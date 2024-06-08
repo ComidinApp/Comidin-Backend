@@ -4,7 +4,6 @@ const userRouter = require('./API/user/router');
 const orderRouter = require('./API/order/router');
 const productRouter = require('./API/product/router');
 const subscriptionRouter = require('./API/subscription/router');
-const employeeRouter = require('./API/employee/router');
 const commerceRouter = require('./API/commerce/router');
 const addressRouter = require('./API/address/router');
 
@@ -19,7 +18,6 @@ app.use('/users', userRouter);
 app.use('/orders', orderRouter);
 app.use('/products', productRouter);
 app.use('/subscriptions', subscriptionRouter);
-app.use('/employees', employeeRouter);
 app.use('/commerces', commerceRouter);
 app.use('/addresses', addressRouter);
 
