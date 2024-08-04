@@ -1,14 +1,16 @@
 const express = require('express');
 const { connectDatabase, sequelize } = require('./database');
+const app = express();
+const PORT = 11001;
+//Routers
 const userRouter = require('./API/user/router');
 const orderRouter = require('./API/order/router');
 const productRouter = require('./API/product/router');
 const subscriptionRouter = require('./API/subscription/router');
 const commerceRouter = require('./API/commerce/router');
 const addressRouter = require('./API/address/router');
-
-const app = express();
-const PORT = 11001;
+//Models
+const User = require('./API/user/models');
 
 app.use(express.json());
 
@@ -23,7 +25,7 @@ app.use('/addresses', addressRouter);
 
 
 // Initialize database models #TODO Descomentar cuando tengamos todos los modelos y los importemos en app.js
-/* const init = async () => {
+const init = async () => {
     try {
         await sequelize.sync();
         console.log('Database synchronized');
@@ -32,7 +34,7 @@ app.use('/addresses', addressRouter);
     }
 };
 
-init(); */
+init();
 
 app.listen(PORT, () => {
     console.log(`Server is running on http://localhost:${PORT}`);

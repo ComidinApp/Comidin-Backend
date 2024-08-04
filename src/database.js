@@ -1,7 +1,8 @@
 const { Sequelize } = require('sequelize');
 
-const sequelize = new Sequelize('database', 'username', 'password', {
-    host: 'localhost',
+//Sacar esto que esta hardcodeado ajio
+const sequelize = new Sequelize('fazt_db', 'fazt', '123456', {
+    host: 'mysqldb',
     dialect: 'mysql',
 });
 
