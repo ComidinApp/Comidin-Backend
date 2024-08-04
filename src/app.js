@@ -3,14 +3,15 @@ const { connectDatabase, sequelize } = require('./database');
 const app = express();
 const PORT = 11001;
 //Routers
-const userRouter = require('./API/user/router');
-const orderRouter = require('./API/order/router');
-const productRouter = require('./API/product/router');
-const subscriptionRouter = require('./API/subscription/router');
-const commerceRouter = require('./API/commerce/router');
-const addressRouter = require('./API/address/router');
+const userRouter = require('./routes/user');
+const orderRouter = require('./routes/order');
+const productRouter = require('./routes/product');
+const subscriptionRouter = require('./routes/subscription');
+const commerceRouter = require('./routes/commerce');
+const addressRouter = require('./routes/address');
 //Models
-const User = require('./API/user/models');
+const User = require('./models/user');
+const Address = require('./models/address');
 
 app.use(express.json());
 

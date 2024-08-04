@@ -1,6 +1,6 @@
 
 const Sequelize = require('sequelize');
-const { sequelize } = require('../../database'); // Import database connection
+const { sequelize } = require('../database'); // Import database connection
 
 const User = sequelize.define('user', {
     id: {
@@ -8,11 +8,11 @@ const User = sequelize.define('user', {
         primaryKey: true,
         autoIncrement: true
     },
-    firstName: {
+    first_name: {
         type: Sequelize.STRING,
         allowNull: false
     },
-    lastName: {
+    last_name: {
         type: Sequelize.STRING,
         allowNull: false
     },
@@ -24,25 +24,25 @@ const User = sequelize.define('user', {
             isEmail: true // Ensure valid email format
         }
     },
-    phoneNumber: {
+    phone_number: {
         type: Sequelize.STRING,
         allowNull: false,
         unique: true,
     },
-    nationalId: {
+    national_id: {
         type: Sequelize.STRING,
         allowNull: false,
         unique: true,
     },
-    isActive: {
-        type: Sequelize.STRING,
+    is_active: {
+        type: Sequelize.BOOLEAN,
         allowNull: false,
     },
     birthday: {
         type: Sequelize.DATE,
         allowNull: false,
     },
-    createdOn: {
+    created_on: {
         type: Sequelize.DATE,
         allowNull: false,
         defaultValue: Sequelize.NOW
@@ -50,23 +50,11 @@ const User = sequelize.define('user', {
     password: {
         type: Sequelize.STRING,
         allowNull: false
-    },
-    /* addressId: {
-        type: Sequelize.INTEGER,
-        allowNull: true,
-        references: {
-          model: 'address',
-          key: 'id'
-        }
-      },
-    roleId: {
-      type: Sequelize.INTEGER,
-      allowNull: false,
-      references: {
-        model: 'role',
-        key: 'id'
-      }
-    } */
+    }
 });
+
+User.associate = function(models) {
+    User.hasMany(sequelize.define('Address'), { foreignKey: 'address_id' });
+};
 
 module.exports = User;

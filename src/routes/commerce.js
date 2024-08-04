@@ -1,5 +1,5 @@
 const express = require('express');
-const Commerce = require('./controller');
+const Commerce = require('../controllers/commerce');
 const router = express.Router();
 
 // Create a commerce
