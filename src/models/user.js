@@ -58,8 +58,4 @@ const User = sequelize.define('user', {
     freezeTableName: true
 });
 
-User.associate = function(models) {
-    User.hasMany(sequelize.define('Address'));
-};
-
 module.exports = User;
