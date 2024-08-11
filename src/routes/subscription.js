@@ -1,5 +1,5 @@
 const express = require('express');
-const Subscription = require('../controllers/subscription').default;
+const Subscription = require('../controllers/subscription');
 const router = express.Router();
 
 router.post('/', Subscription.createSubscription);
