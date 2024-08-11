@@ -3,14 +3,7 @@ const User = require('../controllers/user');
 const router = express.Router();
 
 // Create a user
-router.post('/', async (req, res) => {
-    try {
-        const user = await User.create(req.body);
-        res.status(201).json(user);
-    } catch (error) {
-        res.status(500).json({ error: error.message });
-    }
-});
+router.post('/', User.createUser);
 
 // Get all users
 router.get('/', async (req, res) => {

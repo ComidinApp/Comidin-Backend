@@ -1,25 +1,17 @@
 const Sequelize = require('sequelize');
 const { sequelize } = require('../database'); // Import database connection
 
-const Order = sequelize.define('order', {
+const Payment = sequelize.define('payment', {
   id: {
     type: Sequelize.INTEGER,
     primaryKey: true,
     autoIncrement: true
   },
-  user_id: {
+  order_id: {
     type: Sequelize.INTEGER,
     allowNull: false,
     references: {
-      model: 'user',
-      key: 'id'
-    }
-  },
-  commerce_id: {
-    type: Sequelize.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'commerce',
+      model: 'order',
       key: 'id'
     }
   },
@@ -35,10 +27,6 @@ const Order = sequelize.define('order', {
   status: {
     type: Sequelize.STRING,
     allowNull: false
-  },
-  delivery_type: {
-    type: Sequelize.STRING,
-    allowNull: false
   }
 }, {
   createdAt: false,
@@ -46,4 +34,4 @@ const Order = sequelize.define('order', {
   freezeTableName: true
 });
 
-module.exports = Order;
+module.exports = Payment;

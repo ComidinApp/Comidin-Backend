@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize');
-const db = require('./config'); // Import database connection
+const { sequelize } = require('../database'); // Import database connection
 
-const Commerce = db.define('commerce', {
+const Commerce = sequelize.define('commerce', {
   id: {
     type: Sequelize.INTEGER,
     primaryKey: true,
@@ -11,23 +11,7 @@ const Commerce = db.define('commerce', {
     type: Sequelize.STRING,
     allowNull: false
   },
-  subscription: {
-    type: Sequelize.INTEGER,
-    allowNull: true,
-    references: {
-      model: 'address',
-      key: 'id'
-    }
-  },
-  addressId: {
-    type: Sequelize.INTEGER,
-    allowNull: true,
-    references: {
-      model: 'address',
-      key: 'id'
-    }
-  },
-  commerceCategoryId: {
+  commerce_category_id: {
     type: Sequelize.INTEGER,
     allowNull: false,
     references: {
@@ -35,34 +19,49 @@ const Commerce = db.define('commerce', {
       key: 'id'
     }
   },
-  commerceNationalId: {
+  street_name: {
+    type: Sequelize.STRING,
+    allowNull: false
+  },
+  number: {
+    type: Sequelize.STRING,
+    allowNull: false
+  },
+  postal_code: {
+    type: Sequelize.STRING,
+    allowNull: false
+  },
+  commerce_national_id: {
     type: Sequelize.STRING,
     allowNull: false,
     unique: true
   },
-  isActive: {
+  is_active: {
     type: Sequelize.BOOLEAN,
     allowNull: false,
     defaultValue: true
   },
-  imageUrl: {
+  image_url: {
     type: Sequelize.STRING,
     allowNull: true
   },
-  createdOn: {
+  created_at: {
     type: Sequelize.DATE,
     allowNull: false,
     defaultValue: Sequelize.NOW
   },
-  openAt: {
+  open_at: {
     type: Sequelize.TIME,
     allowNull: true
   },
-  closeAt: {
+  close_at: {
     type: Sequelize.TIME,
     allowNull: true
   }
 }, {
+  createdAt: false,
+  updatedAt: false,
+  freezeTableName: true
 });
 
 module.exports = Commerce;

@@ -2,11 +2,27 @@
 const Sequelize = require('sequelize');
 const { sequelize } = require('../database'); // Import database connection
 
-const User = sequelize.define('user', {
+const Employee = sequelize.define('employee', {
     id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
         autoIncrement: true
+    },
+    commerce_id: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'commerce',
+        key: 'id'
+      }
+    },
+    role_id: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'role',
+        key: 'id'
+      }
     },
     first_name: {
         type: Sequelize.STRING,
@@ -34,6 +50,18 @@ const User = sequelize.define('user', {
         allowNull: false,
         unique: true,
     },
+    street_name: {
+      type: Sequelize.STRING,
+      allowNull: false
+    },
+    number: {
+      type: Sequelize.STRING,
+      allowNull: false
+    },
+    postal_code: {
+      type: Sequelize.STRING,
+      allowNull: false
+    },
     is_active: {
         type: Sequelize.BOOLEAN,
         allowNull: false,
@@ -58,8 +86,4 @@ const User = sequelize.define('user', {
     freezeTableName: true
 });
 
-User.associate = function(models) {
-    User.hasMany(sequelize.define('Address'));
-};
-
-module.exports = User;
+module.exports = Employee;

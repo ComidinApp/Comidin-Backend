@@ -1,18 +1,18 @@
-
 const Sequelize = require('sequelize');
 const { sequelize } = require('../database'); // Import database connection
 
-const Subscription = sequelize.define('subscription', {
+
+const Rating = sequelize.define('rating', {
     id: {
-        type: Sequelize.INTEGER,
-        primaryKey: true,
-        autoIncrement: true
+      type: Sequelize.INTEGER,
+      primaryKey: true,
+      autoIncrement: true
     },
-    plan_id: {
+    user_id: {
       type: Sequelize.INTEGER,
       allowNull: false,
       references: {
-        model: 'plan',
+        model: 'user',
         key: 'id'
       }
     },
@@ -24,15 +24,22 @@ const Subscription = sequelize.define('subscription', {
         key: 'id'
       }
     },
-    created_at: {
-        type: Sequelize.DATE,
-        allowNull: false,
-        defaultValue: Sequelize.NOW
+    order_id: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'order',
+        key: 'id'
       }
+    },
+    rate_order: {
+      type: Sequelize.INTEGER,
+      allowNull: false
+    }
 }, {
     createdAt: false,
     updatedAt: false,
     freezeTableName: true
 });
 
-module.exports = Subscription;
+module.exports = Rating;

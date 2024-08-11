@@ -1,5 +1,6 @@
 const Sequelize = require('sequelize');
 const { sequelize } = require('../database'); // Import database connection
+const User = require('./user');
 
 const Address = sequelize.define('address', {
   id: {
@@ -7,7 +8,15 @@ const Address = sequelize.define('address', {
     primaryKey: true,
     autoIncrement: true
   },
-  name: {
+  user_id: {
+    type: Sequelize.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'user',
+      key: 'id'
+    }
+  },
+  street_name: {
     type: Sequelize.STRING,
     allowNull: false
   },
@@ -27,7 +36,7 @@ const Address = sequelize.define('address', {
     type: Sequelize.STRING,
     allowNull: true
   },
-  created_on: {
+  created_at: {
     type: Sequelize.DATE,
     allowNull: false,
     defaultValue: Sequelize.NOW
@@ -41,10 +50,9 @@ const Address = sequelize.define('address', {
     allowNull: false
   }
 }, {
+  createdAt: false,
+  updatedAt: false,
+  freezeTableName: true
 });
-
-Address.associate = function(models) {
-  Address.belongsTo(sequelize.define('User'), { foreignKey: 'user_id' });
-};
 
 module.exports = Address;

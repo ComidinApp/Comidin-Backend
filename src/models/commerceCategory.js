@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize');
-const db = require('./config'); // Import database connection
+const { sequelize } = require('../database'); // Import database connection
 
-const CommerceCategory = db.define('commerce_category', {
+const CommerceCategory = sequelize.define('commerce_category', {
     id: {
         type: Sequelize.INTEGER,
         primaryKey: true,
@@ -13,8 +13,13 @@ const CommerceCategory = db.define('commerce_category', {
     },
     description: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
+        freezeTableName: true
     }
+}, {
+    createdAt: false,
+    updatedAt: false,
+    freezeTableName: true
 });
 
 module.exports = CommerceCategory;

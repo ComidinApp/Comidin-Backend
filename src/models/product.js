@@ -1,7 +1,7 @@
 const Sequelize = require('sequelize');
-const db = require('./config');
+const { sequelize } = require('../database'); // Import database connection
 
-const Product = db.define('product', {
+const Product = sequelize.define('product', {
   id: {
     type: Sequelize.INTEGER,
     primaryKey: true,
@@ -15,7 +15,7 @@ const Product = db.define('product', {
     type: Sequelize.TEXT,
     allowNull: true
   },
-  commerceId: {
+  commerce_id: {
     type: Sequelize.INTEGER,
     allowNull: false,
     references: {
@@ -23,21 +23,32 @@ const Product = db.define('product', {
       key: 'id'
     }
   },
-  imageUrl: {
+  product_category_id: {
+    type: Sequelize.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'product_category',
+      key: 'id'
+    }
+  },
+  image_url: {
     type: Sequelize.STRING,
     allowNull: true
   },
-  productCode: {
+  product_code: {
     type: Sequelize.STRING,
     allowNull: false,
     unique: true
   },
-  createdOn: {
+  created_at: {
     type: Sequelize.DATE,
     allowNull: false,
     defaultValue: Sequelize.NOW
   }
 }, {
+  createdAt: false,
+  updatedAt: false,
+  freezeTableName: true
 });
 
 module.exports = Product;

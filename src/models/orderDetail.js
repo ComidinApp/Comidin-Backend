@@ -1,25 +1,25 @@
 const Sequelize = require('sequelize');
 const { sequelize } = require('../database'); // Import database connection
 
-const Order = sequelize.define('order', {
+const OrderDetail = sequelize.define('order_detail', {
   id: {
     type: Sequelize.INTEGER,
     primaryKey: true,
     autoIncrement: true
   },
-  user_id: {
+  order_id: {
     type: Sequelize.INTEGER,
     allowNull: false,
     references: {
-      model: 'user',
+      model: 'order',
       key: 'id'
     }
   },
-  commerce_id: {
+  publication_id: {
     type: Sequelize.INTEGER,
     allowNull: false,
     references: {
-      model: 'commerce',
+      model: 'publication',
       key: 'id'
     }
   },
@@ -28,22 +28,22 @@ const Order = sequelize.define('order', {
     allowNull: false,
     defaultValue: Sequelize.NOW
   },
-  total_amount: {
+  quantity: {
     type: Sequelize.DECIMAL(10, 2),
     allowNull: false
   },
-  status: {
-    type: Sequelize.STRING,
+  tips: {
+    type: Sequelize.DECIMAL(10, 2),
     allowNull: false
   },
-  delivery_type: {
-    type: Sequelize.STRING,
+  amount: {
+    type: Sequelize.DECIMAL(10, 2),
     allowNull: false
-  }
+  },
 }, {
   createdAt: false,
   updatedAt: false,
   freezeTableName: true
 });
 
-module.exports = Order;
+module.exports = OrderDetail;
