@@ -7,5 +7,6 @@ router.get('/', Employee.findAllEmployees);
 router.get('/:id', Employee.findEmployeeById);
 router.put('/:id', Employee.updateEmployee);
 router.delete('/:id', Employee.deleteEmployee);
+// find employees by role id 
 
 module.exports = router;

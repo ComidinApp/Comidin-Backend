@@ -28,7 +28,7 @@ const findSubscriptionById = async (req, res) => {
         const { id } = req.params;
         const subscription = await Subscription.findByPk(id);
         if (!subscription) {
-            return res.status(404).json({ error: 'subscription not found with id:' + id });
+            return res.status(404).json({ error: 'Subscription not found with id:' + id });
         }
         return res.status(200).json(subscription);
     } catch (error) {
@@ -43,7 +43,7 @@ const updateSubscription = async (req, res) => {
         const { id } = req.params;
         const subscription = await Subscription.findByPk(id);
         if (!subscription) {
-            return res.status(404).json({ error: 'subscription not found with id:' + id });
+            return res.status(404).json({ error: 'Subscription not found with id:' + id });
         }
         await subscription.update(body);
         return res.status(201).json(subscription);
@@ -58,7 +58,7 @@ const deleteSubscription = async (req, res) => {
         const { id } = req.params;
         const subscription = await Subscription.findByPk(id);
         if (!subscription) {
-            return res.status(404).json({ error: 'subscription not found with id:' + id });
+            return res.status(404).json({ error: 'Subscription not found with id:' + id });
         }
         await subscription.destroy()
         return res.status(200).json(subscription);

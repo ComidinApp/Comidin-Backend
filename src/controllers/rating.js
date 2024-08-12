@@ -1,71 +1,71 @@
 
-const Rating = require('../models/raiting');
+const Rating = require('../models/rating');
 
-const createRaiting = async (req, res) => {
+const createRating = async (req, res) => {
     try {
         const { body } = req;
-        const raiting = new Rating(body);
-        await raiting.save();
-        return res.status(201).json(raiting);
+        const rating = new Rating(body);
+        await rating.save();
+        return res.status(201).json(rating);
     } catch (error) {
         console.log(error)
         res.status(500).json({ error: error.message });
     }
 }
 
-const findAllRaitings = async (req, res) => {
+const findAllRatings = async (req, res) => {
     try {
-        const raitings = await Rating.findAll()
-        return res.status(200).json(raitings);
+        const ratings = await Rating.findAll()
+        return res.status(200).json(ratings);
     } catch (error) {
         console.log(error)
         return res.status(500).json({ error: error.message });
     }
 }
 
-const findRaitingById = async (req, res) => {
+const findRatingById = async (req, res) => {
     try {
         const { id } = req.params;
-        const raiting = await Rating.findByPk(id);
-        if (!raiting) {
-            return res.status(404).json({ error: 'raiting not found with id:' + id });
+        const rating = await Rating.findByPk(id);
+        if (!rating) {
+            return res.status(404).json({ error: 'Rating not found with id:' + id });
         }
-        return res.status(200).json(raiting);
+        return res.status(200).json(rating);
     } catch (error) {
         console.log(error)
         return res.status(500).json({ error: error.message });
     }
 }
 
-const updateRaiting = async (req, res) => {
+const updateRating = async (req, res) => {
     try {
         const { body } = req;
         const { id } = req.params;
-        const raiting = await Rating.findByPk(id);
-        if (!raiting) {
-            return res.status(404).json({ error: 'raiting not found with id:' + id });
+        const rating = await Rating.findByPk(id);
+        if (!rating) {
+            return res.status(404).json({ error: 'Rating not found with id:' + id });
         }
-        await raiting.update(body);
-        return res.status(201).json(raiting);
+        await rating.update(body);
+        return res.status(201).json(rating);
     } catch (error) {
         console.log(error)
         return res.status(500).json({ error: error.message });
     }
 }
 
-const deleteRaiting = async (req, res) => {
+const deleteRating = async (req, res) => {
     try {
         const { id } = req.params;
-        const raiting = await Rating.findByPk(id);
-        if (!raiting) {
-            return res.status(404).json({ error: 'raiting not found with id:' + id });
+        const rating = await Rating.findByPk(id);
+        if (!rating) {
+            return res.status(404).json({ error: 'Rating not found with id:' + id });
         }
-        await raiting.destroy()
-        return res.status(200).json(raiting);
+        await rating.destroy()
+        return res.status(200).json(rating);
     } catch (error) {
         console.log(error)
         return res.status(500).json({ error: error.message });
     }
 }
 
-module.exports =  {createRaiting, updateRaiting, deleteRaiting, findRaitingById, findRaitingById};
+module.exports =  {createRating, updateRating, deleteRating, findAllRatings, findRatingById};

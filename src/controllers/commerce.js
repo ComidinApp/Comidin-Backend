@@ -28,7 +28,7 @@ const findCommerceById = async (req, res) => {
         const { id } = req.params;
         const commerce = await Commerce.findByPk(id);
         if (!commerce) {
-            return res.status(404).json({ error: 'commerce not found with id:' + id });
+            return res.status(404).json({ error: 'Commerce not found with id:' + id });
         }
         return res.status(200).json(commerce);
     } catch (error) {
@@ -43,7 +43,7 @@ const updateCommerce = async (req, res) => {
         const { id } = req.params;
         const commerce = await Commerce.findByPk(id);
         if (!commerce) {
-            return res.status(404).json({ error: 'commerce not found with id:' + id });
+            return res.status(404).json({ error: 'Commerce not found with id:' + id });
         }
         await commerce.update(body);
         return res.status(201).json(commerce);
@@ -58,7 +58,7 @@ const deleteCommerce = async (req, res) => {
         const { id } = req.params;
         const commerce = await Commerce.findByPk(id);
         if (!commerce) {
-            return res.status(404).json({ error: 'commerce not found with id:' + id });
+            return res.status(404).json({ error: 'Commerce not found with id:' + id });
         }
         await commerce.destroy()
         return res.status(200).json(commerce);

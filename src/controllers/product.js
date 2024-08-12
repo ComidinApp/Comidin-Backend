@@ -1,71 +1,71 @@
 
-const User = require('../models/user');
+const Product = require('../models/product');
 
-const createUser = async (req, res) => {
+const createProduct = async (req, res) => {
     try {
         const { body } = req;
-        const user = new User(body);
-        await user.save();
-        return res.status(201).json(user);
+        const product = new Product(body);
+        await product.save();
+        return res.status(201).json(product);
     } catch (error) {
         console.log(error)
         res.status(500).json({ error: error.message });
     }
 }
 
-const findAllUsers = async (req, res) => {
+const findAllProducts = async (req, res) => {
     try {
-        const users = await User.findAll()
-        return res.status(200).json(users);
+        const products = await Product.findAll()
+        return res.status(200).json(products);
     } catch (error) {
         console.log(error)
         return res.status(500).json({ error: error.message });
     }
 }
 
-const findUserById = async (req, res) => {
+const findProductById = async (req, res) => {
     try {
         const { id } = req.params;
-        const user = await User.findByPk(id);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found with id:' + id });
+        const product = await Product.findByPk(id);
+        if (!product) {
+            return res.status(404).json({ error: 'Product not found with id:' + id });
         }
-        return res.status(200).json(user);
+        return res.status(200).json(product);
     } catch (error) {
         console.log(error)
         return res.status(500).json({ error: error.message });
     }
 }
 
-const updateUser = async (req, res) => {
+const updateProduct = async (req, res) => {
     try {
         const { body } = req;
         const { id } = req.params;
-        const user = await User.findByPk(id);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found with id:' + id });
+        const product = await Product.findByPk(id);
+        if (!product) {
+            return res.status(404).json({ error: 'Product not found with id:' + id });
         }
-        await user.update(body);
-        return res.status(201).json(user);
+        await product.update(body);
+        return res.status(201).json(product);
     } catch (error) {
         console.log(error)
         return res.status(500).json({ error: error.message });
     }
 }
 
-const deleteUser = async (req, res) => {
+const deleteProduct = async (req, res) => {
     try {
         const { id } = req.params;
-        const user = await User.findByPk(id);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found with id:' + id });
+        const product = await Product.findByPk(id);
+        if (!product) {
+            return res.status(404).json({ error: 'Product not found with id:' + id });
         }
-        await user.destroy()
-        return res.status(200).json(user);
+        await product.destroy()
+        return res.status(200).json(product);
     } catch (error) {
         console.log(error)
         return res.status(500).json({ error: error.message });
     }
 }
 
-module.exports =  {createUser, updateUser, deleteUser, findAllUsers, findUserById};
+module.exports =  {createProduct, updateProduct, deleteProduct, findAllProducts, findProductById};

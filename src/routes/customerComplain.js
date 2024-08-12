@@ -7,5 +7,8 @@ router.get('/', CustomerComplain.findAllCustomerComplains);
 router.get('/:id', CustomerComplain.findCustomerComplainById);
 router.put('/:id', CustomerComplain.updateCustomerComplain);
 router.delete('/:id', CustomerComplain.deleteCustomerComplain);
+// find complain by user
+// find complain by commerce
+// find complain by order id
 
 module.exports = router;

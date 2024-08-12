@@ -28,7 +28,7 @@ const findRoleById = async (req, res) => {
         const { id } = req.params;
         const role = await Role.findByPk(id);
         if (!role) {
-            return res.status(404).json({ error: 'role not found with id:' + id });
+            return res.status(404).json({ error: 'Role not found with id:' + id });
         }
         return res.status(200).json(role);
     } catch (error) {
@@ -43,7 +43,7 @@ const updateRole = async (req, res) => {
         const { id } = req.params;
         const role = await Role.findByPk(id);
         if (!role) {
-            return res.status(404).json({ error: 'role not found with id:' + id });
+            return res.status(404).json({ error: 'Role not found with id:' + id });
         }
         await role.update(body);
         return res.status(201).json(role);
@@ -58,7 +58,7 @@ const deleteRole = async (req, res) => {
         const { id } = req.params;
         const role = await Role.findByPk(id);
         if (!role) {
-            return res.status(404).json({ error: 'role not found with id:' + id });
+            return res.status(404).json({ error: 'Role not found with id:' + id });
         }
         await role.destroy()
         return res.status(200).json(role);
