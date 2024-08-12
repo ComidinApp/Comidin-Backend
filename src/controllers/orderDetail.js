@@ -1,71 +1,70 @@
+const OrderDetail = require('../models/orderDetail');
 
-const User = require('../models/user');
-
-const createUser = async (req, res) => {
+const createOrderDetail = async (req, res) => {
     try {
         const { body } = req;
-        const user = new User(body);
-        await user.save();
-        return res.status(201).json(user);
+        const orderDetail = new OrderDetail(body);
+        await orderDetail.save();
+        return res.status(201).json(orderDetail);
     } catch (error) {
         console.log(error)
         res.status(500).json({ error: error.message });
     }
 }
 
-const findAllUsers = async (req, res) => {
+const findAllOrderDetails = async (req, res) => {
     try {
-        const users = await User.findAll()
-        return res.status(200).json(users);
+        const orderDetail = await OrderDetail.findAll()
+        return res.status(200).json(orderDetail);
     } catch (error) {
         console.log(error)
         return res.status(500).json({ error: error.message });
     }
 }
 
-const findUserById = async (req, res) => {
+const findOrderDetailById = async (req, res) => {
     try {
         const { id } = req.params;
-        const user = await User.findByPk(id);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found with id:' + id });
+        const orderDetail = await OrderDetail.findByPk(id);
+        if (!orderDetail) {
+            return res.status(404).json({ error: 'OrderDetail not found with id:' + id });
         }
-        return res.status(200).json(user);
+        return res.status(200).json(orderDetail);
     } catch (error) {
         console.log(error)
         return res.status(500).json({ error: error.message });
     }
 }
 
-const updateUser = async (req, res) => {
+const updateOrderDetail = async (req, res) => {
     try {
         const { body } = req;
         const { id } = req.params;
-        const user = await User.findByPk(id);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found with id:' + id });
+        const orderDetail = await OrderDetail.findByPk(id);
+        if (!orderDetail) {
+            return res.status(404).json({ error: 'OrderDetail not found with id:' + id });
         }
-        await user.update(body);
-        return res.status(201).json(user);
+        await OrderDetail.update(body);
+        return res.status(201).json(orderDetail);
     } catch (error) {
         console.log(error)
         return res.status(500).json({ error: error.message });
     }
 }
 
-const deleteUser = async (req, res) => {
+const deleteOrderDetail = async (req, res) => {
     try {
         const { id } = req.params;
-        const user = await User.findByPk(id);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found with id:' + id });
+        const orderDetail = await OrderDetail.findByPk(id);
+        if (!orderDetail) {
+            return res.status(404).json({ error: 'OrderDetail not found with id:' + id });
         }
-        await user.destroy()
-        return res.status(200).json(user);
+        await OrderDetail.destroy()
+        return res.status(200).json(orderDetail);
     } catch (error) {
         console.log(error)
         return res.status(500).json({ error: error.message });
     }
 }
 
-module.exports =  {createUser, updateUser, deleteUser, findAllUsers, findUserById};
+module.exports =  {createOrderDetail, updateOrderDetail, deleteOrderDetail, findAllOrderDetails, findOrderDetailById};
