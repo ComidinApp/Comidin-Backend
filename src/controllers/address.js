@@ -27,9 +27,23 @@ const findAddressById = async (req, res) => {
         const { id } = req.params;
         const address = await Address.findByPk(id);
         if (!address) {
-            return res.status(404).json({ error: 'address not found with id:' + id });
+            return res.status(404).json({ error: 'Address not found with id:' + id });
         }
         return res.status(200).json(address);
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ error: error.message });
+    }
+}
+
+const findAddressesByUserId = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const addresses = await Address.findAddressesByUserId(userId);
+        if (addresses.length === 0) {
+            return res.status(404).json({ error: 'Address not found with id:' + userId });
+        }
+        return res.status(200).json(addresses);
     } catch (error) {
         console.log(error)
         return res.status(500).json({ error: error.message });
@@ -42,7 +56,7 @@ const updateAddress = async (req, res) => {
         const { id } = req.params;
         const address = await Address.findByPk(id);
         if (!address) {
-            return res.status(404).json({ error: 'address not found with id:' + id });
+            return res.status(404).json({ error: 'Address not found with id:' + id });
         }
         await address.update(body);
         return res.status(201).json(address);
@@ -57,7 +71,7 @@ const deleteAddress = async (req, res) => {
         const { id } = req.params;
         const address = await Address.findByPk(id);
         if (!address) {
-            return res.status(404).json({ error: 'address not found with id:' + id });
+            return res.status(404).json({ error: 'Address not found with id:' + id });
         }
         await address.destroy()
         return res.status(200).json(address);
@@ -67,4 +81,4 @@ const deleteAddress = async (req, res) => {
     }
 }
 
-module.exports =  {createAddress, updateAddress, deleteAddress, findAllAddresses, findAddressById};
+module.exports =  {createAddress, updateAddress, deleteAddress, findAllAddresses, findAddressById, findAddressesByUserId};

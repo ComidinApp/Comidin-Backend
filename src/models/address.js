@@ -55,4 +55,17 @@ const Address = sequelize.define('address', {
   freezeTableName: true
 });
 
+Address.findAddressesByUserId = async function(userId) {
+  try {
+    const addresses = await Address.findAll({
+      where: { user_id: userId }
+    });
+
+    return addresses;
+  } catch (error) {
+    console.error('Error finding Addresses:', error);
+    throw error;
+  }
+};
+
 module.exports = Address;

@@ -3,12 +3,21 @@ const { connectDatabase, sequelize } = require('./database');
 const app = express();
 const PORT = 3000;
 //Routers
-const userRouter = require('./routes/user');
-const orderRouter = require('./routes/order');
-const productRouter = require('./routes/product');
-const subscriptionRouter = require('./routes/subscription');
-const commerceRouter = require('./routes/commerce');
 const addressRouter = require('./routes/address');
+const commerceRouter = require('./routes/commerce');
+const commerceCategoryRouter = require('./routes/commerceCategory');
+const customerComplainRouter = require('./routes/customerComplain');
+const employeeRouter = require('./routes/employee');
+const orderRouter = require('./routes/order');
+const orderDetailRouter = require('./routes/orderDetail');
+const planRouter = require('./routes/plan');
+const productRouter = require('./routes/product');
+const productCategoryRouter = require('./routes/productCategory');
+const publicationRouter = require('./routes/publication');
+const ratingRouter = require('./routes/rating');
+const roleRouter = require('./routes/role');
+const subscriptionRouter = require('./routes/subscription');
+const userRouter = require('./routes/user');
 //Models
 const Address = require('./models/address');
 const Commerce = require('./models/commerce');
@@ -31,15 +40,22 @@ app.use(express.json());
 
 connectDatabase();
 
-app.get('/', (req, res) => {
-    res.send('Hello World!');
-  });  
-app.use('/users', userRouter);
-app.use('/orders', orderRouter);
-app.use('/products', productRouter);
-app.use('/subscriptions', subscriptionRouter);
-app.use('/commerces', commerceRouter);
-app.use('/addresses', addressRouter);
+app.get('/', (req, res) => {res.send('Hello World!');});  
+app.use('/address', addressRouter);
+app.use('/commerce', commerceRouter);
+app.use('/commerceCategory', commerceCategoryRouter);
+app.use('/customerComplain', customerComplainRouter);
+app.use('/employee', employeeRouter);
+app.use('/order', orderRouter);
+app.use('/orderDetail', orderDetailRouter);
+app.use('/plan', planRouter);
+app.use('/product', productRouter);
+app.use('/productCategory', productCategoryRouter);
+app.use('/publication', publicationRouter);
+app.use('/rating', ratingRouter);
+app.use('/role', roleRouter);
+app.use('/subscription', subscriptionRouter);
+app.use('/user', userRouter);
 
 const init = async () => {
     try {
