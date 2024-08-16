@@ -7,7 +7,7 @@ router.get('/', Subscription.findAllSubscriptions);
 router.get('/:id', Subscription.findSubscriptionById);
 router.put('/:id', Subscription.updateSubscription);
 router.delete('/:id', Subscription.deleteSubscription);
-// find subscription by plan 
-// find subscription by commerce 
+router.get('/plan/:planId', Subscription.findSubscriptionsByPlanId);
+router.get('/commerce/:commerceId', Subscription.findSubscriptionsByCommerceId);
 
 module.exports = router;

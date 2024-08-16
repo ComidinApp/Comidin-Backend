@@ -64,4 +64,17 @@ const Commerce = sequelize.define('commerce', {
   freezeTableName: true
 });
 
+Commerce.findCommercesByCategoryId = async function(categoryId) {
+  try {
+    const commerces = await Commerce.findAll({
+      where: { commerce_category_id: categoryId }
+    });
+
+    return commerces;
+  } catch (error) {
+    console.error('Error finding Commerces:', error);
+    throw error;
+  }
+};
+
 module.exports = Commerce;

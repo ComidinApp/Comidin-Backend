@@ -7,5 +7,6 @@ router.get('/', Commerce.findAllCommerces);
 router.get('/:id', Commerce.findCommerceById);
 router.put('/:id', Commerce.updateCommerce);
 router.delete('/:id', Commerce.deleteCommerce);
+router.get('/category/:categoryId', Commerce.findCommercesByCategoryId);
 
 module.exports = router;

@@ -35,4 +35,32 @@ const Subscription = sequelize.define('subscription', {
     freezeTableName: true
 });
 
+
+Subscription.findSubscriptionsByPlanId = async function(planId) {
+  try {
+    const subscriptions = await Subscription.findAll({
+      where: { plan_id: planId }
+    });
+
+    return subscriptions;
+  } catch (error) {
+    console.error('Error finding Subscriptions:', error);
+    throw error;
+  }
+};
+
+
+Subscription.findSubscriptionsByCommerceId = async function(commerceId) {
+  try {
+    const subscriptions = await Subscription.findAll({
+      where: { commerce_id: commerceId }
+    });
+
+    return subscriptions;
+  } catch (error) {
+    console.error('Error finding Subscriptions:', error);
+    throw error;
+  }
+};
+
 module.exports = Subscription;

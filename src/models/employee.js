@@ -86,4 +86,30 @@ const Employee = sequelize.define('employee', {
     freezeTableName: true
 });
 
+Employee.findEmployeesByCommerceId = async function(commerceId) {
+  try {
+    const employees = await Employee.findAll({
+      where: { commerce_id: commerceId }
+    });
+
+    return employees;
+  } catch (error) {
+    console.error('Error finding Employees:', error);
+    throw error;
+  }
+};
+
+Employee.findEmployeesByRoleId = async function(roleId) {
+  try {
+    const employees = await Employee.findAll({
+      where: { role_id: roleId }
+    });
+
+    return employees;
+  } catch (error) {
+    console.error('Error finding Employees:', error);
+    throw error;
+  }
+};
+
 module.exports = Employee;

@@ -68,4 +68,32 @@ const deleteEmployee = async (req, res) => {
     }
 }
 
-module.exports =  {createEmployee, updateEmployee, deleteEmployee, findAllEmployees, findEmployeeById};
+const findEmployeesByCommerceId = async (req, res) => {
+    try {
+        const { commerceId } = req.params;
+        const employees = await Employee.findEmployeesByCommerceId(commerceId);
+        if (!employees) {
+            return res.status(404).json({ message: 'No employees found for this commerce.' });
+        }
+        return res.status(200).json(employees);
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+const findEmployeesByRoleId = async (req, res) => {
+    try {
+        const { roleId } = req.params;
+        const employees = await Employee.findEmployeesByRoleId(roleId);
+        if (!employees) {
+            return res.status(404).json({ message: 'No employees found for this role.' });
+        }
+        return res.status(200).json(employees);
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports =  {createEmployee, updateEmployee, deleteEmployee, findAllEmployees, findEmployeeById, findEmployeesByCommerceId, findEmployeesByRoleId};

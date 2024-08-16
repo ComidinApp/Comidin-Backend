@@ -68,4 +68,18 @@ const deleteCommerce = async (req, res) => {
     }
 }
 
-module.exports =  {createCommerce, updateCommerce, deleteCommerce, findAllCommerces, findCommerceById};
+const findCommercesByCategoryId = async (req, res) => {
+    try {
+        const { categoryId } = req.params;
+        const commerces = await Commerce.findCommercesByCategoryId(categoryId);
+        if (!commerces) {
+            return res.status(404).json({ message: 'No commerces found for this category.' });
+        }
+        return res.status(200).json(commerces);
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports =  {createCommerce, updateCommerce, deleteCommerce, findAllCommerces, findCommerceById, findCommercesByCategoryId};
