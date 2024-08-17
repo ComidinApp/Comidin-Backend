@@ -41,4 +41,43 @@ const CustomerComplain = sequelize.define('customer_complain', {
   freezeTableName: true
 });
 
+CustomerComplain.findCustomerComplainByUserId = async function(userId) {
+  try {
+    const complains = await CustomerComplain.findAll({
+      where: { user_id: userId }
+    });
+
+    return complains;
+  } catch (error) {
+    console.error('Error finding Complains:', error);
+    throw error;
+  }
+};
+
+CustomerComplain.findCustomerComplainByCommerceId = async function(commerceId) {
+  try {
+    const complains = await CustomerComplain.findAll({
+      where: { commerce_id: commerceId }
+    });
+
+    return complains;
+  } catch (error) {
+    console.error('Error finding Complains:', error);
+    throw error;
+  }
+};
+
+CustomerComplain.findCustomerComplainByOrderId = async function(orderId) {
+  try {
+    const complain = await CustomerComplain.findOne({
+      where: { order_id: orderId }
+    });
+
+    return complain;
+  } catch (error) {
+    console.error('Error finding Complains:', error);
+    throw error;
+  }
+};
+
 module.exports = CustomerComplain;
