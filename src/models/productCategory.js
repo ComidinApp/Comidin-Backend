@@ -30,4 +30,17 @@ const ProductCategory = sequelize.define('product_category', {
     freezeTableName: true
 });
 
+ProductCategory.findProductCategoriesByCommerceId = async function(commerceId) {
+    try {
+      const categories = await ProductCategory.findAll({
+        where: { commerce_id: commerceId }
+      });
+  
+      return categories;
+    } catch (error) {
+      console.error('Error finding Product Categories:', error);
+      throw error;
+    }
+  };
+
 module.exports = ProductCategory;
