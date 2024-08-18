@@ -46,4 +46,30 @@ const Order = sequelize.define('order', {
   freezeTableName: true
 });
 
+Order.findOrdersByUserId = async function(userId) {
+  try {
+    const orders = await Order.findAll({
+      where: { user_id: userId }
+    });
+
+    return orders;
+  } catch (error) {
+    console.error('Error finding Orders:', error);
+    throw error;
+  }
+};
+
+Order.findOrdersByCommerceId = async function(commerceId) {
+  try {
+    const orders = await Order.findAll({
+      where: { commerce_id: commerceId }
+    });
+
+    return orders;
+  } catch (error) {
+    console.error('Error finding Orders:', error);
+    throw error;
+  }
+};
+
 module.exports = Order;

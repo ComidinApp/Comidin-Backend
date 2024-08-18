@@ -42,4 +42,43 @@ const Rating = sequelize.define('rating', {
     freezeTableName: true
 });
 
+Rating.findRatingByUserId = async function(userId) {
+  try {
+    const ratings = await Rating.findAll({
+      where: { user_id: userId }
+    });
+
+    return ratings;
+  } catch (error) {
+    console.error('Error finding Ratings:', error);
+    throw error;
+  }
+};
+
+Rating.findRatingByCommerceId = async function(commerceId) {
+  try {
+    const ratings = await Rating.findAll({
+      where: { commerce_id: commerceId }
+    });
+
+    return ratings;
+  } catch (error) {
+    console.error('Error finding Ratings:', error);
+    throw error;
+  }
+};
+
+Rating.findRatingByOrderId = async function(orderId) {
+  try {
+    const rating = await Rating.findOne({
+      where: { order_id: orderId }
+    });
+
+    return rating;
+  } catch (error) {
+    console.error('Error finding Rating:', error);
+    throw error;
+  }
+};
+
 module.exports = Rating;

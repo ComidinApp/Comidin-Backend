@@ -67,4 +67,32 @@ const deleteOrder = async (req, res) => {
     }
 }
 
-module.exports =  {createOrder, updateOrder, deleteOrder, findAllOrders, findOrderById};
+const findOrdersByUserId = async (req, res) => {
+    try {
+        const { userId } = req.params;
+        const orders = await Order.findOrdersByUserId(userId);
+        if (!orders) {
+            return res.status(404).json({ message: 'No orders found for this user.' });
+        }
+        return res.status(200).json(orders);
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+const findOrdersByCommerceId = async (req, res) => {
+    try {
+        const { commerceId } = req.params;
+        const orders = await Order.findOrdersByCommerceId(commerceId);
+        if (!orders) {
+            return res.status(404).json({ message: 'No orders found for this commerce.' });
+        }
+        return res.status(200).json(orders);
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports =  {createOrder, updateOrder, deleteOrder, findAllOrders, findOrderById, findOrdersByUserId, findOrdersByCommerceId};

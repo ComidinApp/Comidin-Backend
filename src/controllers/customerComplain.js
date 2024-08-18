@@ -80,6 +80,7 @@ const findCustomerComplainByUserId = async (req, res) => {
         return res.status(500).json({ error: error.message });
     }
 };
+
 const findCustomerComplainByCommerceId = async (req, res) => {
     try {
         const { commerceId } = req.params;
@@ -93,6 +94,7 @@ const findCustomerComplainByCommerceId = async (req, res) => {
         return res.status(500).json({ error: error.message });
     }
 };
+
 const findCustomerComplainByOrderId = async (req, res) => {
     try {
         const { orderId } = req.params;

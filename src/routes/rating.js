@@ -7,8 +7,8 @@ router.get('/', Rating.findAllRatings);
 router.get('/:id', Rating.findRatingById);
 router.put('/:id', Rating.updateRating);
 router.delete('/:id', Rating.deleteRating);
-// find raitings by user
-// find raitings by commerce
-// find raiting by order id
-
+router.get('/user/:userId', Rating.findRatingByUserId);
+router.get('/commerce/:commerceId', Rating.findRatingComplainByCommerceId);
+router.get('/order/:orderId', Rating.findRatingByOrderId);
+ 
 module.exports = router;
