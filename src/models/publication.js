@@ -46,4 +46,17 @@ const Publication = sequelize.define('publication', {
   freezeTableName: true
 });
 
+Publication.findPublicationsByCommerceId = async function(commerceId) {
+  try {
+    const publications = await Publication.findAll({
+      where: { commerce_id: commerceId }
+    });
+
+    return publications;
+  } catch (error) {
+    console.error('Error finding Publications:', error);
+    throw error;
+  }
+};
+
 module.exports = Publication;

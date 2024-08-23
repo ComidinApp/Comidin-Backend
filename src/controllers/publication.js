@@ -55,7 +55,7 @@ const updatePublication = async (req, res) => {
 const deletePublication = async (req, res) => {
     try {
         const { id } = req.params;
-        const publication = await publication.findByPk(id);
+        const publication = await Publication.findByPk(id);
         if (!publication) {
             return res.status(404).json({ error: 'Publication not found with id:' + id });
         }
@@ -67,4 +67,18 @@ const deletePublication = async (req, res) => {
     }
 }
 
-module.exports =  {createPublication, updatePublication, deletePublication, findAllPublications, findPublicationById};
+const findPublicationsByCommerceId = async (req, res) => {
+    try {
+        const { commerceId } = req.params;
+        const publications = await Publication.findPublicationsByCommerceId(commerceId);
+        if (!publications) {
+            return res.status(404).json({ message: 'No publications found for this commerce.' });
+        }
+        return res.status(200).json(publications);
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports =  {createPublication, updatePublication, deletePublication, findAllPublications, findPublicationById, findPublicationsByCommerceId};

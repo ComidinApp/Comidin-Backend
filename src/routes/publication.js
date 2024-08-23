@@ -7,6 +7,7 @@ router.get('/', Publication.findAllPublications);
 router.get('/:id', Publication.findPublicationById);
 router.put('/:id', Publication.updatePublication);
 router.delete('/:id', Publication.deletePublication);
+router.get('/commerce/:commerceId', Publication.findPublicationsByCommerceId);
 // find Publication by commerce 
 
 module.exports = router;
