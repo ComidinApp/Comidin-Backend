@@ -7,7 +7,7 @@ router.get('/', OrderDetail.findAllOrderDetails);
 router.get('/:id', OrderDetail.findOrderDetailById);
 router.put('/:id', OrderDetail.updateOrderDetail);
 router.delete('/:id', OrderDetail.deleteOrderDetail);
-// find orderDetails by order_id 
-// find orderDetails by publication id
+router.get('/order/:orderId', OrderDetail.findOrderDetailsByOrderId);
+router.get('/publication/:publicationId', OrderDetail.findOrderDetailsByPublicationId);
 
 module.exports = router;

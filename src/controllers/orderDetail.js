@@ -67,4 +67,32 @@ const deleteOrderDetail = async (req, res) => {
     }
 }
 
-module.exports =  {createOrderDetail, updateOrderDetail, deleteOrderDetail, findAllOrderDetails, findOrderDetailById};
+const findOrderDetailsByOrderId = async (req, res) => {
+    try {
+        const { orderId } = req.params;
+        const orderDetails = await OrderDetail.findOrderDetailsByOrderId(orderId);
+        if (!orderDetails) {
+            return res.status(404).json({ message: 'No order details found for this order.' });
+        }
+        return res.status(200).json(orderDetails);
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+const findOrderDetailsByPublicationId = async (req, res) => {
+    try {
+        const { publicationId } = req.params;
+        const orderDetails = await Product.findOrderDetailsByPublicationId(publicationId);
+        if (!orderDetails) {
+            return res.status(404).json({ message: 'No order details found for this publication.' });
+        }
+        return res.status(200).json(orderDetails);
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports =  {createOrderDetail, updateOrderDetail, deleteOrderDetail, findAllOrderDetails, findOrderDetailById, findOrderDetailsByOrderId, findOrderDetailsByPublicationId};

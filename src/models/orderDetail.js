@@ -46,4 +46,30 @@ const OrderDetail = sequelize.define('order_detail', {
   freezeTableName: true
 });
 
+OrderDetail.findOrderDetailsByOrderId = async function(orderId) {
+  try {
+    const orderDetails = await OrderDetail.findAll({
+      where: { order_id: orderId }
+    });
+
+    return orderDetails;
+  } catch (error) {
+    console.error('Error finding order details:', error);
+    throw error;
+  }
+};
+
+OrderDetail.findOrderDetailsByPublicationId = async function(publicationId) {
+  try {
+    const orderDetails = await OrderDetail.findAll({
+      where: { publication_id: publicationId }
+    });
+
+    return orderDetails;
+  } catch (error) {
+    console.error('Error finding order details:', error);
+    throw error;
+  }
+};
+
 module.exports = OrderDetail;

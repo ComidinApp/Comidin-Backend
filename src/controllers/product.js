@@ -84,10 +84,10 @@ const findProductsByCommerceId = async (req, res) => {
 
 const findProductsByCategoryId = async (req, res) => {
     try {
-        const { commerceId } = req.params;
-        const products = await Product.findProductsByCategoryId(commerceId);
+        const { categoryId } = req.params;
+        const products = await Product.findProductsByCategoryId(categoryId);
         if (!products) {
-            return res.status(404).json({ message: 'No products found for this commerce.' });
+            return res.status(404).json({ message: 'No products found for this category.' });
         }
         return res.status(200).json(products);
     } catch (error) {

@@ -64,10 +64,10 @@ Product.findProductsByCommerceId = async function(commerceId) {
   }
 };
 
-Product.findProductsByCategoryId = async function(productCategoryId) {
+Product.findProductsByCategoryId = async function(categoryId) {
   try {
     const products = await Product.findAll({
-      where: { product_category_id: productCategoryId }
+      where: { product_category_id: categoryId }
     });
 
     return products;
