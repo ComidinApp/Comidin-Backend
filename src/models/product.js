@@ -51,4 +51,30 @@ const Product = sequelize.define('product', {
   freezeTableName: true
 });
 
+Product.findProductsByCommerceId = async function(commerceId) {
+  try {
+    const products = await Product.findAll({
+      where: { commerce_id: commerceId }
+    });
+
+    return products;
+  } catch (error) {
+    console.error('Error finding Products:', error);
+    throw error;
+  }
+};
+
+Product.findProductsByCategoryId = async function(productCategoryId) {
+  try {
+    const products = await Product.findAll({
+      where: { product_category_id: productCategoryId }
+    });
+
+    return products;
+  } catch (error) {
+    console.error('Error finding Products:', error);
+    throw error;
+  }
+};
+
 module.exports = Product;

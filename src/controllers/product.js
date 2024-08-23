@@ -68,4 +68,32 @@ const deleteProduct = async (req, res) => {
     }
 }
 
-module.exports =  {createProduct, updateProduct, deleteProduct, findAllProducts, findProductById};
+const findProductsByCommerceId = async (req, res) => {
+    try {
+        const { commerceId } = req.params;
+        const products = await Product.findProductsByCommerceId(commerceId);
+        if (!products) {
+            return res.status(404).json({ message: 'No products found for this commerce.' });
+        }
+        return res.status(200).json(products);
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+const findProductsByCategoryId = async (req, res) => {
+    try {
+        const { commerceId } = req.params;
+        const products = await Product.findProductsByCategoryId(commerceId);
+        if (!products) {
+            return res.status(404).json({ message: 'No products found for this commerce.' });
+        }
+        return res.status(200).json(products);
+    } catch (error) {
+        console.log(error)
+        return res.status(500).json({ error: error.message });
+    }
+};
+
+module.exports =  {createProduct, updateProduct, deleteProduct, findAllProducts, findProductById, findProductsByCommerceId, findProductsByCategoryId};
