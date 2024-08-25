@@ -28,7 +28,7 @@ const Publication = sequelize.define('publication', {
     }
   },
   price: {
-    type: Sequelize.DATE,
+    type: Sequelize.DECIMAL(10, 2),
     allowNull: false,
   },
   expiration_date: {

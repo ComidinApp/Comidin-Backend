@@ -34,7 +34,16 @@ const CustomerComplain = sequelize.define('customer_complain', {
   complain_description: {
     type: Sequelize.STRING,
     allowNull: false
-  }
+  },
+  created_at: {
+    type: Sequelize.DATE,
+    allowNull: false,
+    defaultValue: Sequelize.NOW
+},
+terminate_at: {
+  type: Sequelize.DATE,
+  allowNull: true
+}
 }, {
   createdAt: false,
   updatedAt: false,

@@ -42,12 +42,20 @@ const updateCustomerComplain = async (req, res) => {
         const { id } = req.params;
         const customerComplain = await CustomerComplain.findByPk(id);
         if (!customerComplain) {
-            return res.status(404).json({ error: 'CustomerComplain not found with id:' + id });
+            return res.status(404).json({ error: 'CustomerComplain not found with id: ' + id });
         }
-        await CustomerComplain.update(body);
-        return res.status(201).json(customerComplain);
+
+        // Actualizar el registro encontrado usando el id
+        await CustomerComplain.update(body, {
+            where: { id: id }
+        });
+
+        // Retorna el registro actualizado
+        const updatedCustomerComplain = await CustomerComplain.findByPk(id);
+
+        return res.status(200).json(updatedCustomerComplain);
     } catch (error) {
-        console.log(error)
+        console.log(error);
         return res.status(500).json({ error: error.message });
     }
 }
@@ -59,7 +67,9 @@ const deleteCustomerComplain = async (req, res) => {
         if (!customerComplain) {
             return res.status(404).json({ error: 'CustomerComplain not found with id:' + id });
         }
-        await CustomerComplain.destroy()
+        await CustomerComplain.destroy({
+            where: { id: id }
+        });
         return res.status(200).json(customerComplain);
     } catch (error) {
         console.log(error)
