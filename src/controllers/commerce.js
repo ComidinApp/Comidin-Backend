@@ -1,85 +1,80 @@
-
 const Commerce = require('../models/commerce');
 
-const createCommerce = async (req, res) => {
+exports.createCommerce = async (req, res) => {
     try {
-        const { body } = req;
-        const commerce = new Commerce(body);
-        await commerce.save();
-        return res.status(201).json(commerce);
+        const commerce = await Commerce.create(req.body);
+        res.status(201).json(commerce);
     } catch (error) {
-        console.log(error)
-        res.status(500).json({ error: error.message });
+        console.error('Error creating Commerce:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
 
-const findAllCommerces = async (req, res) => {
+exports.findAllCommerces = async (req, res) => {
     try {
-        const commerces = await Commerce.findAll()
-        return res.status(200).json(commerces);
+        const commerces = await Commerce.findAll();
+        res.status(200).json(commerces);
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+        console.error('Error fetching Commerces:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
 
-const findCommerceById = async (req, res) => {
+exports.findCommerceById = async (req, res) => {
     try {
         const { id } = req.params;
         const commerce = await Commerce.findByPk(id);
         if (!commerce) {
-            return res.status(404).json({ error: 'Commerce not found with id:' + id });
+            return res.status(404).json({ error: 'Commerce not found with id: ' + id });
         }
-        return res.status(200).json(commerce);
+        res.status(200).json(commerce);
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+        console.error('Error fetching Commerce by ID:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
 
-const updateCommerce = async (req, res) => {
+exports.updateCommerce = async (req, res) => {
     try {
         const { body } = req;
         const { id } = req.params;
         const commerce = await Commerce.findByPk(id);
         if (!commerce) {
-            return res.status(404).json({ error: 'Commerce not found with id:' + id });
+            return res.status(404).json({ error: 'Commerce not found with id: ' + id });
         }
         await commerce.update(body);
-        return res.status(201).json(commerce);
+        res.status(200).json(commerce);
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+        console.error('Error updating Commerce:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
 
-const deleteCommerce = async (req, res) => {
+exports.deleteCommerce = async (req, res) => {
     try {
         const { id } = req.params;
         const commerce = await Commerce.findByPk(id);
         if (!commerce) {
-            return res.status(404).json({ error: 'Commerce not found with id:' + id });
+            return res.status(404).json({ error: 'Commerce not found with id: ' + id });
         }
-        await commerce.destroy()
-        return res.status(200).json(commerce);
+        await commerce.destroy();
+        res.status(200).json(commerce);
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+        console.error('Error deleting Commerce:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
 
-const findCommercesByCategoryId = async (req, res) => {
+exports.findCommercesByCategoryId = async (req, res) => {
     try {
         const { categoryId } = req.params;
         const commerces = await Commerce.findCommercesByCategoryId(categoryId);
         if (!commerces) {
             return res.status(404).json({ message: 'No commerces found for this category.' });
         }
-        return res.status(200).json(commerces);
+        res.status(200).json(commerces);
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+        console.error('Error fetching Commerces by Category ID:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 };
-
-module.exports =  {createCommerce, updateCommerce, deleteCommerce, findAllCommerces, findCommerceById, findCommercesByCategoryId};

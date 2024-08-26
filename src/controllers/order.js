@@ -1,98 +1,94 @@
 const Order = require('../models/order');
 
-const createOrder = async (req, res) => {
+exports.createOrder = async (req, res) => {
     try {
-        const { body } = req;
-        const order = new Order(body);
-        await order.save();
-        return res.status(201).json(order);
+        const order = await Order.create(req.body);
+        res.status(201).json(order);
     } catch (error) {
-        console.log(error)
-        res.status(500).json({ error: error.message });
+        console.error('Error creating Order:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
 
-const findAllOrders = async (req, res) => {
+exports.findAllOrders = async (req, res) => {
     try {
-        const orders = await Order.findAll()
-        return res.status(200).json(orders);
+        const orders = await Order.findAll();
+        res.status(200).json(orders);
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+        console.error('Error fetching Orders:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
 
-const findOrderById = async (req, res) => {
+exports.findOrderById = async (req, res) => {
     try {
         const { id } = req.params;
         const order = await Order.findByPk(id);
         if (!order) {
-            return res.status(404).json({ error: 'Order not found with id:' + id });
+            return res.status(404).json({ error: 'Order not found with id: ' + id });
         }
-        return res.status(200).json(order);
+        res.status(200).json(order);
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+        console.error('Error fetching Order by ID:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
 
-const updateOrder = async (req, res) => {
+exports.updateOrder = async (req, res) => {
     try {
         const { body } = req;
         const { id } = req.params;
         const order = await Order.findByPk(id);
         if (!order) {
-            return res.status(404).json({ error: 'Order not found with id:' + id });
+            return res.status(404).json({ error: 'Order not found with id: ' + id });
         }
         await order.update(body);
-        return res.status(201).json(order);
+        res.status(200).json(order);
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+        console.error('Error updating Order:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
 
-const deleteOrder = async (req, res) => {
+exports.deleteOrder = async (req, res) => {
     try {
         const { id } = req.params;
         const order = await Order.findByPk(id);
         if (!order) {
-            return res.status(404).json({ error: 'Order not found with id:' + id });
+            return res.status(404).json({ error: 'Order not found with id: ' + id });
         }
-        await order.destroy()
-        return res.status(200).json(order);
+        await order.destroy();
+        res.status(200).json(order);
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+        console.error('Error deleting Order:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
 
-const findOrdersByUserId = async (req, res) => {
+exports.findOrdersByUserId = async (req, res) => {
     try {
         const { userId } = req.params;
         const orders = await Order.findOrdersByUserId(userId);
         if (!orders) {
             return res.status(404).json({ message: 'No orders found for this user.' });
         }
-        return res.status(200).json(orders);
+        res.status(200).json(orders);
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+        console.error('Error fetching Orders by User ID:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 };
 
-const findOrdersByCommerceId = async (req, res) => {
+exports.findOrdersByCommerceId = async (req, res) => {
     try {
         const { commerceId } = req.params;
         const orders = await Order.findOrdersByCommerceId(commerceId);
         if (!orders) {
             return res.status(404).json({ message: 'No orders found for this commerce.' });
         }
-        return res.status(200).json(orders);
+        res.status(200).json(orders);
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+        console.error('Error fetching Orders by Commerce ID:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 };
-
-module.exports =  {createOrder, updateOrder, deleteOrder, findAllOrders, findOrderById, findOrdersByUserId, findOrdersByCommerceId};

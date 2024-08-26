@@ -40,7 +40,7 @@ const CustomerComplain = sequelize.define('customer_complain', {
     allowNull: false,
     defaultValue: Sequelize.NOW
 },
-terminate_at: {
+closed_at: {
   type: Sequelize.DATE,
   allowNull: true
 }

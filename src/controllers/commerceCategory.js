@@ -1,70 +1,66 @@
 const CommerceCategory = require('../models/commerceCategory');
 
-const createCommerceCategory = async (req, res) => {
+exports.createCommerceCategory = async (req, res) => {
     try {
-        const { body } = req;
-        const commerceCategory = new CommerceCategory(body);
-        await commerceCategory.save();
-        return res.status(201).json(commerceCategory);
+        const commerceCategory = await CommerceCategory.create(req.body);
+        res.status(201).json(commerceCategory);
     } catch (error) {
-        console.log(error)
-        res.status(500).json({ error: error.message });
+        console.error('Error creating CommerceCategory:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
 
-const findAllCommerceCategories = async (req, res) => {
+exports.findAllCommerceCategories = async (req, res) => {
     try {
-        const commerceCategory = await CommerceCategory.findAll()
-        return res.status(200).json(commerceCategory);
+        const commerceCategories = await CommerceCategory.findAll();
+        res.status(200).json(commerceCategories);
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+        console.error('Error fetching CommerceCategories:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
 
-const findCommerceCategoryById = async (req, res) => {
+exports.findCommerceCategoryById = async (req, res) => {
     try {
         const { id } = req.params;
         const commerceCategory = await CommerceCategory.findByPk(id);
         if (!commerceCategory) {
-            return res.status(404).json({ error: 'CommerceCategory not found with id:' + id });
+            return res.status(404).json({ error: 'CommerceCategory not found with id: ' + id });
         }
-        return res.status(200).json(commerceCategory);
+        res.status(200).json(commerceCategory);
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+        console.error('Error fetching CommerceCategory by ID:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
 
-const updateCommerceCategory = async (req, res) => {
+exports.updateCommerceCategory = async (req, res) => {
     try {
         const { body } = req;
         const { id } = req.params;
         const commerceCategory = await CommerceCategory.findByPk(id);
         if (!commerceCategory) {
-            return res.status(404).json({ error: 'CommerceCategory not found with id:' + id });
+            return res.status(404).json({ error: 'CommerceCategory not found with id: ' + id });
         }
-        await CommerceCategory.update(body);
-        return res.status(201).json(commerceCategory);
+        await commerceCategory.update(body);
+        res.status(200).json(commerceCategory);
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+        console.error('Error updating CommerceCategory:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
 
-const deleteCommerceCategory = async (req, res) => {
+exports.deleteCommerceCategory = async (req, res) => {
     try {
         const { id } = req.params;
         const commerceCategory = await CommerceCategory.findByPk(id);
         if (!commerceCategory) {
-            return res.status(404).json({ error: 'CommerceCategory not found with id:' + id });
+            return res.status(404).json({ error: 'CommerceCategory not found with id: ' + id });
         }
-        await CommerceCategory.destroy()
-        return res.status(200).json(commerceCategory);
+        await commerceCategory.destroy();
+        res.status(200).json(commerceCategory);
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+        console.error('Error deleting CommerceCategory:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-}
-
-module.exports =  {createCommerceCategory, updateCommerceCategory, deleteCommerceCategory, findAllCommerceCategories, findCommerceCategoryById};
+};

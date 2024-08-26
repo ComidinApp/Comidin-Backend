@@ -40,11 +40,15 @@ const createCommerceValidation = [
   check('open_at')
     .optional()
     .isString()
-    .withMessage('Open at must be a valid time string'),
+    .withMessage('Open at must be a valid time string')
+    .notEmpty()
+    .withMessage('Open at cannot be empty'),
   check('close_at')
     .optional()
     .isString()
     .withMessage('Close at must be a valid time string')
+    .notEmpty()
+    .withMessage('Close at cannot be empty')
 ];
 
 // Validaciones para actualizar un comercio
@@ -94,11 +98,16 @@ const updateCommerceValidation = [
   check('open_at')
     .optional()
     .isString()
-    .withMessage('Open at must be a valid time string'),
+    .withMessage('Open at must be a valid time string')
+    .notEmpty()
+    .withMessage('Open at cannot be empty'),
   check('close_at')
     .optional()
     .isString()
     .withMessage('Close at must be a valid time string')
+    .notEmpty()
+    .withMessage('Close at cannot be empty')
+    
 ];
 
 // Validaciones para los parámetros de la ruta

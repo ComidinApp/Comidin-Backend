@@ -4,7 +4,9 @@ const { check } = require('express-validator');
 const createAddressValidation = [
   check('user_id')
     .isInt({ min: 1 })
-    .withMessage('User ID must be a positive integer'),
+    .withMessage('User ID must be a positive integer')
+    .notEmpty()
+    .withMessage('User ID cannot be empty'),
   check('street_name')
     .isString()
     .withMessage('Street name must be a string')
@@ -23,7 +25,9 @@ const createAddressValidation = [
   check('home_type')
     .optional()
     .isString()
-    .withMessage('Home type must be a string'),
+    .withMessage('Home type must be a string')
+    .notEmpty()
+    .withMessage('Home type cannot be empty'),
   check('extra_info')
     .optional()
     .isString()
@@ -44,7 +48,9 @@ const updateAddressValidation = [
   check('user_id')
     .optional()
     .isInt({ min: 1 })
-    .withMessage('User ID must be a positive integer'),
+    .withMessage('User ID must be a positive integer')
+    .notEmpty()
+    .withMessage('User ID cannot be empty'),
   check('street_name')
     .optional()
     .isString()

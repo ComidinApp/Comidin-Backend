@@ -1,99 +1,100 @@
-
 const Subscription = require('../models/subscription');
 
-const createSubscription = async (req, res) => {
-    try {
-        const { body } = req;
-        const subscription = new Subscription(body);
-        await subscription.save();
-        return res.status(201).json(subscription);
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({ error: error.message });
-    }
-}
-
-const findAllSubscriptions = async (req, res) => {
-    try {
-        const subscriptions = await Subscription.findAll()
-        return res.status(200).json(subscriptions);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
-    }
-}
-
-const findSubscriptionById = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const subscription = await Subscription.findByPk(id);
-        if (!subscription) {
-            return res.status(404).json({ error: 'Subscription not found with id:' + id });
-        }
-        return res.status(200).json(subscription);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
-    }
-}
-
-const updateSubscription = async (req, res) => {
-    try {
-        const { body } = req;
-        const { id } = req.params;
-        const subscription = await Subscription.findByPk(id);
-        if (!subscription) {
-            return res.status(404).json({ error: 'Subscription not found with id:' + id });
-        }
-        await subscription.update(body);
-        return res.status(201).json(subscription);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
-    }
-}
-
-const deleteSubscription = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const subscription = await Subscription.findByPk(id);
-        if (!subscription) {
-            return res.status(404).json({ error: 'Subscription not found with id:' + id });
-        }
-        await subscription.destroy()
-        return res.status(200).json(subscription);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
-    }
-}
-
-const findSubscriptionsByCommerceId = async (req, res) => {
-    try {
-        const { commerceId } = req.params;
-        const subscriptions = await Subscription.findSubscriptionsByCommerceId(commerceId);
-        if (!subscriptions) {
-            return res.status(404).json({ message: 'No subscriptions found for this commerce.' });
-        }
-        return res.status(200).json(subscriptions);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
-    }
+exports.createSubscription = async (req, res) => {
+  try {
+    const { body } = req;
+    const subscription = await Subscription.create(body); // Uso de create en lugar de instanciar manualmente
+    res.status(201).json(subscription);
+  } catch (error) {
+    console.error('Error creating Subscription:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 };
 
-const findSubscriptionsByPlanId = async (req, res) => {
-    try {
-        const { planId } = req.params;
-        const subscriptions = await Subscription.findSubscriptionsByPlanId(planId);
-        if (!subscriptions) {
-            return res.status(404).json({ message: 'No subscriptions found for this plan.' });
-        }
-        return res.status(200).json(subscriptions);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
-    }
+exports.findAllSubscriptions = async (req, res) => {
+  try {
+    const subscriptions = await Subscription.findAll();
+    res.status(200).json(subscriptions);
+  } catch (error) {
+    console.error('Error fetching Subscriptions:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 };
 
-module.exports =  {createSubscription, updateSubscription, deleteSubscription, findAllSubscriptions, findSubscriptionById, findSubscriptionsByCommerceId, findSubscriptionsByPlanId};
+exports.findSubscriptionById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const subscription = await Subscription.findByPk(id);
+    if (subscription) {
+      res.status(200).json(subscription);
+    } else {
+      res.status(404).json({ error: `Subscription not found with id: ${id}` });
+    }
+  } catch (error) {
+    console.error('Error fetching Subscription by ID:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+exports.updateSubscription = async (req, res) => {
+  try {
+    const { body } = req;
+    const { id } = req.params;
+    const subscription = await Subscription.findByPk(id);
+    if (subscription) {
+      await subscription.update(body);
+      res.status(200).json(subscription);
+    } else {
+      res.status(404).json({ error: `Subscription not found with id: ${id}` });
+    }
+  } catch (error) {
+    console.error('Error updating Subscription:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+exports.deleteSubscription = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const subscription = await Subscription.findByPk(id);
+    if (subscription) {
+      await subscription.destroy();
+      res.status(200).json({ message: 'Subscription successfully deleted' });
+    } else {
+      res.status(404).json({ error: `Subscription not found with id: ${id}` });
+    }
+  } catch (error) {
+    console.error('Error deleting Subscription:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+exports.findSubscriptionsByCommerceId = async (req, res) => {
+  try {
+    const { commerceId } = req.params;
+    const subscriptions = await Subscription.findSubscriptionsByCommerceId(commerceId);
+    if (subscriptions && subscriptions.length > 0) {
+      res.status(200).json(subscriptions);
+    } else {
+      res.status(404).json({ message: 'No subscriptions found for this commerce.' });
+    }
+  } catch (error) {
+    console.error('Error fetching Subscriptions by Commerce ID:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+exports.findSubscriptionsByPlanId = async (req, res) => {
+  try {
+    const { planId } = req.params;
+    const subscriptions = await Subscription.findSubscriptionsByPlanId(planId);
+    if (subscriptions && subscriptions.length > 0) {
+      res.status(200).json(subscriptions);
+    } else {
+      res.status(404).json({ message: 'No subscriptions found for this plan.' });
+    }
+  } catch (error) {
+    console.error('Error fetching Subscriptions by Plan ID:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};

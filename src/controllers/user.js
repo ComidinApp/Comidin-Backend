@@ -1,71 +1,70 @@
-
 const User = require('../models/user');
 
-const createUser = async (req, res) => {
-    try {
-        const { body } = req;
-        const user = new User(body);
-        await user.save();
-        return res.status(201).json(user);
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({ error: error.message });
-    }
-}
+exports.createUser = async (req, res) => {
+  try {
+    const { body } = req;
+    const user = await User.create(body); 
+    res.status(201).json(user);
+  } catch (error) {
+    console.error('Error creating User:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
 
-const findAllUsers = async (req, res) => {
-    try {
-        const users = await User.findAll()
-        return res.status(200).json(users);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
-    }
-}
+exports.findAllUsers = async (req, res) => {
+  try {
+    const users = await User.findAll();
+    res.status(200).json(users);
+  } catch (error) {
+    console.error('Error fetching Users:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
 
-const findUserById = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const user = await User.findByPk(id);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found with id:' + id });
-        }
-        return res.status(200).json(user);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+exports.findUserById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findByPk(id);
+    if (user) {
+      res.status(200).json(user);
+    } else {
+      res.status(404).json({ error: `User not found with id: ${id}` });
     }
-}
+  } catch (error) {
+    console.error('Error fetching User by ID:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
 
-const updateUser = async (req, res) => {
-    try {
-        const { body } = req;
-        const { id } = req.params;
-        const user = await User.findByPk(id);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found with id:' + id });
-        }
-        await user.update(body);
-        return res.status(201).json(user);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+exports.updateUser = async (req, res) => {
+  try {
+    const { body } = req;
+    const { id } = req.params;
+    const user = await User.findByPk(id);
+    if (user) {
+      await user.update(body);
+      res.status(200).json(user); 
+    } else {
+      res.status(404).json({ error: `User not found with id: ${id}` });
     }
-}
+  } catch (error) {
+    console.error('Error updating User:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
 
-const deleteUser = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const user = await User.findByPk(id);
-        if (!user) {
-            return res.status(404).json({ error: 'User not found with id:' + id });
-        }
-        await user.destroy()
-        return res.status(200).json(user);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+exports.deleteUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const user = await User.findByPk(id);
+    if (user) {
+      await user.destroy();
+      res.status(200).json({ message: 'User successfully deleted' }); 
+    } else {
+      res.status(404).json({ error: `User not found with id: ${id}` });
     }
-}
-
-module.exports =  {createUser, updateUser, deleteUser, findAllUsers, findUserById};
+  } catch (error) {
+    console.error('Error deleting User:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};

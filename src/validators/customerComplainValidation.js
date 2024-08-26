@@ -4,20 +4,28 @@ const { check } = require('express-validator');
 const createCustomerComplainValidation = [
   check('user_id')
     .isInt({ min: 1 })
-    .withMessage('User ID must be a positive integer'),
+    .withMessage('User ID must be a positive integer')
+    .notEmpty()
+    .withMessage('User ID cannot be empty'),
   check('commerce_id')
     .isInt({ min: 1 })
-    .withMessage('Commerce ID must be a positive integer'),
+    .withMessage('Commerce ID must be a positive integer')
+    .notEmpty()
+    .withMessage('Commerce ID cannot be empty'),
   check('order_id')
     .isInt({ min: 1 })
-    .withMessage('Order ID must be a positive integer'),
+    .withMessage('Order ID must be a positive integer')
+    .notEmpty()
+    .withMessage('Order ID cannot be empty'),
   check('complain_description')
     .isString()
-    .withMessage('Complain description must be a string'),
-  check('terminate_at')
+    .withMessage('Complain description must be a string')
+    .notEmpty()
+    .withMessage('Complain description cannot be empty'),
+  check('closed_at')
     .optional()
     .isISO8601()
-    .withMessage('Terminate date must be a valid date'),
+    .withMessage('Closed date must be a valid date'),
 ];
 
 // Validaciones para actualizar una queja de cliente
@@ -38,10 +46,10 @@ const updateCustomerComplainValidation = [
     .optional()
     .isString()
     .withMessage('Complain description must be a string'),
-  check('terminate_at')
+  check('closed_at')
     .optional()
     .isISO8601()
-    .withMessage('Terminate date must be a valid date'),
+    .withMessage('Closed date must be a valid date'),
 ];
 
 // Validaciones para los parámetros de la ruta

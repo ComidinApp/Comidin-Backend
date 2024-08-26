@@ -1,71 +1,70 @@
-
 const Payment = require('../models/payment');
 
-const createPayment = async (req, res) => {
-    try {
-        const { body } = req;
-        const payment = new Payment(body);
-        await payment.save();
-        return res.status(201).json(payment);
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({ error: error.message });
-    }
-}
+exports.createPayment = async (req, res) => {
+  try {
+    const { body } = req;
+    const payment = await Payment.create(body);
+    res.status(201).json(payment);
+  } catch (error) {
+    console.error('Error creating Payment:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
 
-const findAllPayments = async (req, res) => {
-    try {
-        const payments = await Payment.findAll()
-        return res.status(200).json(payments);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
-    }
-}
+exports.findAllPayments = async (req, res) => {
+  try {
+    const payments = await Payment.findAll();
+    res.status(200).json(payments);
+  } catch (error) {
+    console.error('Error fetching Payments:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
 
-const findPaymentById = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const payment = await Payment.findByPk(id);
-        if (!payment) {
-            return res.status(404).json({ error: 'Payment not found with id:' + id });
-        }
-        return res.status(200).json(payment);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+exports.findPaymentById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const payment = await Payment.findByPk(id);
+    if (payment) {
+      res.status(200).json(payment);
+    } else {
+      res.status(404).json({ error: `Payment not found with id: ${id}` });
     }
-}
+  } catch (error) {
+    console.error('Error fetching Payment by ID:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
 
-const updatePayment = async (req, res) => {
-    try {
-        const { body } = req;
-        const { id } = req.params;
-        const payment = await Payment.findByPk(id);
-        if (!payment) {
-            return res.status(404).json({ error: 'Payment not found with id:' + id });
-        }
-        await payment.update(body);
-        return res.status(201).json(payment);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+exports.updatePayment = async (req, res) => {
+  try {
+    const { body } = req;
+    const { id } = req.params;
+    const payment = await Payment.findByPk(id);
+    if (payment) {
+      await payment.update(body);
+      res.status(200).json(payment);
+    } else {
+      res.status(404).json({ error: `Payment not found with id: ${id}` });
     }
-}
+  } catch (error) {
+    console.error('Error updating Payment:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
 
-const deletePayment = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const payment = await Payment.findByPk(id);
-        if (!payment) {
-            return res.status(404).json({ error: 'Payment not found with id:' + id });
-        }
-        await payment.destroy()
-        return res.status(200).json(payment);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+exports.deletePayment = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const payment = await Payment.findByPk(id);
+    if (payment) {
+      await payment.destroy();
+      res.status(204).json();
+    } else {
+      res.status(404).json({ error: `Payment not found with id: ${id}` });
     }
-}
-
-module.exports =  {createPayment, updatePayment, deletePayment, findAllPayments, findPaymentById};
+  } catch (error) {
+    console.error('Error deleting Payment:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
