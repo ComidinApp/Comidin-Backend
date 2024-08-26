@@ -1,13 +1,27 @@
 const express = require('express');
+const { validationResult } = require('express-validator');
 const Order = require('../controllers/order');
+const {
+  createOrderValidation,
+  updateOrderValidation,
+  userIdValidation,
+  commerceIdValidation,
+} = require('../validators/orderValidation');
 const router = express.Router();
+const validate = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) {
+    return res.status(400).json({ errors: errors.array() });
+  }
+  next();
+};
 
-router.post('/', Order.createOrder);
+router.post('/', createOrderValidation, validate, Order.createOrder);
 router.get('/', Order.findAllOrders);
 router.get('/:id', Order.findOrderById);
-router.put('/:id', Order.updateOrder);
+router.put('/:id', updateOrderValidation, validate, Order.updateOrder);
 router.delete('/:id', Order.deleteOrder);
-router.get('/user/:userId', Order.findOrdersByUserId);
-router.get('/commerce/:commerceId', Order.findOrdersByCommerceId);
+router.get('/user/:userId', userIdValidation, validate, Order.findOrdersByUserId);
+router.get('/commerce/:commerceId', commerceIdValidation, validate, Order.findOrdersByCommerceId);
 
 module.exports = router;
