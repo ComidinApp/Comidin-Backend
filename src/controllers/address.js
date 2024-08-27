@@ -1,84 +1,78 @@
 const Address = require('../models/address');
 
-const createAddress = async (req, res) => {
-    try {
-        const { body } = req;
-        const address = new Address(body);
-        await address.save();
-        return res.status(201).json(address);
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({ error: error.message });
-    }
-}
+exports.createAddress = async (req, res) => {
+  try {
+    const address = await Address.create(req.body);
+    res.status(201).json(address);
+  } catch (error) {
+    console.error('Error creating Address:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
 
-const findAllAddresses = async (req, res) => {
-    try {
-        const addresss = await Address.findAll()
-        return res.status(200).json(addresss);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
-    }
-}
+exports.findAllAddresses = async (req, res) => {
+  try {
+    const addresses = await Address.findAll();
+    res.status(200).json(addresses);
+  } catch (error) {
+    console.error('Error fetching Addresses:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
 
-const findAddressById = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const address = await Address.findByPk(id);
-        if (!address) {
-            return res.status(404).json({ error: 'Address not found with id:' + id });
-        }
-        return res.status(200).json(address);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+exports.findAddressById = async (req, res) => {
+  try {
+    const address = await Address.findByPk(req.params.id);
+    if (address) {
+      res.status(200).json(address);
+    } else {
+      res.status(404).json({ error: 'Address not found' });
     }
-}
+  } catch (error) {
+    console.error('Error fetching Address:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
 
-const findAddressesByUserId = async (req, res) => {
-    try {
-        const { userId } = req.params;
-        const addresses = await Address.findAddressesByUserId(userId);
-        if (addresses.length === 0) {
-            return res.status(404).json({ error: 'Address not found with id:' + userId });
-        }
-        return res.status(200).json(addresses);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+exports.updateAddress = async (req, res) => {
+  try {
+    const [updated] = await Address.update(req.body, {
+      where: { id: req.params.id }
+    });
+    if (updated) {
+      const updatedAddress = await Address.findByPk(req.params.id);
+      res.status(200).json(updatedAddress);
+    } else {
+      res.status(404).json({ error: 'Address not found' });
     }
-}
+  } catch (error) {
+    console.error('Error updating Address:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
 
-const updateAddress = async (req, res) => {
-    try {
-        const { body } = req;
-        const { id } = req.params;
-        const address = await Address.findByPk(id);
-        if (!address) {
-            return res.status(404).json({ error: 'Address not found with id:' + id });
-        }
-        await address.update(body);
-        return res.status(201).json(address);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+exports.deleteAddress = async (req, res) => {
+  try {
+    const deleted = await Address.destroy({
+      where: { id: req.params.id }
+    });
+    if (deleted) {
+      res.status(204).json();
+    } else {
+      res.status(404).json({ error: 'Address not found' });
     }
-}
+  } catch (error) {
+    console.error('Error deleting Address:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
 
-const deleteAddress = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const address = await Address.findByPk(id);
-        if (!address) {
-            return res.status(404).json({ error: 'Address not found with id:' + id });
-        }
-        await address.destroy()
-        return res.status(200).json(address);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
-    }
-}
-
-module.exports =  {createAddress, updateAddress, deleteAddress, findAllAddresses, findAddressById, findAddressesByUserId};
+exports.findAddressesByUserId = async (req, res) => {
+  try {
+    const addresses = await Address.findAddressesByUserId(req.params.userId);
+    res.status(200).json(addresses);
+  } catch (error) {
+    console.error('Error finding Addresses by User ID:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};

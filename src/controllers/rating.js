@@ -1,111 +1,115 @@
-
 const Rating = require('../models/rating');
 
-const createRating = async (req, res) => {
-    try {
-        const { body } = req;
-        const rating = new Rating(body);
-        await rating.save();
-        return res.status(201).json(rating);
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({ error: error.message });
-    }
-}
-
-const findAllRatings = async (req, res) => {
-    try {
-        const ratings = await Rating.findAll()
-        return res.status(200).json(ratings);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
-    }
-}
-
-const findRatingById = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const rating = await Rating.findByPk(id);
-        if (!rating) {
-            return res.status(404).json({ error: 'Rating not found with id:' + id });
-        }
-        return res.status(200).json(rating);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
-    }
-}
-
-const updateRating = async (req, res) => {
-    try {
-        const { body } = req;
-        const { id } = req.params;
-        const rating = await Rating.findByPk(id);
-        if (!rating) {
-            return res.status(404).json({ error: 'Rating not found with id:' + id });
-        }
-        await rating.update(body);
-        return res.status(201).json(rating);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
-    }
-}
-
-const deleteRating = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const rating = await Rating.findByPk(id);
-        if (!rating) {
-            return res.status(404).json({ error: 'Rating not found with id:' + id });
-        }
-        await rating.destroy()
-        return res.status(200).json(rating);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
-    }
-}
-
-const findRatingByUserId = async (req, res) => {
-    try {
-        const { userId } = req.params;
-        const ratings = await Rating.findCustomerComplainByUserId(userId);
-        if (!ratings) {
-            return res.status(404).json({ message: 'No ratings found for this user.' });
-        }
-        return res.status(200).json(ratings);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
-    }
-};
-const findRatingComplainByCommerceId = async (req, res) => {
-    try {
-        const { commerceId } = req.params;
-        const ratings = await Rating.findCustomerComplainByCommerceId(commerceId);
-        if (!ratings) {
-            return res.status(404).json({ message: 'No ratings found for this commerce.' });
-        }
-        return res.status(200).json(ratings);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
-    }
-};
-const findRatingByOrderId = async (req, res) => {
-    try {
-        const { orderId } = req.params;
-        const rating = await Rating.findCustomerComplainByOrderId(orderId);
-        if (!rating) {
-            return res.status(404).json({ message: 'No rating found for this order.' });
-        }
-        return res.status(200).json(rating);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
-    }
+exports.createRating = async (req, res) => {
+  try {
+    const { body } = req;
+    const rating = await Rating.create(body);
+    res.status(201).json(rating);
+  } catch (error) {
+    console.error('Error creating Rating:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
 };
 
-module.exports =  {createRating, updateRating, deleteRating, findAllRatings, findRatingById, findRatingByUserId, findRatingComplainByCommerceId, findRatingByOrderId};
+exports.findAllRatings = async (req, res) => {
+  try {
+    const ratings = await Rating.findAll();
+    res.status(200).json(ratings);
+  } catch (error) {
+    console.error('Error fetching Ratings:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+exports.findRatingById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const rating = await Rating.findByPk(id);
+    if (rating) {
+      res.status(200).json(rating);
+    } else {
+      res.status(404).json({ error: `Rating not found with id: ${id}` });
+    }
+  } catch (error) {
+    console.error('Error fetching Rating by ID:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+exports.updateRating = async (req, res) => {
+  try {
+    const { body } = req;
+    const { id } = req.params;
+    const rating = await Rating.findByPk(id);
+    if (rating) {
+      await rating.update(body);
+      res.status(200).json(rating);
+    } else {
+      res.status(404).json({ error: `Rating not found with id: ${id}` });
+    }
+  } catch (error) {
+    console.error('Error updating Rating:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+exports.deleteRating = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const rating = await Rating.findByPk(id);
+    if (rating) {
+      await rating.destroy();
+      res.status(200).json({ message: 'Rating successfully deleted' });
+    } else {
+      res.status(404).json({ error: `Rating not found with id: ${id}` });
+    }
+  } catch (error) {
+    console.error('Error deleting Rating:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+exports.findRatingByUserId = async (req, res) => {
+  try {
+    const { userId } = req.params;
+    const ratings = await Rating.findRatingsByUserId(userId); 
+    if (ratings && ratings.length > 0) {
+      res.status(200).json(ratings);
+    } else {
+      res.status(404).json({ message: 'No ratings found for this user.' });
+    }
+  } catch (error) {
+    console.error('Error fetching Ratings by User ID:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+exports.findRatingComplainByCommerceId = async (req, res) => {
+  try {
+    const { commerceId } = req.params;
+    const ratings = await Rating.findRatingsByCommerceId(commerceId); 
+    if (ratings && ratings.length > 0) {
+      res.status(200).json(ratings);
+    } else {
+      res.status(404).json({ message: 'No ratings found for this commerce.' });
+    }
+  } catch (error) {
+    console.error('Error fetching Ratings by Commerce ID:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+exports.findRatingByOrderId = async (req, res) => {
+  try {
+    const { orderId } = req.params;
+    const rating = await Rating.findRatingByOrderId(orderId); 
+    if (rating) {
+      res.status(200).json(rating);
+    } else {
+      res.status(404).json({ message: 'No rating found for this order.' });
+    }
+  } catch (error) {
+    console.error('Error fetching Rating by Order ID:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};

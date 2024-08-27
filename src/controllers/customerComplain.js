@@ -1,112 +1,109 @@
 const CustomerComplain = require('../models/customerComplain');
 
-const createCustomerComplain = async (req, res) => {
+exports.createCustomerComplain = async (req, res) => {
     try {
-        const { body } = req;
-        const customerComplain = new CustomerComplain(body);
-        await customerComplain.save();
-        return res.status(201).json(customerComplain);
+        const customerComplain = await CustomerComplain.create(req.body);
+        res.status(201).json(customerComplain);
     } catch (error) {
-        console.log(error)
-        res.status(500).json({ error: error.message });
+        console.error('Error creating CustomerComplain:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
 
-const findAllCustomerComplains = async (req, res) => {
+exports.findAllCustomerComplains = async (req, res) => {
     try {
-        const customerComplain = await CustomerComplain.findAll()
-        return res.status(200).json(customerComplain);
+        const customerComplains = await CustomerComplain.findAll();
+        res.status(200).json(customerComplains);
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+        console.error('Error fetching CustomerComplains:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
 
-const findCustomerComplainById = async (req, res) => {
+exports.findCustomerComplainById = async (req, res) => {
     try {
         const { id } = req.params;
         const customerComplain = await CustomerComplain.findByPk(id);
         if (!customerComplain) {
-            return res.status(404).json({ error: 'CustomerComplain not found with id:' + id });
+            return res.status(404).json({ error: 'CustomerComplain not found with id: ' + id });
         }
-        return res.status(200).json(customerComplain);
+        res.status(200).json(customerComplain);
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+        console.error('Error fetching CustomerComplain by ID:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
 
-const updateCustomerComplain = async (req, res) => {
+exports.updateCustomerComplain = async (req, res) => {
     try {
         const { body } = req;
         const { id } = req.params;
         const customerComplain = await CustomerComplain.findByPk(id);
         if (!customerComplain) {
-            return res.status(404).json({ error: 'CustomerComplain not found with id:' + id });
+            return res.status(404).json({ error: 'CustomerComplain not found with id: ' + id });
         }
-        await CustomerComplain.update(body);
-        return res.status(201).json(customerComplain);
+        await CustomerComplain.update(body, { where: { id: id } });
+        const updatedCustomerComplain = await CustomerComplain.findByPk(id);
+        res.status(200).json(updatedCustomerComplain);
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+        console.error('Error updating CustomerComplain:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
 
-const deleteCustomerComplain = async (req, res) => {
+exports.deleteCustomerComplain = async (req, res) => {
     try {
         const { id } = req.params;
         const customerComplain = await CustomerComplain.findByPk(id);
         if (!customerComplain) {
-            return res.status(404).json({ error: 'CustomerComplain not found with id:' + id });
+            return res.status(404).json({ error: 'CustomerComplain not found with id: ' + id });
         }
-        await CustomerComplain.destroy()
-        return res.status(200).json(customerComplain);
+        await CustomerComplain.destroy({ where: { id: id } });
+        res.status(200).json(customerComplain);
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+        console.error('Error deleting CustomerComplain:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
-}
+};
 
-const findCustomerComplainByUserId = async (req, res) => {
+exports.findCustomerComplainByUserId = async (req, res) => {
     try {
         const { userId } = req.params;
         const customerComplains = await CustomerComplain.findCustomerComplainByUserId(userId);
         if (!customerComplains) {
             return res.status(404).json({ message: 'No complains found for this user.' });
         }
-        return res.status(200).json(customerComplains);
+        res.status(200).json(customerComplains);
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+        console.error('Error fetching CustomerComplains by User ID:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 };
 
-const findCustomerComplainByCommerceId = async (req, res) => {
+exports.findCustomerComplainByCommerceId = async (req, res) => {
     try {
         const { commerceId } = req.params;
         const customerComplains = await CustomerComplain.findCustomerComplainByCommerceId(commerceId);
         if (!customerComplains) {
             return res.status(404).json({ message: 'No complains found for this commerce.' });
         }
-        return res.status(200).json(customerComplains);
+        res.status(200).json(customerComplains);
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+        console.error('Error fetching CustomerComplains by Commerce ID:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 };
 
-const findCustomerComplainByOrderId = async (req, res) => {
+exports.findCustomerComplainByOrderId = async (req, res) => {
     try {
         const { orderId } = req.params;
         const customerComplain = await CustomerComplain.findCustomerComplainByOrderId(orderId);
         if (!customerComplain) {
             return res.status(404).json({ message: 'No complain found for this order.' });
         }
-        return res.status(200).json(customerComplain);
+        res.status(200).json(customerComplain);
     } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+        console.error('Error fetching CustomerComplain by Order ID:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
     }
 };
-
-module.exports =  {createCustomerComplain, updateCustomerComplain, deleteCustomerComplain, findAllCustomerComplains, findCustomerComplainById, findCustomerComplainByUserId, findCustomerComplainByCommerceId, findCustomerComplainByOrderId};

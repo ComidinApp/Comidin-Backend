@@ -1,71 +1,70 @@
-
 const Role = require('../models/role');
 
-const createRole = async (req, res) => {
-    try {
-        const { body } = req;
-        const role = new Role(body);
-        await role.save();
-        return res.status(201).json(role);
-    } catch (error) {
-        console.log(error)
-        res.status(500).json({ error: error.message });
-    }
-}
+exports.createRole = async (req, res) => {
+  try {
+    const { body } = req;
+    const role = await Role.create(body);
+    res.status(201).json(role);
+  } catch (error) {
+    console.error('Error creating Role:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
 
-const findAllRoles = async (req, res) => {
-    try {
-        const roles = await Role.findAll()
-        return res.status(200).json(roles);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
-    }
-}
+exports.findAllRoles = async (req, res) => {
+  try {
+    const roles = await Role.findAll();
+    res.status(200).json(roles);
+  } catch (error) {
+    console.error('Error fetching Roles:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
 
-const findRoleById = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const role = await Role.findByPk(id);
-        if (!role) {
-            return res.status(404).json({ error: 'Role not found with id:' + id });
-        }
-        return res.status(200).json(role);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+exports.findRoleById = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const role = await Role.findByPk(id);
+    if (role) {
+      res.status(200).json(role);
+    } else {
+      res.status(404).json({ error: `Role not found with id: ${id}` });
     }
-}
+  } catch (error) {
+    console.error('Error fetching Role by ID:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
 
-const updateRole = async (req, res) => {
-    try {
-        const { body } = req;
-        const { id } = req.params;
-        const role = await Role.findByPk(id);
-        if (!role) {
-            return res.status(404).json({ error: 'Role not found with id:' + id });
-        }
-        await role.update(body);
-        return res.status(201).json(role);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+exports.updateRole = async (req, res) => {
+  try {
+    const { body } = req;
+    const { id } = req.params;
+    const role = await Role.findByPk(id);
+    if (role) {
+      await role.update(body);
+      res.status(200).json(role);
+    } else {
+      res.status(404).json({ error: `Role not found with id: ${id}` });
     }
-}
+  } catch (error) {
+    console.error('Error updating Role:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
 
-const deleteRole = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const role = await Role.findByPk(id);
-        if (!role) {
-            return res.status(404).json({ error: 'Role not found with id:' + id });
-        }
-        await role.destroy()
-        return res.status(200).json(role);
-    } catch (error) {
-        console.log(error)
-        return res.status(500).json({ error: error.message });
+exports.deleteRole = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const role = await Role.findByPk(id);
+    if (role) {
+      await role.destroy();
+      res.status(200).json({ message: 'Role successfully deleted' });
+    } else {
+      res.status(404).json({ error: `Role not found with id: ${id}` });
     }
-}
-
-module.exports =  {createRole, updateRole, deleteRole, findAllRoles, findRoleById};
+  } catch (error) {
+    console.error('Error deleting Role:', error);
+    res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
