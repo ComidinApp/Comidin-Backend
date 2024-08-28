@@ -5,7 +5,7 @@
   "main": "index.js",
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "node src/app.js && sequelize-cli db:seed:all"
+    "dev": "concurrently \"node src/app.js\" \"sequelize-cli db:seed:all\""
   },
   "author": "",
   "license": "ISC",
@@ -21,5 +21,8 @@
     "mysql2": "^3.10.0",
     "sequelize": "^6.37.3",
     "sequelize-cli": "^6.6.2"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   }
 }

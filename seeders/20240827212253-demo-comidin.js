@@ -13,7 +13,8 @@ module.exports = {
         national_id:'999999',
         is_active: true,
         password:'12wref@edfs3',
-        birthday:'2000-05-04'
+        birthday:'2000-05-04',
+        created_at: new Date()
       }
     ], {});
   } catch (error) {
