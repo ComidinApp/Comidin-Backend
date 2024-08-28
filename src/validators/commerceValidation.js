@@ -33,10 +33,6 @@ const createCommerceValidation = [
   check('is_active')
     .isBoolean()
     .withMessage('Is active must be a boolean value'),
-  check('image_url')
-    .optional()
-    .isURL()
-    .withMessage('Image URL must be a valid URL'),
   check('open_at')
     .optional()
     .isString()

@@ -79,6 +79,18 @@ const Employee = sequelize.define('employee', {
     password: {
         type: Sequelize.STRING,
         allowNull: false
+    },
+    dni: {
+        type: Sequelize.STRING,
+        allowNull: false
+    },
+    ciudad: {
+        type: Sequelize.STRING,
+        allowNull: false
+    },
+    status: {
+        type: Sequelize.STRING,
+        allowNull: false
     }
 }, {
     createdAt: false,

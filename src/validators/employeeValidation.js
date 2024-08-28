@@ -4,43 +4,68 @@ const { check } = require('express-validator');
 const createEmployeeValidation = [
   check('commerce_id')
     .isInt({ min: 1 })
-    .withMessage('Commerce ID must be a positive integer'),
+    .withMessage('Commerce ID must be a positive integer')
+    .notEmpty(),
   check('role_id')
     .isInt({ min: 1 })
-    .withMessage('Role ID must be a positive integer'),
+    .withMessage('Role ID must be a positive integer')
+    .notEmpty(),
   check('first_name')
     .isString()
-    .withMessage('First name must be a string'),
+    .withMessage('First name must be a string')
+    .notEmpty(),
   check('last_name')
     .isString()
-    .withMessage('Last name must be a string'),
+    .withMessage('Last name must be a string')
+    .notEmpty(),
   check('email')
     .isEmail()
-    .withMessage('Email must be a valid email address'),
+    .withMessage('Email must be a valid email address')
+    .notEmpty(),
   check('phone_number')
     .isString()
-    .withMessage('Phone number must be a string'),
+    .withMessage('Phone number must be a string')
+    .notEmpty(),
   check('national_id')
     .isString()
-    .withMessage('National ID must be a string'),
+    .withMessage('National ID must be a string')
+    .notEmpty(),
   check('street_name')
     .isString()
-    .withMessage('Street name must be a string'),
+    .withMessage('Street name must be a string')
+    .notEmpty(),
   check('number')
     .isString()
-    .withMessage('Number must be a string'),
+    .withMessage('Number must be a string')
+    .notEmpty(),
   check('postal_code')
     .isString()
-    .withMessage('Postal code must be a string'),
+    .withMessage('Postal code must be a string')
+    .notEmpty(),
   check('is_active')
     .isBoolean()
-    .withMessage('Is active must be a boolean value'),
+    .withMessage('Is active must be a boolean value')
+    .notEmpty(),
   check('birthday')
     .isISO8601()
-    .withMessage('Birthday must be a valid date'),
+    .withMessage('Birthday must be a valid date')
+    .notEmpty(),
   check('password')
     .isString()
-    .withMessage('Password must be a string'),
+    .withMessage('Password must be a string')
+    .notEmpty(),
+    check('dni')
+    .isString()
+    .withMessage('DNI must be a string')
+    .notEmpty(),
+    check('ciudad')
+    .isString()
+    .withMessage('Ciudad must be a string')
+    .notEmpty(),
+    check('status')
+    .isString()
+    .withMessage('Status must be a string')
+    .notEmpty(),
 ];
 
 // Validaciones para actualizar un empleado
