@@ -9,10 +9,43 @@ module.exports = {
         first_name: 'Fran',
         last_name:'Somoza',
         email:'fran@hotmail.com',
-        phone_number:'99999999',
-        national_id:'999999',
+        phone_number:'99998999',
+        national_id:'999799',
         is_active: true,
-        password:'12wref@edfs3',
+        password:'Fran@test1',
+        birthday:'2000-05-04',
+        created_at: new Date()
+      },
+      {
+        first_name: 'Juan',
+        last_name:'Donalisio',
+        email:'juan@hotmail.com',
+        phone_number:'99979999',
+        national_id:'996999',
+        is_active: true,
+        password:'Juan@test1',
+        birthday:'2000-05-04',
+        created_at: new Date()
+      },
+      {
+        first_name: 'Flor',
+        last_name:'Farace',
+        email:'flor@hotmail.com',
+        phone_number:'95999999',
+        national_id:'999499',
+        is_active: true,
+        password:'Flor@test1',
+        birthday:'2000-05-04',
+        created_at: new Date()
+      },
+      {
+        first_name: 'Tato',
+        last_name:'Cargnelutti',
+        email:'tato@hotmail.com',
+        phone_number:'932999999',
+        national_id:'9991999',
+        is_active: true,
+        password:'Tato@test1',
         birthday:'2000-05-04',
         created_at: new Date()
       }
@@ -96,37 +129,35 @@ module.exports = {
       role_id: 1,
       first_name: 'Juan',
       last_name: 'Donalisio',
-      email: 'juan.perez@gmail.com',
+      email: 'jpdona@hotmail.com',
       phone_number: '123456789',
       national_id: '1',
-      street_name: 'Av. Siempre Viva',
       number: '742',
       postal_code: "1001",
       is_active: true,
       birthday: "1985-07-20",
-      password: "SecurePass!123",
+      password: "Juan@test1",
       created_at: new Date(),
       ciudad: 'Cordoba',
-      dni:'42564738',
+      pais: 'Argentina',
       status:'Active'
     },
     {
       commerce_id: 3,
       role_id: 2,
       first_name: 'Tato',
-      last_name: 'Carneluti',
-      email: 'Tato.perez@gmail.com',
+      last_name: 'Cargnelutti',
+      email: 'cargneluttilautaro@gmail.com',
       phone_number: '122456789',
       national_id: '2',
-      street_name: 'Colonia C',
       number: '742',
       postal_code: "1001",
       is_active: true,
       birthday: "1985-07-20",
-      password: "SecurePass!123",
+      password: "Tato@test1",
       created_at: new Date(),
       ciudad: 'Cordoba',
-      dni:'42534738',
+      pais: 'Argentina',
       status:'Active'
     },
     {
@@ -134,18 +165,17 @@ module.exports = {
       role_id: 2,
       first_name: 'Fran',
       last_name: 'Somoza',
-      email: 'fran.perez@gmail.com',
+      email: 'fran.s300@hotmail.com',
       phone_number: '122256789',
       national_id: '3',
-      street_name: 'Santa R',
       number: '742',
       postal_code: "1001",
       is_active: true,
       birthday: "1985-07-20",
-      password: "SecurePass!123",
+      password: "Fran@test1",
       created_at: new Date(),
       ciudad: 'Cordoba',
-      dni:'42111738',
+      pais: 'Argentina',
       status:'Active'
     },
     {
@@ -153,18 +183,17 @@ module.exports = {
       role_id: 2,
       first_name: 'Flor',
       last_name: 'Farace',
-      email: 'flor.perez@gmail.com',
+      email: ' faraceflorencia@gmail.com',
       phone_number: '122356789',
       national_id: '4',
-      street_name: 'Cba',
       number: '742',
       postal_code: "1001",
       is_active: true,
       birthday: "1985-07-20",
-      password: "SecurePass!123",
+      password: "Flor@test1",
       created_at: new Date(),
       ciudad: 'Cordoba',
-      dni:'42222238',
+      pais: 'Argentina',
       status:'Active'
     },
     {
@@ -175,19 +204,323 @@ module.exports = {
       email: 'ceci.perez@gmail.com',
       phone_number: '122456689',
       national_id: '5',
-      street_name: 'Calle sin numero',
       number: '742',
       postal_code: "1001",
       is_active: true,
       birthday: "1985-07-20",
-      password: "SecurePass!123",
+      password: "Ceci@test1",
       created_at: new Date(),
       ciudad: 'Cordoba',
-      dni:'42577738',
+      pais: 'Argentina',
       status:'Active'
     },
 
   ], {});
+
+  await queryInterface.bulkInsert('address', [
+    {
+      user_id: 1,
+      street_name: 'Enfermera Clermont',
+      number: '377',
+      postal_code: '5000',
+      home_type: 'Apartment',
+      extra_info: 'Cerca de cancha de Belgrano',
+      home_referral_name: 'Unico edificio',
+      coordinates: '40.712776,-74.005974',
+      created_at: new Date()
+    },
+    {
+      user_id: 2,
+      street_name: 'Achaval Rodriguez',
+      number: '12',
+      postal_code: '5000',
+      home_type: 'House',
+      extra_info: 'Casa roja',
+      home_referral_name: 'La rosita',
+      coordinates: '40.712776,-74.005974',
+      created_at: new Date()
+    },
+    {
+      user_id: 3,
+      street_name: 'Estrada',
+      number: '123678',
+      postal_code: '5000',
+      home_type: 'House',
+      extra_info: 'Arriba de Pet Shop',
+      home_referral_name: 'La peque',
+      coordinates: '40.712776,-74.005974',
+      created_at: new Date()
+    },
+    {
+      user_id: 4,
+      street_name: 'Juan manuel Estrada',
+      number: '1234',
+      postal_code: '5000',
+      home_type: 'Apartment',
+      extra_info: 'Cerca de plaza españa',
+      home_referral_name: '5H',
+      coordinates: '40.712776,-74.005974',
+      created_at: new Date()
+    },
+
+
+  ], {});
+
+  await queryInterface.bulkInsert('plan', [
+    {
+      name: 'Premium',
+      description: 'Contiene publicaciones ilimitadas, mayor exposicion y accesos a estadisticas unicas' 
+    },
+    {
+      name: 'Clasic',
+      description: 'Contiene publicaciones ilimitadas y mayor exposicion' 
+    },
+    {
+      name: 'Basic',
+      description: 'Contiene unicamente publicaciones ilimitadas' 
+    }
+  ], {});
+
+  await queryInterface.bulkInsert('product_category', [
+    {
+      commerce_id: 1,
+      name: 'Postre',
+      description: 'Abarca tortas y dulces' 
+    },
+    {
+      commerce_id: 1,
+      name: 'Panificacion',
+      description: 'Panes, criollos, facturas y grisines' 
+    },
+    {
+      commerce_id: 2,
+      name: 'Carnes envasadas',
+      description: 'Carnes para consumir en el acto' 
+    },
+    {
+      commerce_id: 2,
+      name: 'Carnes fresca',
+      description: 'Carne sin evasado' 
+    },
+    {
+      commerce_id: 3,
+      name: 'Frito',
+      description: 'Hecho con aceite como papas fritas' 
+    },
+    {
+      commerce_id: 3,
+      name: 'Hervidos',
+      description: 'salchichaz, huevos, etc' 
+    }
+  ], {});
+
+  await queryInterface.bulkInsert('product', [
+    {
+      commerce_id: 1,
+      name: 'Torta de manzana',
+      description: 'Torta con manzana rey',
+      image_url:'Https....',
+      product_code:'432',
+      product_category_id:1,
+      created_at: new Date()
+
+    },
+    {
+      commerce_id: 1,
+      name: 'Pan flauta',
+      description: 'El que usas para el sanguche de milanguesa',
+      image_url:'http.....',
+      product_code:'123',
+      product_category_id:2,
+      created_at: new Date()
+    },
+    {
+      commerce_id: 2,
+      name: 'Palomita envasada',
+      description: 'Corte palomita',
+      image_url:'http....',
+      product_code:'321',
+      product_category_id:3,
+      created_at: new Date()
+    },
+    {
+      commerce_id: 2,
+      name: 'Matambre',
+      description: 'Bueno para asado',
+      image_url:'htpp....',
+      product_code:'231',
+      product_category_id:4,
+      created_at: new Date()
+    },
+    {
+      commerce_id: 3,
+      name: 'Caja de papa fritas',
+      description: '500g de papas tipo baston fritas',
+      image_url:'htpps...',
+      product_code:'312',
+      product_category_id:5,
+      created_at: new Date()
+    },
+    {
+      commerce_id: 3,
+      name: 'Pancho el gran rolando',
+      description: 'Pancho con triple salchica,bañado de salsas, medio metro :)',
+      image_url:'https...',
+      product_code:'534',
+      product_category_id:6,
+      created_at: new Date()
+    }
+  ], {});
+
+  await queryInterface.bulkInsert('subscription', [
+    {
+      commerce_id: 1,
+      plan_id: 1,
+      created_at: new Date()
+    },
+    {
+      commerce_id: 2,
+      plan_id: 2,
+      created_at: new Date()
+    },
+    {
+      commerce_id: 3,
+      plan_id: 3,
+      created_at: new Date()
+    }
+  ], {});
+
+  await queryInterface.bulkInsert('order', [
+    {
+      user_id: 1,
+      commerce_id: 1,
+      created_at: new Date(),
+      total_amount:'500',
+      status:'Finalizado',
+      delivery_type:'Moto'
+    },
+    {
+      user_id: 2,
+      commerce_id: 2,
+      created_at: new Date(),
+      total_amount:'1000',
+      status:'Finalizado',
+      delivery_type:'Bici'
+    },
+    {
+      user_id: 3,
+      commerce_id: 3,
+      created_at: new Date(),
+      total_amount:'4000',
+      status:'Finalizado',
+      delivery_type:'Auto'
+    }
+  ], {});
+
+  await queryInterface.bulkInsert('rating', [
+    {
+      user_id: 1,
+      commerce_id: 1,
+      order_id:1,
+      rate_order:'5'
+    },
+    {
+      user_id: 2,
+      commerce_id: 2,
+      order_id:2,
+      rate_order:'7'
+    },
+    {
+      user_id: 3,
+      commerce_id: 3,
+      order_id:3,
+      rate_order:'10'
+    }
+  ], {});
+
+    await queryInterface.bulkInsert('customer_complain', [
+    {
+      user_id: 1,
+      commerce_id: 1,
+      order_id:1,
+      complain_description:'El pedido llego tarde',
+      created_at: new Date(),
+      closed_at: new Date()
+    },
+    {
+      user_id: 2,
+      commerce_id: 2,
+      order_id:2,
+      complain_description:'Me llego el rpoducto incorrecto',
+      created_at: new Date(),
+      closed_at: new Date()
+    },
+    {
+      user_id: 3,
+      commerce_id: 3,
+      order_id:3,
+      complain_description:'Nunca llego mi producto',
+      created_at: new Date(),
+      closed_at: new Date()
+    }
+  ], {});
+
+  await queryInterface.bulkInsert('publication', [
+    {
+      name: 'Combo Criollos',
+      commerce_id:1,
+      product_id: 2,
+      created_at: new Date(),
+      price:'100',
+      expiration_date:new Date(),
+    
+    },
+    {
+      name: 'Combo Asado',
+      commerce_id:2,
+      product_id: 4,
+      created_at: new Date(),
+      price:'300',
+      expiration_date:new Date(),
+    },
+    {
+      name: 'Pancho segundero',
+      commerce_id:3,
+      product_id: 6,
+      created_at: new Date(),
+      price:'100',
+      expiration_date:new Date(),
+    }
+  ], {});
+
+  await queryInterface.bulkInsert('order_detail', [
+    {
+
+      order_id:1,
+      publication_id: 1,
+      created_at: new Date(),
+      quantity:'1',
+      tips:'1',
+      amount:'100'
+    },
+    {
+      order_id:2,
+      publication_id: 2,
+      created_at: new Date(),
+      quantity:'1',
+      tips:'1',
+      amount:'300'
+    },
+    {
+      order_id:3,
+      publication_id: 3,
+      created_at: new Date(),
+      quantity:'1',
+      tips:'1',
+      amount:'100'
+    }
+  ], {});
+
 
   } catch (error) {
     console.error('Error executing seeder:', error);

@@ -30,10 +30,6 @@ const createEmployeeValidation = [
     .isString()
     .withMessage('National ID must be a string')
     .notEmpty(),
-  check('street_name')
-    .isString()
-    .withMessage('Street name must be a string')
-    .notEmpty(),
   check('number')
     .isString()
     .withMessage('Number must be a string')
@@ -54,13 +50,13 @@ const createEmployeeValidation = [
     .isString()
     .withMessage('Password must be a string')
     .notEmpty(),
-    check('dni')
-    .isString()
-    .withMessage('DNI must be a string')
-    .notEmpty(),
     check('ciudad')
     .isString()
     .withMessage('Ciudad must be a string')
+    .notEmpty(),
+    check('pais')
+    .isString()
+    .withMessage('Pais must be a string')
     .notEmpty(),
     check('status')
     .isString()

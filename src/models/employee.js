@@ -50,10 +50,6 @@ const Employee = sequelize.define('employee', {
         allowNull: false,
         unique: true,
     },
-    street_name: {
-      type: Sequelize.STRING,
-      allowNull: false
-    },
     number: {
       type: Sequelize.STRING,
       allowNull: false
@@ -80,11 +76,11 @@ const Employee = sequelize.define('employee', {
         type: Sequelize.STRING,
         allowNull: false
     },
-    dni: {
+    ciudad: {
         type: Sequelize.STRING,
         allowNull: false
     },
-    ciudad: {
+    pais: {
         type: Sequelize.STRING,
         allowNull: false
     },
