@@ -1,6 +1,8 @@
 
 const Sequelize = require('sequelize');
 const { sequelize } = require('../database'); // Import database connection
+const Role = require('./role');
+const Commerce = require('./commerce');
 
 const Employee = sequelize.define('employee', {
     id: {
@@ -50,11 +52,7 @@ const Employee = sequelize.define('employee', {
         allowNull: false,
         unique: true,
     },
-    street_name: {
-      type: Sequelize.STRING,
-      allowNull: false
-    },
-    number: {
+    street: {
       type: Sequelize.STRING,
       allowNull: false
     },
@@ -79,12 +77,46 @@ const Employee = sequelize.define('employee', {
     password: {
         type: Sequelize.STRING,
         allowNull: false
+    },
+    city: {
+        type: Sequelize.STRING,
+        allowNull: false
+    },
+    country: {
+        type: Sequelize.STRING,
+        allowNull: false
+    },
+    status: {
+        type: Sequelize.STRING,
+        allowNull: false
     }
 }, {
     createdAt: false,
     updatedAt: false,
     freezeTableName: true
 });
+
+Employee.findEmployeesWithRoleAndCommerce = async function() {
+  try {
+    const employees = await Employee.findAll({
+      include: [
+        {
+          model: Role,
+          attributes: ['name'] // Trae solo el nombre del rol
+        },
+        {
+          model: Commerce,
+          attributes: ['name'] // Trae solo el nombre del comercio
+        }
+      ]
+    });
+
+    return employees;
+  } catch (error) {
+    console.error('Error finding Employees with Role and Commerce:', error);
+    throw error;
+  }
+};
 
 Employee.findEmployeesByCommerceId = async function(commerceId) {
   try {
