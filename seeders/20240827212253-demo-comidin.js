@@ -70,8 +70,7 @@ module.exports = {
       {
         name: 'La Celeste',
         commerce_category_id: 1 ,//Aqui iria el id del commerceCategory que cree en el paso anterior
-        street_name: 'Av. 9 de Mayo',
-        number: '1234',
+        street: 'Av. 9 de Mayo 1234',
         postal_code: '5020',
         commerce_national_id: '123',
         is_active: true,
@@ -83,8 +82,7 @@ module.exports = {
       {
         name: 'Carnes Argentinas',
         commerce_category_id: 2 ,//Aqui iria el id del commerceCategory que cree en el paso anterior
-        street_name: 'Savedra',
-        number: '139',
+        street: 'Savedra 139',
         postal_code: '5020',
         commerce_national_id: '1233',
         is_active: true,
@@ -96,8 +94,7 @@ module.exports = {
       {
         name: 'Pancho Roldan',
         commerce_category_id: 3 ,//Aqui iria el id del commerceCategory que cree en el paso anterior
-        street_name: 'Achaval Rodriguez',
-        number: '99',
+        street: 'Achaval Rodriguez 99',
         postal_code: '5020',
         commerce_national_id: '1234',
         is_active: true,
@@ -138,8 +135,8 @@ module.exports = {
       birthday: "1985-07-20",
       password: "Juan@test1",
       created_at: new Date(),
-      ciudad: 'Cordoba',
-      pais: 'Argentina',
+      city: 'Cordoba',
+      country: 'Argentina',
       status:'Active'
     },
     {
@@ -156,8 +153,8 @@ module.exports = {
       birthday: "1985-07-20",
       password: "Tato@test1",
       created_at: new Date(),
-      ciudad: 'Cordoba',
-      pais: 'Argentina',
+      city: 'Cordoba',
+      country: 'Argentina',
       status:'Active'
     },
     {
@@ -174,8 +171,8 @@ module.exports = {
       birthday: "1985-07-20",
       password: "Fran@test1",
       created_at: new Date(),
-      ciudad: 'Cordoba',
-      pais: 'Argentina',
+      city: 'Cordoba',
+      country: 'Argentina',
       status:'Active'
     },
     {
@@ -192,8 +189,8 @@ module.exports = {
       birthday: "1985-07-20",
       password: "Flor@test1",
       created_at: new Date(),
-      ciudad: 'Cordoba',
-      pais: 'Argentina',
+      city: 'Cordoba',
+      country: 'Argentina',
       status:'Active'
     },
     {
@@ -210,8 +207,8 @@ module.exports = {
       birthday: "1985-07-20",
       password: "Ceci@test1",
       created_at: new Date(),
-      ciudad: 'Cordoba',
-      pais: 'Argentina',
+      city: 'Cordoba',
+      country: 'Argentina',
       status:'Active'
     },
 
