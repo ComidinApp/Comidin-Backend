@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const { connectDatabase, sequelize } = require('./database');
 const app = express();
 const PORT = 3000;
@@ -37,6 +38,13 @@ const User = require('./models/user');
 
 
 app.use(express.json());
+
+app.use(cors({
+    origin: '*', // Replace in other environments jiji
+    methods: 'GET, POST, PUT, DELETE',
+    credentials: false,
+    allowedHeaders: ['Content-Type', 'Authorization'],
+}));
 
 connectDatabase();
 
