@@ -50,13 +50,13 @@ const createEmployeeValidation = [
     .isString()
     .withMessage('Password must be a string')
     .notEmpty(),
-    check('ciudad')
+    check('city')
     .isString()
-    .withMessage('Ciudad must be a string')
+    .withMessage('city must be a string')
     .notEmpty(),
-    check('pais')
+    check('country')
     .isString()
-    .withMessage('Pais must be a string')
+    .withMessage('country must be a string')
     .notEmpty(),
     check('status')
     .isString()
