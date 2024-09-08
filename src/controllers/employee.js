@@ -12,7 +12,7 @@ exports.createEmployee = async (req, res) => {
 
 exports.findAllEmployees = async (req, res) => {
     try {
-        const employees = await Employee.findAll();
+        const employees = await Employee.findAllEmployees();
         res.status(200).json(employees);
     } catch (error) {
         console.error('Error fetching Employees:', error);
@@ -23,7 +23,7 @@ exports.findAllEmployees = async (req, res) => {
 exports.findEmployeeById = async (req, res) => {
     try {
         const { id } = req.params;
-        const employee = await Employee.findByPk(id);
+        const employee = await Employee.findEmployeeById(id);
         if (!employee) {
             return res.status(404).json({ error: 'Employee not found with id: ' + id });
         }

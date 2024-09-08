@@ -52,22 +52,13 @@ const Employee = sequelize.define('employee', {
         allowNull: false,
         unique: true,
     },
-    street: {
+    address: {
       type: Sequelize.STRING,
       allowNull: false
     },
     postal_code: {
       type: Sequelize.STRING,
       allowNull: false
-    },
-    is_active: {
-        type: Sequelize.BOOLEAN,
-        allowNull: false,
-        defaultValue: true
-    },
-    birthday: {
-        type: Sequelize.DATE,
-        allowNull: false,
     },
     created_at: {
         type: Sequelize.DATE,
@@ -89,24 +80,53 @@ const Employee = sequelize.define('employee', {
     status: {
         type: Sequelize.STRING,
         allowNull: false
-    }
+    },
+    avatar_url: {
+      type: Sequelize.STRING,
+      allowNull: false
+  }
 }, {
     createdAt: false,
     updatedAt: false,
     freezeTableName: true
 });
 
-Employee.findEmployeesWithRoleAndCommerce = async function() {
+Employee.belongsTo(Role, { foreignKey: 'role_id' });
+Employee.belongsTo(Commerce, { foreignKey: 'commerce_id' });
+
+Employee.findAllEmployees = async function() {
   try {
     const employees = await Employee.findAll({
       include: [
         {
           model: Role,
-          attributes: ['name'] // Trae solo el nombre del rol
+          attributes: ['name']
         },
         {
           model: Commerce,
-          attributes: ['name'] // Trae solo el nombre del comercio
+          attributes: ['name']
+        }
+      ]
+    });
+
+    return employees;
+  } catch (error) {
+    console.error('Error finding Employees with Role and Commerce:', error);
+    throw error;
+  }
+};
+
+Employee.findEmployeeById = async function(id) {
+  try {
+    const employees = await Employee.findByPk(id,{
+      include: [
+        {
+          model: Role,
+          attributes: ['name']
+        },
+        {
+          model: Commerce,
+          attributes: ['name']
         }
       ]
     });
