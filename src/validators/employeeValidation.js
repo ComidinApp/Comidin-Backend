@@ -30,21 +30,9 @@ const createEmployeeValidation = [
     .isString()
     .withMessage('National ID must be a string')
     .notEmpty(),
-  check('number')
-    .isString()
-    .withMessage('Number must be a string')
-    .notEmpty(),
   check('postal_code')
     .isString()
     .withMessage('Postal code must be a string')
-    .notEmpty(),
-  check('is_active')
-    .isBoolean()
-    .withMessage('Is active must be a boolean value')
-    .notEmpty(),
-  check('birthday')
-    .isISO8601()
-    .withMessage('Birthday must be a valid date')
     .notEmpty(),
   check('password')
     .isString()
@@ -94,26 +82,14 @@ const updateEmployeeValidation = [
     .optional()
     .isString()
     .withMessage('National ID must be a string'),
-  check('street_name')
+  check('address')
     .optional()
     .isString()
     .withMessage('Street name must be a string'),
-  check('number')
-    .optional()
-    .isString()
-    .withMessage('Number must be a string'),
   check('postal_code')
     .optional()
     .isString()
     .withMessage('Postal code must be a string'),
-  check('is_active')
-    .optional()
-    .isBoolean()
-    .withMessage('Is active must be a boolean value'),
-  check('birthday')
-    .optional()
-    .isISO8601()
-    .withMessage('Birthday must be a valid date'),
   check('password')
     .optional()
     .isString()
