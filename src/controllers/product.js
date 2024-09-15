@@ -1,8 +1,16 @@
 const Product = require('../models/product');
+const { uploadImage } = require('../services/s3Service');
+const { processImage } = require('../helpers/imageHelper');
 
 exports.createProduct = async (req, res) => {
   try {
-    const product = await Product.create(req.body);
+    const { image_url, ...productData } = req.body;
+    const { buffer, contentType, filename } = processImage(image_url[0]);
+
+    const imageUrl = await uploadImage(buffer, contentType, filename);
+    productData.image_url = imageUrl;
+
+    const product = await Product.create(productData);
     res.status(201).json(product);
   } catch (error) {
     console.error('Error creating Product:', error);
@@ -10,9 +18,10 @@ exports.createProduct = async (req, res) => {
   }
 };
 
+
 exports.findAllProducts = async (req, res) => {
   try {
-    const products = await Product.findAll();
+    const products = await Product.findAllProducts();
     res.status(200).json(products);
   } catch (error) {
     console.error('Error fetching Products:', error);
@@ -36,15 +45,22 @@ exports.findProductById = async (req, res) => {
 
 exports.updateProduct = async (req, res) => {
   try {
-    const [updated] = await Product.update(req.body, {
-      where: { id: req.params.id }
-    });
-    if (updated) {
-      const updatedProduct = await Product.findByPk(req.params.id);
-      res.status(200).json(updatedProduct);
-    } else {
-      res.status(404).json({ error: 'Product not found' });
+    const { body } = req;
+    const { id } = req.params;
+    const product = await Product.findByPk(id);
+    if (!product) {
+        return res.status(404).json({ error: 'Product not found with id: ' + id });
     }
+
+    if (body.image_url != product.image_url) {
+      const { buffer, contentType, filename } = processImage(body.image_url);
+
+      const imageUrl = await uploadImage(buffer, contentType, filename);
+      body.image_url = imageUrl;
+    } 
+
+    await product.update(body);
+    res.status(200).json(product);
   } catch (error) {
     console.error('Error updating Product:', error);
     res.status(500).json({ error: 'Internal Server Error' });

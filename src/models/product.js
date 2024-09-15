@@ -1,5 +1,7 @@
 const Sequelize = require('sequelize');
 const { sequelize } = require('../database'); // Import database connection
+const ProductCategory = require('./productCategory');
+const Commerce = require('./commerce');
 
 const Product = sequelize.define('product', {
   id: {
@@ -50,6 +52,31 @@ const Product = sequelize.define('product', {
   updatedAt: false,
   freezeTableName: true
 });
+
+Product.belongsTo(ProductCategory, { foreignKey: 'product_category_id' });
+Product.belongsTo(Commerce, { foreignKey: 'commerce_id' });
+
+Product.findAllProducts = async function() {
+  try {
+    const employees = await Product.findAll({
+      include: [
+        {
+          model: ProductCategory,
+          attributes: ['name']
+        },
+        {
+          model: Commerce,
+          attributes: ['name']
+        }
+      ]
+    });
+
+    return employees;
+  } catch (error) {
+    console.error('Error finding Employees with Role and Commerce:', error);
+    throw error;
+  }
+};
 
 Product.findProductsByCommerceId = async function(commerceId) {
   try {

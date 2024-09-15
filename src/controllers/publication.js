@@ -13,7 +13,7 @@ exports.createPublication = async (req, res) => {
 
 exports.findAllPublications = async (req, res) => {
   try {
-    const publications = await Publication.findAll();
+    const publications = await Publication.findAllPublications();
     res.status(200).json(publications);
   } catch (error) {
     console.error('Error fetching Publications:', error);

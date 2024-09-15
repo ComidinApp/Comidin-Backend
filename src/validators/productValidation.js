@@ -47,9 +47,7 @@ const updateProductValidation = [
     .isInt({ min: 1 })
     .withMessage('Product Category ID must be a positive integer'),
   check('image_url')
-    .optional()
-    .isURL()
-    .withMessage('Image URL must be a valid URL'),
+    .optional(),
   check('product_code')
     .optional()
     .isString()

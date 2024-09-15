@@ -1,5 +1,7 @@
 const Sequelize = require('sequelize');
 const { sequelize } = require('../database'); // Import database connection
+const Product = require('./product');
+const Commerce = require('./commerce');
 
 const Publication = sequelize.define('publication', {
   id: {
@@ -7,7 +9,7 @@ const Publication = sequelize.define('publication', {
     primaryKey: true,
     autoIncrement: true
   },
-  name: {
+  is_active: {
     type: Sequelize.STRING,
     allowNull: false
   },
@@ -31,6 +33,18 @@ const Publication = sequelize.define('publication', {
     type: Sequelize.DECIMAL(10, 2),
     allowNull: false,
   },
+  discount_percentaje: {
+    type: Sequelize.DECIMAL(10, ),
+    allowNull: false,
+  },
+  discounted_price: {
+    type: Sequelize.DECIMAL(10, 2),
+    allowNull: false,
+  },
+  available_stock: {
+    type: Sequelize.DECIMAL(10, 0),
+    allowNull: false,
+  },
   expiration_date: {
     type: Sequelize.DATE,
     allowNull: false,
@@ -45,6 +59,31 @@ const Publication = sequelize.define('publication', {
   updatedAt: false,
   freezeTableName: true
 });
+
+Publication.belongsTo(Product, { foreignKey: 'product_id' });
+Publication.belongsTo(Commerce, { foreignKey: 'commerce_id' });
+
+Publication.findAllPublications = async function() {
+  try {
+    const employees = await Publication.findAll({
+      include: [
+        {
+          model: Product,
+          attributes: ['name','description','image_url']
+        },
+        {
+          model: Commerce,
+          attributes: ['name']
+        }
+      ]
+    });
+
+    return employees;
+  } catch (error) {
+    console.error('Error finding Employees with Role and Commerce:', error);
+    throw error;
+  }
+};
 
 Publication.findPublicationsByCommerceId = async function(commerceId) {
   try {
