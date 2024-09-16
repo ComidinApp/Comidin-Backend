@@ -9,18 +9,17 @@ module.exports = {
       role_id: 1,
       first_name: 'Juan',
       last_name: 'Donalisio',
-      email: 'jpdona@hotmail.com',
+      email: 'juanpadon@gmail.com',
       phone_number: '123456789',
       national_id: '1',
-      number: '742',
+      address: 'Illia 742',
       postal_code: "1001",
-      is_active: true,
-      birthday: "1985-07-20",
       password: "Juan@test1",
       created_at: new Date(),
-      ciudad: 'Cordoba',
-      pais: 'Argentina',
-      status:'Active'
+      city: 'Cordoba',
+      country: 'Argentina',
+      avatar_url: 'https://comidin-assets-tjff.s3.amazonaws.com/avatar/icecream.png',
+      status:'active'
     },
     {
       commerce_id: 3,
@@ -30,15 +29,14 @@ module.exports = {
       email: 'cargneluttilautaro@gmail.com',
       phone_number: '122456789',
       national_id: '2',
-      number: '742',
+      address: 'Mi direccion real 123',
       postal_code: "1001",
-      is_active: true,
-      birthday: "1985-07-20",
       password: "Tato@test1",
       created_at: new Date(),
-      ciudad: 'Cordoba',
-      pais: 'Argentina',
-      status:'Active'
+      city: 'Cordoba',
+      country: 'Argentina',
+      avatar_url: 'https://comidin-assets-tjff.s3.amazonaws.com/avatar/fries.png',
+      status:'active'
     },
     {
       commerce_id: 3,
@@ -48,15 +46,14 @@ module.exports = {
       email: 'fran.s300@hotmail.com',
       phone_number: '122256789',
       national_id: '3',
-      number: '742',
+      address: 'San Martin 3212',
       postal_code: "1001",
-      is_active: true,
-      birthday: "1985-07-20",
       password: "Fran@test1",
       created_at: new Date(),
-      ciudad: 'Cordoba',
-      pais: 'Argentina',
-      status:'Active'
+      city: 'Cordoba',
+      country: 'Argentina',
+      avatar_url: 'https://comidin-assets-tjff.s3.amazonaws.com/avatar/bread.png',
+      status:'active'
     },
     {
       commerce_id: 3,
@@ -66,15 +63,14 @@ module.exports = {
       email: ' faraceflorencia@gmail.com',
       phone_number: '122356789',
       national_id: '4',
-      number: '742',
+      address: 'Av rafael nuñez 333',
       postal_code: "1001",
-      is_active: true,
-      birthday: "1985-07-20",
       password: "Flor@test1",
       created_at: new Date(),
-      ciudad: 'Cordoba',
-      pais: 'Argentina',
-      status:'Active'
+      city: 'Cordoba',
+      country: 'Argentina',
+      avatar_url: 'https://comidin-assets-tjff.s3.amazonaws.com/avatar/pizza.png',
+      status:'active'
     },
     {
       commerce_id: 3,
@@ -84,16 +80,15 @@ module.exports = {
       email: 'ceci.perez@gmail.com',
       phone_number: '122456689',
       national_id: '5',
-      number: '742',
+      address: 'Gato y mancha 2231',
       postal_code: "1001",
-      is_active: true,
-      birthday: "1985-07-20",
       password: "Ceci@test1",
       created_at: new Date(),
-      ciudad: 'Cordoba',
-      pais: 'Argentina',
-      status:'Active'
-    },
+      city: 'Cordoba',
+      country: 'Argentina',
+      avatar_url: 'https://comidin-assets-tjff.s3.amazonaws.com/avatar/coffe.png',
+      status:'active'
+    }
 
   ], {});
       
