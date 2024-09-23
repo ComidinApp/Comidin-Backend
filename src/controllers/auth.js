@@ -1,4 +1,5 @@
 const Employee = require('../models/employee');
+const { sendVerificationCode } = require('../services/emailSender');
 const { CognitoIdentityProviderClient, AdminSetUserPasswordCommand, ListUsersCommand } = require("@aws-sdk/client-cognito-identity-provider");
 const client = new CognitoIdentityProviderClient({
     region: process.env.AWS_REGION,
@@ -20,7 +21,7 @@ exports.sendEmployeeVerificationCode = async (req, res) => {
         employee.verification_code = verificationCode;
         await employee.save();
 
-        //Send mail
+        sendVerificationCode(employee,verificationCode)
         res.status(200).json();
     } catch (error) {
         console.log(error)

@@ -1,7 +1,9 @@
 const Employee = require('../models/employee');
+const { createNewEmployee } = require('../services/cognitoService')
 
 exports.createEmployee = async (req, res) => {
     try {
+        await createNewEmployee(req.body)
         const employee = await Employee.create(req.body);
         res.status(201).json(employee);
     } catch (error) {
@@ -34,10 +36,10 @@ exports.findEmployeeById = async (req, res) => {
     }
 };
 
-exports.findEmployeesByEmail = async (req, res) => {
+exports.findEmployeeByEmail = async (req, res) => {
     try {
         const { email } = req.params;
-        const employee = await Employee.findEmployeesByEmail(email);
+        const employee = await Employee.findEmployeeByEmail(email);
         if (!employee) {
             return res.status(404).json({ error: 'Employee not found with email: ' + email });
         }

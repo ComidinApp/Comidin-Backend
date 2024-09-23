@@ -1,6 +1,7 @@
 const Sequelize = require('sequelize');
 const { sequelize } = require('../database'); // Import database connection
 const Product = require('./product');
+const ProductCategory = require('./productCategory');
 const Commerce = require('./commerce');
 
 const Publication = sequelize.define('publication', {
@@ -69,7 +70,13 @@ Publication.findAllPublications = async function() {
       include: [
         {
           model: Product,
-          attributes: ['name','description','image_url']
+          attributes: ['name','description','image_url', 'product_category_id'],
+          include: [
+            {
+              model: ProductCategory,
+              attributes: ['name']
+            }
+          ]
         },
         {
           model: Commerce,
@@ -88,7 +95,17 @@ Publication.findAllPublications = async function() {
 Publication.findPublicationsByCommerceId = async function(commerceId) {
   try {
     const publications = await Publication.findAll({
-      where: { commerce_id: commerceId }
+      where: { commerce_id: commerceId },
+      include: [
+        {
+          model: Product,
+          attributes: ['name','description','image_url']
+        },
+        {
+          model: Commerce,
+          attributes: ['name']
+        }
+      ]
     });
 
     return publications;

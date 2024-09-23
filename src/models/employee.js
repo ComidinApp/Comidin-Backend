@@ -171,7 +171,9 @@ Employee.findEmployeesByRoleId = async function(roleId) {
 Employee.findEmployeeByEmail = async function(email) {
   try {
     const employees = await Employee.findOne({
-      where: { email: email }
+      where: { email: email },
+      include:{model: Role,attributes: ['name']},
+      attributes: ['id', 'role_id','first_name', 'last_name', 'email', 'avatar_url','status']
     });
 
     return employees;
