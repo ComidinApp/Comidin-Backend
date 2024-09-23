@@ -19,6 +19,7 @@ const ratingRouter = require('./routes/rating');
 const roleRouter = require('./routes/role');
 const subscriptionRouter = require('./routes/subscription');
 const userRouter = require('./routes/user');
+const authRouter = require('./routes/auth');
 //Models
 const Address = require('./models/address');
 const Commerce = require('./models/commerce');
@@ -64,6 +65,7 @@ app.use('/rating', ratingRouter);
 app.use('/role', roleRouter);
 app.use('/subscription', subscriptionRouter);
 app.use('/user', userRouter);
+app.use('/auth', authRouter);
 
 const init = async () => {
     try {

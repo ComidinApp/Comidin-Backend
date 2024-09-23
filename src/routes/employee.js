@@ -23,5 +23,6 @@ router.put('/:id', updateEmployeeValidation, validate, Employee.updateEmployee);
 router.delete('/:id', Employee.deleteEmployee);
 router.get('/commerce/:commerceId', commerceIdValidation, validate, Employee.findEmployeesByCommerceId);
 router.get('/role/:roleId', roleIdValidation, validate, Employee.findEmployeesByRoleId);
+router.get('/email/:email', Employee.findEmployeeByEmail);
 
 module.exports = router;

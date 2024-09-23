@@ -1,7 +1,9 @@
 const Employee = require('../models/employee');
+const { createNewEmployee } = require('../services/cognitoService')
 
 exports.createEmployee = async (req, res) => {
     try {
+        await createNewEmployee(req.body)
         const employee = await Employee.create(req.body);
         res.status(201).json(employee);
     } catch (error) {
@@ -30,6 +32,20 @@ exports.findEmployeeById = async (req, res) => {
         res.status(200).json(employee);
     } catch (error) {
         console.error('Error fetching Employee by ID:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+exports.findEmployeeByEmail = async (req, res) => {
+    try {
+        const { email } = req.params;
+        const employee = await Employee.findEmployeeByEmail(email);
+        if (!employee) {
+            return res.status(404).json({ error: 'Employee not found with email: ' + email });
+        }
+        res.status(200).json(employee);
+    } catch (error) {
+        console.error('Error fetching Employee by email:', error);
         res.status(500).json({ error: 'Internal Server Error' });
     }
 };

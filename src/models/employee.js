@@ -84,7 +84,11 @@ const Employee = sequelize.define('employee', {
     avatar_url: {
       type: Sequelize.STRING,
       allowNull: false
-  }
+    },
+    verification_code: {
+      type: Sequelize.STRING,
+      allowNull: true
+  },
 }, {
     createdAt: false,
     updatedAt: false,
@@ -163,5 +167,21 @@ Employee.findEmployeesByRoleId = async function(roleId) {
     throw error;
   }
 };
+
+Employee.findEmployeeByEmail = async function(email) {
+  try {
+    const employees = await Employee.findOne({
+      where: { email: email },
+      include:{model: Role,attributes: ['name']},
+      attributes: ['id', 'role_id','first_name', 'last_name', 'email', 'avatar_url','status']
+    });
+
+    return employees;
+  } catch (error) {
+    console.error('Error finding Employees:', error);
+    throw error;
+  }
+};
+
 
 module.exports = Employee;
