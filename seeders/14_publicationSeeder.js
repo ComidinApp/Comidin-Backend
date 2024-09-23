@@ -5,7 +5,11 @@ module.exports = {
     try {
   await queryInterface.bulkInsert('publication', [
     {
-      name: 'Combo Criollos',
+      available_stock: 120,
+      price: 3000,
+      discounted_price: 3000,
+      discount_percentaje: 0,
+      is_active: 'active',
       commerce_id:1,
       product_id: 2,
       created_at: new Date(),
@@ -14,7 +18,11 @@ module.exports = {
     
     },
     {
-      name: 'Combo Asado',
+      available_stock: 200,
+      price: 3000,
+      is_active: 'active',
+      discounted_price: 3000,
+      discount_percentaje: 0,
       commerce_id:2,
       product_id: 4,
       created_at: new Date(),
@@ -22,9 +30,13 @@ module.exports = {
       expiration_date:new Date(),
     },
     {
-      name: 'Pancho segundero',
+      available_stock: 22,
+      price: 3000,
+      is_active: 'active',
+      discounted_price: 3000,
+      discount_percentaje: 0,
       commerce_id:3,
-      product_id: 6,
+      product_id: 3,
       created_at: new Date(),
       price:'100',
       expiration_date:new Date(),

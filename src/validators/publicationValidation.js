@@ -2,11 +2,6 @@ const { check } = require('express-validator');
 
 // Validaciones para crear una publicación
 const createPublicationValidation = [
-  check('name')
-    .notEmpty()
-    .withMessage('Publication name is required')
-    .isString()
-    .withMessage('Publication name must be a string'),
   check('commerce_id')
     .isInt({ min: 1 })
     .withMessage('Commerce ID must be a positive integer'),
@@ -23,10 +18,6 @@ const createPublicationValidation = [
 
 // Validaciones para actualizar una publicación
 const updatePublicationValidation = [
-  check('name')
-    .optional()
-    .isString()
-    .withMessage('Publication name must be a string'),
   check('commerce_id')
     .optional()
     .isInt({ min: 1 })
