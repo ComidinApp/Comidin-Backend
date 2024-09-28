@@ -23,7 +23,7 @@ exports.createNewEmployee = async (employee) => {
                 },
                 {
                     Name: "email_verified",
-                    Value: true
+                    Value: "true"
                 }
             ],
             TemporaryPassword: employee.password,
