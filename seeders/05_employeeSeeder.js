@@ -9,7 +9,7 @@ module.exports = {
       role_id: 1,
       first_name: 'Juan',
       last_name: 'Donalisio',
-      email: 'juanpadon@gmail.com',
+      email: 'jpdona@hotmail.com',
       phone_number: '123456789',
       national_id: '1',
       address: 'Illia 742',
@@ -19,7 +19,8 @@ module.exports = {
       city: 'Cordoba',
       country: 'Argentina',
       avatar_url: 'https://comidin-assets-tjff.s3.amazonaws.com/avatar/icecream.png',
-      status:'active'
+      status:'active',
+      verification_code: null
     },
     {
       commerce_id: 3,
@@ -36,7 +37,8 @@ module.exports = {
       city: 'Cordoba',
       country: 'Argentina',
       avatar_url: 'https://comidin-assets-tjff.s3.amazonaws.com/avatar/fries.png',
-      status:'active'
+      status:'active',
+      verification_code: null
     },
     {
       commerce_id: 3,
@@ -53,7 +55,8 @@ module.exports = {
       city: 'Cordoba',
       country: 'Argentina',
       avatar_url: 'https://comidin-assets-tjff.s3.amazonaws.com/avatar/bread.png',
-      status:'active'
+      status:'active',
+      verification_code: null
     },
     {
       commerce_id: 3,
@@ -70,7 +73,8 @@ module.exports = {
       city: 'Cordoba',
       country: 'Argentina',
       avatar_url: 'https://comidin-assets-tjff.s3.amazonaws.com/avatar/pizza.png',
-      status:'active'
+      status:'active',
+      verification_code: null
     },
     {
       commerce_id: 3,
@@ -87,8 +91,9 @@ module.exports = {
       city: 'Cordoba',
       country: 'Argentina',
       avatar_url: 'https://comidin-assets-tjff.s3.amazonaws.com/avatar/coffe.png',
-      status:'active'
-    }
+      status:'active',
+      verification_code: null
+    },
 
   ], {});
       

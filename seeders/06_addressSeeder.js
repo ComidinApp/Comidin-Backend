@@ -49,7 +49,6 @@ module.exports = {
       created_at: new Date()
     },
 
-
   ], {});
       
 } catch (error) {

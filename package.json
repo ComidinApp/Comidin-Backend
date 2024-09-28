@@ -4,8 +4,9 @@
   "description": "Comidin API backend that powers the interactions between the mobile and the backoffices for merchants and administrators",
   "main": "index.js",
 "scripts": {
- "dev": "concurrently \"nodemon --legacy-watch --watch src/ src/app.js\" \"bash -c 'sleep 10 && sequelize-cli db:seed:all'\""
+ "dev": "concurrently \"nodemon --legacy-watch --watch ./ src/app.js\" \"bash -c 'sleep 50 && sequelize-cli db:seed:all'\""
 },
+
 
   "author": "",
   "license": "ISC",

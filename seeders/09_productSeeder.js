@@ -6,9 +6,9 @@ module.exports = {
   await queryInterface.bulkInsert('product', [
     {
       commerce_id: 1,
-      name: 'Torta de manzana',
-      description: 'Torta con manzana rey',
-      image_url:'Https....',
+      name: 'Baguete',
+      description: 'Esto es la descripcion para el baguete',
+      image_url:'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/baguete-laceleste.jpeg',
       product_code:'432',
       product_category_id:1,
       created_at: new Date()
@@ -16,47 +16,38 @@ module.exports = {
     },
     {
       commerce_id: 1,
-      name: 'Pan flauta',
-      description: 'El que usas para el sanguche de milanguesa',
-      image_url:'http.....',
+      name: 'Criollo Hojaldre',
+      description: 'Esto es la descripcion para el criollo de hojaldre',
+      image_url:'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/criollodehojalre-laceleste.jpg',
       product_code:'123',
       product_category_id:2,
       created_at: new Date()
     },
     {
-      commerce_id: 2,
-      name: 'Palomita envasada',
-      description: 'Corte palomita',
-      image_url:'http....',
+      commerce_id: 3,
+      name: 'Hamburguesa de guacamole',
+      description: 'El señor de la nooooocheeeee',
+      image_url:'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/hamburguesaguacamole-panchoroldan.jpg',
       product_code:'321',
       product_category_id:3,
       created_at: new Date()
     },
     {
-      commerce_id: 2,
-      name: 'Matambre',
-      description: 'Bueno para asado',
-      image_url:'htpp....',
+      commerce_id: 1,
+      name: 'Medialuna salada',
+      description: 'Es salada',
+      image_url:'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/medialunasalada-laceleste.jpg',
       product_code:'231',
       product_category_id:4,
       created_at: new Date()
     },
     {
       commerce_id: 3,
-      name: 'Caja de papa fritas',
-      description: '500g de papas tipo baston fritas',
-      image_url:'htpps...',
+      name: 'Super Pancho Rolano',
+      description: 'Pancho con salchicha - medio metro bañado en salsa',
+      image_url:'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/superpancho-panchoroldan.jpg',
       product_code:'312',
       product_category_id:5,
-      created_at: new Date()
-    },
-    {
-      commerce_id: 3,
-      name: 'Pancho el gran rolando',
-      description: 'Pancho con triple salchica,bañado de salsas, medio metro :)',
-      image_url:'https...',
-      product_code:'534',
-      product_category_id:6,
       created_at: new Date()
     }
   ], {});

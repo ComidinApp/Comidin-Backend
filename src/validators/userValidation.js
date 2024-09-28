@@ -2,7 +2,7 @@
 const { check } = require('express-validator');
 
 const createUserValidation = [
-  check('first_name').notEmpty().withMessage('First name is requiredd').isString(),
+  check('first_name').notEmpty().withMessage('First name is required').isString(),
   check('last_name').notEmpty().withMessage('Last name is required').isString(),
   check('email').isEmail().withMessage('Must be a valid email').notEmpty(),
   check('phone_number').notEmpty().withMessage('Phone number is required').isMobilePhone(),
