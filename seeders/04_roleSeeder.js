@@ -5,16 +5,24 @@ module.exports = {
     try {
   await queryInterface.bulkInsert('role', [
     {
-      name: 'Admin',
-      description:'Administrador rol con full acceso, hace todo el loco',
+      name: 'Administrador',
+      description: 'Rol con acceso completo al sistema. Puede gestionar comercios, empleados, productos y realizar configuraciones avanzadas. Encargado de supervisar todas las operaciones del comercio.'
     },
     {
       name: 'Cocinero',
-      description:'Te cocina el loco',
+      description: 'Responsable de la preparación y elaboración de los productos alimenticios en el comercio. Debe garantizar la calidad de los productos y el cumplimiento de los tiempos de entrega.'
     },
     {
-      name: 'Delivery',
-      description:'Te entrega el pedido el loco',
+      name: 'Repartidor',
+      description: 'Encargado de la entrega de los pedidos a los clientes. Su responsabilidad es asegurar que los productos lleguen en buen estado y a tiempo.'
+    },
+    {
+      name: 'Cajero',
+      description: 'Gestiona el cobro de los pedidos, maneja transacciones de pago y provee atención al cliente en el punto de venta. También se encarga de gestionar cualquier incidencia relacionada con pagos.'
+    },
+    {
+      name: 'Supervisor de Ventas',
+      description: 'Supervisa el equipo de ventas y garantiza que se cumplan los objetivos comerciales. Analiza las estadísticas de ventas y propone mejoras para optimizar el rendimiento del negocio.'
     }
   ], {});
       

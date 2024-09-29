@@ -7,7 +7,6 @@
  "dev": "concurrently \"nodemon --legacy-watch --watch ./ src/app.js\" \"bash -c 'sleep 50 && sequelize-cli db:seed:all'\""
 },
 
-
   "author": "",
   "license": "ISC",
   "dependencies": {
