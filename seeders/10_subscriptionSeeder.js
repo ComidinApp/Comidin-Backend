@@ -6,52 +6,52 @@ module.exports = {
   await queryInterface.bulkInsert('subscription', [
   // Plan "Esencial"
   {
-    commerce_id: 1, // La Flor de Caballito
+    commerce_id: 1, 
     plan_id: 1, // Plan Aperitivo
     created_at: new Date()
   },
   {
-    commerce_id: 2, // El Trigal de Córdoba
+    commerce_id: 2, 
     plan_id: 2, // Plan Plato Principa
     created_at: new Date()
   },
   {
-    commerce_id: 3, // Don Pedro Carnicería
+    commerce_id: 3, 
     plan_id: 3, // Plan Banquete
     created_at: new Date()
   },
   {
-    commerce_id: 4, // El Bife de Oro
+    commerce_id: 4, 
     plan_id: 1, // Plan Aperitivo
     created_at: new Date()
   },
   {
-    commerce_id: 5, // Pancho Roldan
+    commerce_id: 5, 
     plan_id: 2, // Plan Plato Principa
     created_at: new Date()
   },
   {
-    commerce_id: 6, // Los Pibes del Pancho
+    commerce_id: 6, 
     plan_id: 3, // Plan Banquete
     created_at: new Date()
   },
   {
-    commerce_id: 7, // La Huerta de Doña Rosa
+    commerce_id: 7, 
     plan_id: 1, // Plan Aperitivo
     created_at: new Date()
   },
   {
-    commerce_id: 8, // Verdulería El Tomate
+    commerce_id: 8, 
     plan_id: 2, // Plan Plato Principa
     created_at: new Date()
   },
   {
-    commerce_id: 9, // Helados Torino
+    commerce_id: 9, 
     plan_id: 3, // Plan Banquete
     created_at: new Date()
   },
   {
-    commerce_id: 10, // Heladería Grido
+    commerce_id: 10, 
     plan_id: 1, // Plan Aperitivo
     created_at: new Date()
   },

@@ -55,7 +55,7 @@ module.exports = {
       status: 'Finalizado',
       delivery_type: 'Bici'
   },
-  {
+  {//7
       user_id: 2,
       commerce_id: 2,
       created_at: new Date('2024-10-01'),
@@ -81,7 +81,7 @@ module.exports = {
   },
 
   // Usuario 3
-  {
+  {//10
       user_id: 3,
       commerce_id: 3,
       created_at: new Date('2024-10-04'),

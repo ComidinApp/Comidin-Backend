@@ -6,168 +6,166 @@ module.exports = {
   await queryInterface.bulkInsert('product_category', [
     //Solo de los primeros 10 comercios
   // Categorías para "La Flor de Caballito" (Panadería)
-  {
-    commerce_id: 1,  // ID de "La Flor de Caballito"
+  {//1
+    commerce_id: 1,  
     name: 'Postres',
     description: 'Tortas, tartas y dulces frescos.'
   },
-  {
+  {//2
     commerce_id: 1,
     name: 'Panificación',
     description: 'Variedad de panes, facturas y otros productos horneados.'
   },
-  {
+  {//3
     commerce_id: 1,
     name: 'Snacks Dulces',
     description: 'Galletitas y pequeños bocados para disfrutar.'
   },
 
-  // Categorías para "El Trigal de Córdoba" (Panadería)
-  {
-    commerce_id: 2,  // ID de "El Trigal de Córdoba"
+
+  {//4
+    commerce_id: 2,  
     name: 'Facturas',
     description: 'Medialunas, vigilantes y otras facturas frescas.'
   },
-  {
+  {//5
     commerce_id: 2,
     name: 'Pan Integral',
     description: 'Pan elaborado con harinas integrales para una opción más saludable.'
   },
-  {
+  {//6
     commerce_id: 2,
     name: 'Tortas Artesanales',
     description: 'Tortas caseras para cualquier ocasión.'
   },
 
-  // Categorías para "Don Pedro Carnicería" (Carnicería)
-  {
-    commerce_id: 3,  // ID de "Don Pedro Carnicería"
+
+  {//7
+    commerce_id: 3,  
     name: 'Cortes Premium',
     description: 'Selección de carnes premium para asados y comidas especiales.'
   },
-  {
+  {//8
     commerce_id: 3,
     name: 'Embutidos',
     description: 'Chorizos, morcillas y embutidos para asado.'
   },
-  {
+  {//9
     commerce_id: 3,
     name: 'Carnes de Cerdo',
     description: 'Cortes frescos de cerdo de alta calidad.'
   },
 
-  // Categorías para "El Bife de Oro" (Carnicería)
-  {
-    commerce_id: 4,  // ID de "El Bife de Oro"
+  // Categorías para "La tuca" (Carnicería)
+  {//10
+    commerce_id: 4,  
     name: 'Cortes Clásicos',
     description: 'Carne de res de cortes clásicos como cuadril y paleta.'
   },
-  {
+  {//11
     commerce_id: 4,
     name: 'Pollo',
     description: 'Pollo fresco y en diversas presentaciones.'
   },
-  {
+  {//12
     commerce_id: 4,
     name: 'Carne Molida',
     description: 'Carne molida fresca, ideal para empanadas y albóndigas.'
   },
 
-  // Categorías para "Pancho Roldan" (Panchería)
-  {
-    commerce_id: 5,  // ID de "Pancho Roldan"
+  // Categorías para "El entrerriano" (Panchería)
+  {//13
+    commerce_id: 5,  
     name: 'Panchos Especiales',
     description: 'Variedad de panchos con distintos ingredientes y salsas.'
   },
-  {
+  {//14
     commerce_id: 5,
     name: 'Fritos',
     description: 'Papas fritas, bastones de mozzarella y otros snacks.'
   },
-  {
+  {//15
     commerce_id: 5,
     name: 'Bebidas',
     description: 'Gaseosas y cervezas para acompañar los panchos.'
   },
 
-  // Categorías para "Los Pibes del Pancho" (Panchería)
-  {
-    commerce_id: 6,  // ID de "Los Pibes del Pancho"
+  // Categorías para "Panceto" (Panchería)
+  {//16
+    commerce_id: 6, 
     name: 'Panchos Clásicos',
     description: 'Panchos tradicionales con ketchup, mostaza y más.'
   },
-  {
+  {//17
     commerce_id: 6,
     name: 'Snacks Fritos',
     description: 'Snacks como papas fritas, aros de cebolla y más.'
   },
-  {
+  {//18
     commerce_id: 6,
     name: 'Aderezos',
     description: 'Variedad de salsas y aderezos para complementar.'
   },
 
-  // Categorías para "La Huerta de Doña Rosa" (Verdulería)
-  {
-    commerce_id: 7,  // ID de "La Huerta de Doña Rosa"
-    name: 'Verduras Frescas',
-    description: 'Verduras de estación, frescas y orgánicas.'
+  {//19
+    commerce_id: 13,  
+    name: 'Mariscos',
+    description: 'Mariscos frescos del mar.'
   },
-  {
-    commerce_id: 7,
-    name: 'Frutas de Estación',
-    description: 'Frutas frescas disponibles según la temporada.'
+  {//20
+    commerce_id: 13,
+    name: 'Pescado',
+    description: 'Pescados frescos del mar, rio y lago.'
   },
-  {
-    commerce_id: 7,
-    name: 'Productos Orgánicos',
-    description: 'Alimentos orgánicos libres de pesticidas.'
+  {//21
+    commerce_id: 13,
+    name: 'Moluscos',
+    description: 'Moluscos frescos del mar.'
   },
 
-  // Categorías para "Verdulería El Tomate" (Verdulería)
-  {
-    commerce_id: 8,  // ID de "Verdulería El Tomate"
-    name: 'Frutas y Verduras',
-    description: 'Amplia variedad de frutas y verduras frescas.'
+  {//22
+    commerce_id: 14,  
+    name: 'Mariscos',
+    description: 'Mariscos frescos del mar.'
   },
-  {
-    commerce_id: 8,
-    name: 'Hierbas y Especias',
-    description: 'Selección de hierbas frescas y especias para cocinar.'
+  {//23
+    commerce_id: 14,
+    name: 'Pescado',
+    description: 'Pescados frescos del mar, rio y lago.'
   },
-  {
-    commerce_id: 8,
-    name: 'Frutos Secos',
-    description: 'Almendras, nueces y otros frutos secos.'
+  {//24
+    commerce_id: 14,
+    name: 'Moluscos',
+    description: 'Moluscos frescos del mar.'
   },    
-  // Categorías para "Almacén Don Juan" (Almacén)
-  {
-    commerce_id: 9,  // ID de "Almacén Don Juan"
+  // 
+  {//25
+    commerce_id: 9,  
     name: 'Galletitas',
     description: 'Surtidos de galletitas con variedad.'
   },
-  {
+  {//26
     commerce_id: 9,
     name: 'Vinos',
     description: 'Selección de vinos importados y exportados.'
   },
-  {
+  {//27
     commerce_id: 9,
     name: 'Gaseosas Y bebidas',
     description: 'Variedad de gaseosas y juegos.'
   },        
-  // Categorías para "Kiosko El Nuevo Alberdi" (Kiosco)
-  {
-    commerce_id: 10,  // ID de "Kiosko El Nuevo Alberdi"
+  // 
+  {//28
+    commerce_id: 10,  
     name: 'Golosinas',
     description: 'Amplia variedad de golosinas y dulces.'
   },
-  {
+  {//29
     commerce_id: 10,
     name: 'Cigarrillos',
     description: 'Variedad de cigarrillos.'
   },
-  {
+  {//30
     commerce_id: 10,
     name: 'Gaseosas',
     description: 'Variedad de gaseosas y juegos.'
