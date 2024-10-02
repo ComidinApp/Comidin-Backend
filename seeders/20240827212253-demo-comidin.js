@@ -74,10 +74,11 @@ module.exports = {
         number:'1234',
         postal_code: '5020',
         commerce_national_id: '123',
-        is_active: true,
+        status: 'active',
         image_url: 'https://url.de.la.imagen',
-        open_at: '09:00:00',
-        close_at: '18:00:00',
+        open_at: '09:00',
+        close_at: '18:00',
+        available_days: 'lunes,martes,miercoles,jueves,viernes',
         created_at: new Date()
       },
       {
@@ -87,10 +88,11 @@ module.exports = {
         number:'139',
         postal_code: '5020',
         commerce_national_id: '1233',
-        is_active: true,
+        status: 'active',
         image_url: 'https://url.de.la.imagen',
-        open_at: '09:00:00',
-        close_at: '18:00:00',
+        open_at: '09:00',
+        close_at: '18:00',
+        available_days: 'lunes,martes,miercoles,jueves,viernes',
         created_at: new Date()
       },
       {
@@ -100,10 +102,11 @@ module.exports = {
         number:'99',
         postal_code: '5020',
         commerce_national_id: '1234',
-        is_active: true,
+        status: 'active',
         image_url: 'https://url.de.la.imagen',
-        open_at: '09:00:00',
-        close_at: '18:00:00',
+        open_at: '09:00',
+        close_at: '18:00',
+        available_days: 'lunes,martes,miercoles,jueves,viernes',
         created_at: new Date()
       }
     ], {});

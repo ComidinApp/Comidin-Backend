@@ -54,11 +54,11 @@ const Employee = sequelize.define('employee', {
     },
     address: {
       type: Sequelize.STRING,
-      allowNull: false
+      allowNull: true
     },
     postal_code: {
       type: Sequelize.STRING,
-      allowNull: false
+      allowNull: true
     },
     created_at: {
         type: Sequelize.DATE,
@@ -71,15 +71,16 @@ const Employee = sequelize.define('employee', {
     },
     city: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: true
     },
     country: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: true
     },
     status: {
         type: Sequelize.STRING,
-        allowNull: false
+        allowNull: false,
+        defaultValue: 'pending'
     },
     avatar_url: {
       type: Sequelize.STRING,
@@ -172,7 +173,7 @@ Employee.findEmployeeByEmail = async function(email) {
   try {
     const employees = await Employee.findOne({
       where: { email: email },
-      include:{model: Role,attributes: ['name']},
+      include:{model: Role,attributes: ['name'], model: Commerce,attributes: ['name','status']},
       attributes: ['id', 'role_id','first_name', 'last_name', 'email', 'avatar_url','status']
     });
 

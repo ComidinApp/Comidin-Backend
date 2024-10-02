@@ -37,19 +37,7 @@ const createEmployeeValidation = [
   check('password')
     .isString()
     .withMessage('Password must be a string')
-    .notEmpty(),
-    check('city')
-    .isString()
-    .withMessage('city must be a string')
-    .notEmpty(),
-    check('country')
-    .isString()
-    .withMessage('country must be a string')
-    .notEmpty(),
-    check('status')
-    .isString()
-    .withMessage('Status must be a string')
-    .notEmpty(),
+    .notEmpty()
 ];
 
 // Validaciones para actualizar un empleado

@@ -36,10 +36,10 @@ const Commerce = sequelize.define('commerce', {
     allowNull: false,
     unique: true
   },
-  is_active: {
-    type: Sequelize.BOOLEAN,
+  status: {
+    type: Sequelize.STRING,
     allowNull: false,
-    defaultValue: true
+    defaultValue: 'pending'
   },
   image_url: {
     type: Sequelize.STRING,
@@ -52,12 +52,21 @@ const Commerce = sequelize.define('commerce', {
   },
   open_at: {
     type: Sequelize.TIME,
-    allowNull: true
+    allowNull: false
   },
   close_at: {
     type: Sequelize.TIME,
-    allowNull: true
-  }
+    allowNull: false
+  },
+  available_days: {
+    type: Sequelize.STRING,
+    allowNull: false,
+  },
+  is_active: {
+    type: Sequelize.BOOLEAN,
+    allowNull: false,
+    defaultValue: true
+  },
 }, {
   createdAt: false,
   updatedAt: false,

@@ -1,8 +1,18 @@
 const Commerce = require('../models/commerce');
+const { sendCommerceWelcome } = require('../services/emailSender');
+const { uploadCommerceImage } = require('../services/s3Service');
+const { processImage } = require('../helpers/imageHelper');
 
 exports.createCommerce = async (req, res) => {
     try {
-        const commerce = await Commerce.create(req.body);
+        const { image_url, image_name, ...commerceData } = req.body;
+        const { buffer, contentType, filename } = processImage(image_url, image_name);
+
+        const imageUrl = await uploadCommerceImage(buffer, contentType, filename);
+        commerceData.image_url = imageUrl;
+
+        const commerce = await Commerce.create(commerceData);
+        await sendCommerceWelcome(commerceData);
         res.status(201).json(commerce);
     } catch (error) {
         console.error('Error creating Commerce:', error);

@@ -1,10 +1,12 @@
 const Employee = require('../models/employee');
 const { createNewEmployee } = require('../services/cognitoService')
+const { sendEmployeeWelcome } = require('../services/emailSender');
 
 exports.createEmployee = async (req, res) => {
     try {
         await createNewEmployee(req.body)
         const employee = await Employee.create(req.body);
+        await sendEmployeeWelcome(employee)
         res.status(201).json(employee);
     } catch (error) {
         console.error('Error creating Employee:', error);
