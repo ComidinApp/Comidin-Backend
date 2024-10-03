@@ -11,7 +11,9 @@ const createCommerceCategoryValidation = [
     .isString()
     .withMessage('Description must be a string')
     .notEmpty()
-    .withMessage('Description cannot be empty')
+    .withMessage('Description cannot be empty'),
+    check('image_url')
+      .optional()
 ];
 
 // Validaciones para actualizar una categoría de comercio
@@ -27,7 +29,9 @@ const updateCommerceCategoryValidation = [
     .isString()
     .withMessage('Description must be a string')
     .notEmpty()
-    .withMessage('Description cannot be empty')
+    .withMessage('Description cannot be empty'),
+    check('image_url')
+      .optional()
 ];
 
 // Validaciones para los parámetros de la ruta

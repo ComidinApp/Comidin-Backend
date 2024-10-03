@@ -15,6 +15,10 @@ const CommerceCategory = sequelize.define('commerce_category', {
         type: Sequelize.STRING,
         allowNull: false,
         freezeTableName: true
+    },
+    image_url: {
+      type: Sequelize.STRING,
+      allowNull: true
     }
 }, {
     createdAt: false,

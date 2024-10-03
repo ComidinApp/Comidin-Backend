@@ -51,7 +51,7 @@ exports.changeEmployeePassword = async (req, res) => {
 
         const cognitoUsername = user.Users[0].Username;
 
-        if (employee.verification_code == code) {
+        if (employee.verification_code == code.toString()) {
             const params = {
                 UserPoolId: process.env.COGNITO_USER_POOL_ID,
                 Username: cognitoUsername,
