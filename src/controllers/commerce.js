@@ -22,7 +22,7 @@ exports.createCommerce = async (req, res) => {
 
 exports.findAllCommerces = async (req, res) => {
     try {
-        const commerces = await Commerce.findAll();
+        const commerces = await Commerce.findAllCommerces();
         res.status(200).json(commerces);
     } catch (error) {
         console.error('Error fetching Commerces:', error);

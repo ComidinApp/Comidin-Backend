@@ -1,5 +1,6 @@
 const Sequelize = require('sequelize');
 const { sequelize } = require('../database'); // Import database connection
+const CommerceCategory = require('./commerceCategory');
 
 const Commerce = sequelize.define('commerce', {
   id: {
@@ -72,6 +73,27 @@ const Commerce = sequelize.define('commerce', {
   updatedAt: false,
   freezeTableName: true
 });
+
+Commerce.belongsTo(CommerceCategory, { foreignKey: 'commerce_category_id' });
+
+Commerce.findAllCommerces = async function() {
+  try {
+    const commerces = await Commerce.findAll({
+      include: [
+        {
+          model: CommerceCategory,
+          attributes: ['name']
+        },
+      ]
+    });
+
+    return commerces;
+  } catch (error) {
+    console.error('Error finding commerces with Role and Commerce:', error);
+    throw error;
+  }
+};
+
 
 Commerce.findCommercesByCategoryId = async function(categoryId) {
   try {
