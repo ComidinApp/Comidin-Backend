@@ -4,8 +4,8 @@ const { processImage } = require('../helpers/imageHelper');
 
 exports.createProduct = async (req, res) => {
   try {
-    const { image_url, ...productData } = req.body;
-    const { buffer, contentType, filename } = processImage(image_url[0]);
+    const { image_url, image_name, ...productData } = req.body;
+    const { buffer, contentType, filename } = processImage(image_url,image_name);
 
     const imageUrl = await uploadImage(buffer, contentType, filename);
     productData.image_url = imageUrl;

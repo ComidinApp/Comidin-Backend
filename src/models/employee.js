@@ -143,6 +143,34 @@ Employee.findEmployeeById = async function(id) {
   }
 };
 
+Employee.findAdminEmployeeByCommerceId = async function(commerceId) {
+  try {
+    const employees = await Employee.findOne({
+      where: {
+        commerce_id: commerceId,
+      },
+      include: [
+        {
+          model: Role,
+          where: {
+            name: 'Administrador'
+          },
+          attributes: ['name']
+        },
+        {
+          model: Commerce,
+          attributes: ['name']
+        }
+      ]
+    });
+
+    return employees;
+  } catch (error) {
+    console.error('Error finding Employees with Role and Commerce:', error);
+    throw error;
+  }
+};
+
 Employee.findEmployeesByCommerceId = async function(commerceId) {
   try {
     const employees = await Employee.findAll({

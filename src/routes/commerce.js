@@ -19,6 +19,8 @@ router.post('/', createCommerceValidation, validate, Commerce.createCommerce);
 router.get('/', Commerce.findAllCommerces);
 router.get('/:id', commerceIdValidation, validate, Commerce.findCommerceById);
 router.put('/:id', updateCommerceValidation, validate, Commerce.updateCommerce);
+router.put('/activate/:id', Commerce.activateCommerce);
+router.put('/status/:id', Commerce.changeCommerceStatus);
 router.delete('/:id', commerceIdValidation, validate, Commerce.deleteCommerce);
 router.get('/category/:categoryId', Commerce.findCommercesByCategoryId);
 

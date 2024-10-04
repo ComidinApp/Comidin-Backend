@@ -1,5 +1,6 @@
 const Commerce = require('../models/commerce');
-const { sendCommerceWelcome } = require('../services/emailSender');
+const Employee = require('../models/employee');
+const { sendCommerceWelcome, sendRejectedNoticeCommerce, sendAdmittedNoticeCommerce } = require('../services/emailSender');
 const { uploadCommerceImage } = require('../services/s3Service');
 const { processImage } = require('../helpers/imageHelper');
 
@@ -53,6 +54,56 @@ exports.updateCommerce = async (req, res) => {
             return res.status(404).json({ error: 'Commerce not found with id: ' + id });
         }
         await commerce.update(body);
+        res.status(200).json(commerce);
+    } catch (error) {
+        console.error('Error updating Commerce:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+exports.changeCommerceStatus = async (req, res) => {
+    try {
+        const { status } = req.body;
+        const { id } = req.params;
+        let commerce = await Commerce.findByPk(id);
+        if (!commerce) {
+            return res.status(404).json({ error: 'Commerce not found with id: ' + id });
+        }
+        commerce.status = status;
+        await commerce.save();
+
+        let employeeAdmin = await Employee.findAdminEmployeeByCommerceId(id);
+        if (!employeeAdmin) {
+            return res.status(404).json({ error: 'Employee not found with id: ' + id });
+        }
+
+        switch (status) {
+            case 'admitted':
+                sendAdmittedNoticeCommerce(employeeAdmin);
+                break;
+            case 'rejected':
+                sendRejectedNoticeCommerce(employeeAdmin);
+                break;
+            default:
+                break;
+        }
+
+        res.status(200).json(commerce);
+    } catch (error) {
+        console.error('Error updating Commerce:', error);
+        res.status(500).json({ error: 'Internal Server Error' });
+    }
+};
+
+exports.activateCommerce = async (req, res) => {
+    try {
+        const { id } = req.params;
+        let commerce = await Commerce.findByPk(id);
+        if (!commerce) {
+            return res.status(404).json({ error: 'Commerce not found with id: ' + id });
+        }
+        commerce.is_active == true ? commerce.is_active = false : commerce.is_active = true;
+        await commerce.save();
         res.status(200).json(commerce);
     } catch (error) {
         console.error('Error updating Commerce:', error);
