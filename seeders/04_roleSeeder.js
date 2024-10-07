@@ -23,6 +23,10 @@ module.exports = {
     {
       name: 'Supervisor de Ventas',
       description: 'Supervisa el equipo de ventas y garantiza que se cumplan los objetivos comerciales. Analiza las estadísticas de ventas y propone mejoras para optimizar el rendimiento del negocio.'
+    },
+    {
+      name: 'Propietario',
+      description: 'Supervisa el equipo de ventas y garantiza que se cumplan los objetivos comerciales. Analiza las estadísticas de ventas y propone mejoras para optimizar el rendimiento del negocio.'
     }
   ], {});
       

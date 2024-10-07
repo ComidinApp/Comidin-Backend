@@ -153,7 +153,7 @@ Employee.findAdminEmployeeByCommerceId = async function(commerceId) {
         {
           model: Role,
           where: {
-            name: 'Administrador'
+            name: 'Propietario'
           },
           attributes: ['name']
         },
@@ -174,7 +174,17 @@ Employee.findAdminEmployeeByCommerceId = async function(commerceId) {
 Employee.findEmployeesByCommerceId = async function(commerceId) {
   try {
     const employees = await Employee.findAll({
-      where: { commerce_id: commerceId }
+      where: { commerce_id: commerceId },
+      include: [
+        {
+          model: Role,
+          attributes: ['name']
+        },
+        {
+          model: Commerce,
+          attributes: ['name']
+        }
+      ]
     });
 
     return employees;
@@ -201,7 +211,7 @@ Employee.findEmployeeByEmail = async function(email) {
   try {
     const employees = await Employee.findOne({
       where: { email: email },
-      include:{model: Role,attributes: ['name'], model: Commerce,attributes: ['name','status']},
+      include:{model: Role,attributes: ['name','id'], model: Commerce,attributes: ['name','status','id']},
       attributes: ['id', 'role_id','first_name', 'last_name', 'email', 'avatar_url','status']
     });
 
