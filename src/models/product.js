@@ -81,7 +81,17 @@ Product.findAllProducts = async function() {
 Product.findProductsByCommerceId = async function(commerceId) {
   try {
     const products = await Product.findAll({
-      where: { commerce_id: commerceId }
+      where: { commerce_id: commerceId },
+      include: [
+        {
+          model: ProductCategory,
+          attributes: ['name']
+        },
+        {
+          model: Commerce,
+          attributes: ['name']
+        }
+      ]
     });
 
     return products;
