@@ -47,13 +47,15 @@ exports.updateProduct = async (req, res) => {
   try {
     const { body } = req;
     const { id } = req.params;
+
     const product = await Product.findByPk(id);
     if (!product) {
         return res.status(404).json({ error: 'Product not found with id: ' + id });
     }
 
     if (body.image_url != product.image_url) {
-      const { buffer, contentType, filename } = processImage(body.image_url);
+      const { image_url, image_name } = req.body;
+      const { buffer, contentType, filename } = processImage(image_url,image_name);
 
       const imageUrl = await uploadImage(buffer, contentType, filename);
       body.image_url = imageUrl;
