@@ -1,5 +1,6 @@
 const Sequelize = require('sequelize');
 const { sequelize } = require('../database'); // Import database connection
+const { Op } = require('sequelize');
 
 const Role = sequelize.define('role', {
   id: {

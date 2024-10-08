@@ -1,5 +1,4 @@
 const Role = require('../models/role');
-const { Op } = require('sequelize');
 
 exports.createRole = async (req, res) => {
   try {
