@@ -5,7 +5,7 @@ module.exports = {
     try {
   await queryInterface.bulkInsert('employee', [
     {
-      commerce_id: 3,
+      commerce_id: 20,
       role_id: 1,
       first_name: 'Juan',
       last_name: 'Donalisio',
@@ -23,8 +23,8 @@ module.exports = {
       verification_code: null
     },
     {
-      commerce_id: 3,
-      role_id: 2,
+      commerce_id: 20,
+      role_id: 1,
       first_name: 'Tato',
       last_name: 'Cargnelutti',
       email: 'cargneluttilautaro@gmail.com',
@@ -41,8 +41,8 @@ module.exports = {
       verification_code: null
     },
     {
-      commerce_id: 3,
-      role_id: 2,
+      commerce_id: 20,
+      role_id: 1,
       first_name: 'Fran',
       last_name: 'Somoza',
       email: 'fran.s300@hotmail.com',
@@ -59,8 +59,8 @@ module.exports = {
       verification_code: null
     },
     {
-      commerce_id: 3,
-      role_id: 2,
+      commerce_id: 20,
+      role_id: 1,
       first_name: 'Flor',
       last_name: 'Farace',
       email: 'faraceflorencia@gmail.com',
@@ -78,7 +78,7 @@ module.exports = {
     },
     {
       commerce_id: 3,
-      role_id: 3,
+      role_id: 2,
       first_name: 'Cecilia',
       last_name: 'Tretel',
       email: 'ceci.perez@gmail.com',
@@ -94,25 +94,6 @@ module.exports = {
       status:'active',
       verification_code: null
     },
-    {
-      commerce_id: 1,
-      role_id: 1,
-      first_name: 'Juan',
-      last_name: 'McDonalds?',
-      email: 'juampa1075@gmail.com',
-      phone_number: '122456768921',
-      national_id: '5112123273',
-      address: 'Gato y mancha 2231',
-      postal_code: "1001",
-      password: "juampa@test1",
-      created_at: new Date(),
-      city: 'Cordoba',
-      country: 'Argentina',
-      avatar_url: 'https://comidin-assets-tjff.s3.amazonaws.com/avatar/coffe.png',
-      status:'active',
-      verification_code: null
-    },
-
   ], {});
       
 } catch (error) {

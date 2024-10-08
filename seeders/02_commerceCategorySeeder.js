@@ -70,7 +70,11 @@ module.exports = {
         description: 'Se especializan en la venta de tortas, postres y dulces artesanales.',
         image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/Costillar.jfif'
       },
-  
+      {//13
+        name: 'Equipo Comidin',
+        description: 'Categoria propia para el equipo de comidin.',
+        image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerceCategory/Comidin.png'
+      },
     ], {});
         
   } catch (error) {

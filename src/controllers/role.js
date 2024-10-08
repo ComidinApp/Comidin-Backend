@@ -1,4 +1,5 @@
 const Role = require('../models/role');
+const { Op } = require('sequelize');
 
 exports.createRole = async (req, res) => {
   try {
@@ -13,7 +14,7 @@ exports.createRole = async (req, res) => {
 
 exports.findAllRoles = async (req, res) => {
   try {
-    const roles = await Role.findAll();
+    const roles = await Role.findAllRoles();
     res.status(200).json(roles);
   } catch (error) {
     console.error('Error fetching Roles:', error);

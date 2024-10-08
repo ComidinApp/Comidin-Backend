@@ -290,6 +290,21 @@ module.exports = {
         status: 'rejected',
         available_days: 'lunes,martes,miercoles,jueves,viernes',
       },
+      {//20
+        name: 'Equipo Comidin',
+        commerce_category_id: 13, // Equipo Comidin
+        street_name: '-',
+        number: '-',
+        postal_code: '-',
+        commerce_national_id: '-',
+        is_active: true,
+        image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-logos/Comidin.png',
+        open_at: '00:00:00',
+        close_at: '23:59:00',
+        created_at: new Date(),
+        status: 'admitted',
+        available_days: 'lunes,martes,miercoles,jueves,viernes,sabado,domingo',
+      },
     ], {});
         
   } catch (error) {
