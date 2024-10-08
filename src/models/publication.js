@@ -12,7 +12,8 @@ const Publication = sequelize.define('publication', {
   },
   is_active: {
     type: Sequelize.STRING,
-    allowNull: false
+    allowNull: false,
+    defaultValue: 'active'
   },
   commerce_id: {
     type: Sequelize.INTEGER,
