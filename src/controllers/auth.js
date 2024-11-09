@@ -38,7 +38,7 @@ exports.changeEmployeePassword = async (req, res) => {
         }
 
         const listParams = {
-            UserPoolId: process.env.COGNITO_USER_POOL_ID,
+            UserPoolId: process.env.COGNITO_EMPLOYEE_POOL_ID,
             Filter: `email = "${email}"`
         };
 
@@ -53,7 +53,7 @@ exports.changeEmployeePassword = async (req, res) => {
 
         if (employee.verification_code == code.toString()) {
             const params = {
-                UserPoolId: process.env.COGNITO_USER_POOL_ID,
+                UserPoolId: process.env.COGNITO_EMPLOYEE_POOL_ID,
                 Username: cognitoUsername,
                 Password: newPassword,
                 Permanent: true

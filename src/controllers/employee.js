@@ -1,5 +1,5 @@
 const Employee = require('../models/employee');
-const { createNewEmployee } = require('../services/cognitoService')
+const { createNewEmployee, deleteEmployeeAccount } = require('../services/cognitoService')
 const { sendEmployeeWelcome } = require('../services/emailSender');
 
 exports.createEmployee = async (req, res) => {
@@ -75,8 +75,10 @@ exports.deleteEmployee = async (req, res) => {
         if (!employee) {
             return res.status(404).json({ error: 'Employee not found with id: ' + id });
         }
+        const employee_email = employee.email
         await employee.destroy();
-        res.status(200).json(employee);
+        await deleteEmployeeAccount(employee_email)
+        res.status(200).json({ message: 'Employee successfully deleted' }); 
     } catch (error) {
         console.error('Error deleting Employee:', error);
         res.status(500).json({ error: 'Internal Server Error' });

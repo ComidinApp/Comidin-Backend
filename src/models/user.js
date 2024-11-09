@@ -58,4 +58,19 @@ const User = sequelize.define('user', {
     freezeTableName: true
 });
 
+User.findUserByEmail = async function(email) {
+    try {
+      const user = await User.findOne({
+        where: { email: email },
+        attributes: ['id', 'first_name','last_name', 'email', 'phone_number', 'national_id','is_active','birthday']
+      });
+  
+      return user;
+    } catch (error) {
+      console.error('Error finding User:', error);
+      throw error;
+    }
+  };
+  
+
 module.exports = User;

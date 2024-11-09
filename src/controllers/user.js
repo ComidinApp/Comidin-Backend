@@ -1,4 +1,5 @@
 const User = require('../models/user');
+const { deleteUserAccount } = require('../services/cognitoService')
 
 exports.createUser = async (req, res) => {
   try {
@@ -18,6 +19,20 @@ exports.findAllUsers = async (req, res) => {
   } catch (error) {
     console.error('Error fetching Users:', error);
     res.status(500).json({ error: 'Internal Server Error' });
+  }
+};
+
+exports.findUserByEmail = async (req, res) => {
+  try {
+      const { email } = req.params;
+      const user = await User.findUserByEmail(email);
+      if (!user) {
+          return res.status(404).json({ error: 'User not found with email: ' + email });
+      }
+      res.status(200).json(user);
+  } catch (error) {
+      console.error('Error fetching user by email:', error);
+      res.status(500).json({ error: 'Internal Server Error' });
   }
 };
 
@@ -58,7 +73,9 @@ exports.deleteUser = async (req, res) => {
     const { id } = req.params;
     const user = await User.findByPk(id);
     if (user) {
+      const user_email = user.email 
       await user.destroy();
+      await deleteUserAccount(user_email)
       res.status(200).json({ message: 'User successfully deleted' }); 
     } else {
       res.status(404).json({ error: `User not found with id: ${id}` });

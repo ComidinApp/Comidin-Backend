@@ -18,5 +18,6 @@ router.get('/', User.findAllUsers);
 router.get('/:id', User.findUserById);
 router.put('/:id', updateUserValidation, validate, User.updateUser);
 router.delete('/:id', User.deleteUser);
+router.get('/email/:email', User.findUserByEmail);
 
 module.exports = router;
