@@ -9,7 +9,7 @@ module.exports = {
       user_id: 1,
       commerce_id: 1,
       created_at: new Date('2024-09-25'),
-      total_amount: '500',
+      total_amount: '300',
       status: 'Finalizado',
       delivery_type: 'Moto'
   },
@@ -17,7 +17,7 @@ module.exports = {
       user_id: 1,
       commerce_id: 2,
       created_at: new Date('2024-09-26'),
-      total_amount: '600',
+      total_amount: '300',
       status: 'Finalizado',
       delivery_type: 'Moto'
   },

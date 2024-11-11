@@ -11,11 +11,11 @@ module.exports = {
       created_at: new Date(),
       quantity:'1',
       tips:'1',
-      amount:'100'
+      amount:'300'
     },
     {
       order_id:2,
-      publication_id: 2,
+      publication_id: 4,
       created_at: new Date(),
       quantity:'1',
       tips:'1',
@@ -23,11 +23,11 @@ module.exports = {
     },
     {
       order_id:3,
-      publication_id: 3,
+      publication_id: 7,
       created_at: new Date(),
       quantity:'1',
       tips:'1',
-      amount:'100'
+      amount:'700'
     }
   ], {});
     
