@@ -1,5 +1,10 @@
 const Sequelize = require('sequelize');
 const { sequelize } = require('../database'); // Import database connection
+const User = require('./user');
+const Commerce = require('./commerce');
+const OrderDetail = require('./orderDetail');
+const Publication = require('./publication');
+const Product = require('./product');
 
 const Order = sequelize.define('order', {
   id: {
@@ -23,6 +28,14 @@ const Order = sequelize.define('order', {
       key: 'id'
     }
   },
+  address_id: {
+    type: Sequelize.INTEGER,
+    allowNull: false,
+    references: {
+      model: 'address',
+      key: 'id'
+    }
+  },
   created_at: {
     type: Sequelize.DATE,
     allowNull: false,
@@ -30,6 +43,10 @@ const Order = sequelize.define('order', {
   },
   total_amount: {
     type: Sequelize.DECIMAL(10, 2),
+    allowNull: false
+  },
+  items_quantity: {
+    type: Sequelize.DECIMAL(10, 0),
     allowNull: false
   },
   status: {
@@ -46,6 +63,10 @@ const Order = sequelize.define('order', {
   freezeTableName: true
 });
 
+Order.belongsTo(User, { foreignKey: 'user_id' });
+Order.belongsTo(Commerce, { foreignKey: 'commerce_id' });
+Order.hasMany(OrderDetail, { foreignKey: 'order_id' });
+
 Order.findOrdersByUserId = async function(userId) {
   try {
     const orders = await Order.findAll({
@@ -59,10 +80,74 @@ Order.findOrdersByUserId = async function(userId) {
   }
 };
 
+Order.findAllOrders = async function() {
+  try {
+    const orders = await Order.findAll({
+      include: [
+        {
+          model: User,
+          attributes: ['first_name','last_name','email']
+        },
+        {
+          model: Commerce,
+          attributes: ['name']
+        },
+        {
+          model: OrderDetail,
+          attributes: ['publication_id', 'quantity', 'amount'],
+          include: [
+            {
+              model: Publication,
+              attributes: ['id','price'],
+              include: [
+                {
+                  model: Product,
+                  attributes: ['name', 'image_url']
+                }
+              ]
+            }
+          ]
+        }
+      ]
+    });
+
+    return orders;
+  } catch (error) {
+    console.error('Error finding Orders:', error);
+    throw error;
+  }
+};
+
 Order.findOrdersByCommerceId = async function(commerceId) {
   try {
     const orders = await Order.findAll({
-      where: { commerce_id: commerceId }
+      where: { commerce_id: commerceId },
+      include: [
+        {
+          model: User,
+          attributes: ['name']
+        },
+        {
+          model: Commerce,
+          attributes: ['name']
+        },
+        {
+          model: OrderDetail,
+          attributes: ['publication_id', 'quantity', 'amount'],
+          include: [
+            {
+              model: Publication,
+              attributes: ['id','price'],
+              include: [
+                {
+                  model: Product,
+                  attributes: ['name', 'image_url']
+                }
+              ]
+            }
+          ]
+        }
+      ]
     });
 
     return orders;

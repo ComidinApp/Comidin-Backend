@@ -12,7 +12,7 @@ exports.createOrder = async (req, res) => {
 
 exports.findAllOrders = async (req, res) => {
     try {
-        const orders = await Order.findAll();
+        const orders = await Order.findAllOrders();
         res.status(200).json(orders);
     } catch (error) {
         console.error('Error fetching Orders:', error);

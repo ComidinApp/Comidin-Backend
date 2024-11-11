@@ -10,15 +10,13 @@ module.exports = {
       publication_id: 1,
       created_at: new Date(),
       quantity:'1',
-      tips:'1',
-      amount:'300'
+      amount:'100'
     },
     {
       order_id:2,
       publication_id: 4,
       created_at: new Date(),
       quantity:'1',
-      tips:'1',
       amount:'300'
     },
     {
@@ -26,8 +24,7 @@ module.exports = {
       publication_id: 7,
       created_at: new Date(),
       quantity:'1',
-      tips:'1',
-      amount:'700'
+      amount:'100'
     }
   ], {});
     

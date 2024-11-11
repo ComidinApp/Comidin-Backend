@@ -13,7 +13,7 @@ module.exports = {
       commerce_id:1,
       product_id: 1,
       created_at: new Date(),
-      price:'300',
+      price: 300,
       expiration_date:new Date(),
     
     },

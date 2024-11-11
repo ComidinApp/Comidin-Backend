@@ -1,5 +1,6 @@
 const Sequelize = require('sequelize');
 const { sequelize } = require('../database'); // Import database connection
+const Publication = require('./publication');
 
 const OrderDetail = sequelize.define('order_detail', {
   id: {
@@ -32,10 +33,6 @@ const OrderDetail = sequelize.define('order_detail', {
     type: Sequelize.DECIMAL(10, 2),
     allowNull: false
   },
-  tips: {
-    type: Sequelize.DECIMAL(10, 2),
-    allowNull: false
-  },
   amount: {
     type: Sequelize.DECIMAL(10, 2),
     allowNull: false
@@ -45,6 +42,8 @@ const OrderDetail = sequelize.define('order_detail', {
   updatedAt: false,
   freezeTableName: true
 });
+
+OrderDetail.belongsTo(Publication, { foreignKey: 'publication_id' });
 
 OrderDetail.findOrderDetailsByOrderId = async function(orderId) {
   try {

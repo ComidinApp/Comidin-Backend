@@ -11,9 +11,6 @@ const createOrderDetailValidation = [
   check('quantity')
     .isDecimal({ decimal_digits: '0,2' })
     .withMessage('Quantity must be a decimal with up to 2 decimal places'),
-  check('tips')
-    .isDecimal({ decimal_digits: '0,2' })
-    .withMessage('Tips must be a decimal with up to 2 decimal places'),
   check('amount')
     .isDecimal({ decimal_digits: '0,2' })
     .withMessage('Amount must be a decimal with up to 2 decimal places'),
@@ -33,10 +30,6 @@ const updateOrderDetailValidation = [
     .optional()
     .isDecimal({ decimal_digits: '0,2' })
     .withMessage('Quantity must be a decimal with up to 2 decimal places'),
-  check('tips')
-    .optional()
-    .isDecimal({ decimal_digits: '0,2' })
-    .withMessage('Tips must be a decimal with up to 2 decimal places'),
   check('amount')
     .optional()
     .isDecimal({ decimal_digits: '0,2' })
