@@ -57,6 +57,10 @@ const Order = sequelize.define('order', {
   delivery_type: {
     type: Sequelize.STRING,
     allowNull: false
+  },
+  payment_method: {
+    type: Sequelize.STRING,
+    allowNull: false
   }
 }, {
   createdAt: false,
