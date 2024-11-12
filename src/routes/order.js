@@ -20,6 +20,7 @@ router.post('/', createOrderValidation, validate, Order.createOrder);
 router.get('/', Order.findAllOrders);
 router.get('/:id', Order.findOrderById);
 router.put('/:id', updateOrderValidation, validate, Order.updateOrder);
+router.put('/status/:id', Order.changeOrderStatus);
 router.delete('/:id', Order.deleteOrder);
 router.get('/user/:userId', userIdValidation, validate, Order.findOrdersByUserId);
 router.get('/commerce/:commerceId', commerceIdValidation, validate, Order.findOrdersByCommerceId);

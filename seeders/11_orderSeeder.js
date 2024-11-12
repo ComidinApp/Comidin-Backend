@@ -12,7 +12,7 @@ module.exports = {
       created_at: new Date('2024-09-25'),
       total_amount: '300',
       status: 'pending',
-      delivery_type: 'Retiro en local',
+      delivery_type: 'pickup',
       payment_method: 'cash',
       items_quantity: 3
   },
@@ -23,7 +23,7 @@ module.exports = {
       created_at: new Date('2024-09-26'),
       total_amount: '300',
       status: 'pending',
-      delivery_type: 'Retiro en local',
+      delivery_type: 'pickup',
       payment_method: 'cash',
       items_quantity: 2
   },
@@ -34,7 +34,7 @@ module.exports = {
       created_at: new Date('2024-09-27'),
       total_amount: '700',
       status: 'pending',
-      delivery_type: 'Delivery a domicilio',
+      delivery_type: 'delivery',
       payment_method: 'cash',
       items_quantity: 1
   },
@@ -45,7 +45,7 @@ module.exports = {
       created_at: new Date('2024-09-28'),
       total_amount: '800',
       status: 'pending',
-      delivery_type: 'Retiro en local',
+      delivery_type: 'pickup',
       payment_method: 'cash',
       items_quantity: 1
   },
@@ -56,7 +56,7 @@ module.exports = {
       created_at: new Date('2024-09-29'),
       total_amount: '900',
       status: 'pending',
-      delivery_type: 'Retiro en local',
+      delivery_type: 'pickup',
       payment_method: 'mercadopago',
       items_quantity: 1
   },
@@ -69,7 +69,7 @@ module.exports = {
       created_at: new Date('2024-09-30'),
       total_amount: '1000',
       status: 'pending',
-      delivery_type: 'Retiro en local',
+      delivery_type: 'pickup',
       payment_method: 'mercadopago',
       items_quantity: 3
   },
@@ -80,7 +80,7 @@ module.exports = {
       created_at: new Date('2024-10-01'),
       total_amount: '1100',
       status: 'pending',
-      delivery_type: 'Retiro en local',
+      delivery_type: 'pickup',
       payment_method: 'mercadopago',
       items_quantity: 2
   },
@@ -91,7 +91,7 @@ module.exports = {
       created_at: new Date('2024-10-02'),
       total_amount: '1200',
       status: 'pending',
-      delivery_type: 'Delivery a domicilio',
+      delivery_type: 'delivery',
       payment_method: 'mercadopago',
       items_quantity: 1
   },
@@ -102,7 +102,7 @@ module.exports = {
       created_at: new Date('2024-10-03'),
       total_amount: '1300',
       status: 'pending',
-      delivery_type: 'Retiro en local',
+      delivery_type: 'pickup',
       payment_method: 'mercadopago',
       items_quantity: 1
   },
@@ -115,7 +115,7 @@ module.exports = {
       created_at: new Date('2024-10-04'),
       total_amount: '1500',
       status: 'pending',
-      delivery_type: 'Delivery a domicilio',
+      delivery_type: 'delivery',
       payment_method: 'mercadopago',
       items_quantity: 1
   },
@@ -126,7 +126,7 @@ module.exports = {
       created_at: new Date('2024-10-05'),
       total_amount: '1600',
       status: 'pending',
-      delivery_type: 'Retiro en local',
+      delivery_type: 'pickup',
       payment_method: 'mercadopago',
       items_quantity: 1
   },
@@ -137,7 +137,7 @@ module.exports = {
       created_at: new Date('2024-10-06'),
       total_amount: '1700',
       status: 'pending',
-      delivery_type: 'Retiro en local',
+      delivery_type: 'pickup',
       payment_method: 'mercadopago',
       items_quantity: 1
   },
@@ -150,7 +150,7 @@ module.exports = {
       created_at: new Date('2024-10-07'),
       total_amount: '3000',
       status: 'pending',
-      delivery_type: 'Delivery a domicilio',
+      delivery_type: 'delivery',
       payment_method: 'mercadopago',
       items_quantity: 1
   },
@@ -161,7 +161,7 @@ module.exports = {
       created_at: new Date('2024-10-08'),
       total_amount: '3500',
       status: 'pending',
-      delivery_type: 'Retiro en local',
+      delivery_type: 'pickup',
       payment_method: 'mercadopago',
       items_quantity: 1
   },
@@ -172,7 +172,7 @@ module.exports = {
       created_at: new Date('2024-10-09'),
       total_amount: '4000',
       status: 'pending',
-      delivery_type: 'Retiro en local',
+      delivery_type: 'pickup',
       payment_method: 'mercadopago',
       items_quantity: 1
   },
@@ -183,7 +183,7 @@ module.exports = {
       created_at: new Date('2024-10-10'),
       total_amount: '4500',
       status: 'pending',
-      delivery_type: 'Delivery a domicilio',
+      delivery_type: 'delivery',
       payment_method: 'mercadopago',
       items_quantity: 5
   },

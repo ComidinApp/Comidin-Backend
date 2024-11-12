@@ -57,6 +57,23 @@ exports.updateOrder = async (req, res) => {
     }
 };
 
+exports.changeOrderStatus = async (req, res) => {
+    try {
+        const { status } = req.body;
+        const { id } = req.params;
+        const order = await Order.findByPk(id);
+        if (!order) {
+            return res.status(404).json({ error: 'Order not found with id: ' + id });
+        }
+        order.status = status;
+        await order.save();
+        res.status(200).json(order);
+    } catch (error) {
+        console.error('Error updating Order:', error);
+        res.status(409).json({ error: 'Conflict', meesage: error });
+    }
+};
+
 exports.deleteOrder = async (req, res) => {
     try {
         const { id } = req.params;
