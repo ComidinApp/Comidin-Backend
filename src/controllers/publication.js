@@ -7,7 +7,7 @@ exports.createPublication = async (req, res) => {
     res.status(201).json(publication);
   } catch (error) {
     console.error('Error creating Publication:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -17,7 +17,7 @@ exports.findAllPublications = async (req, res) => {
     res.status(200).json(publications);
   } catch (error) {
     console.error('Error fetching Publications:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -32,7 +32,7 @@ exports.findPublicationById = async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching Publication by ID:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -49,7 +49,7 @@ exports.updatePublication = async (req, res) => {
     }
   } catch (error) {
     console.error('Error updating Publication:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -65,7 +65,7 @@ exports.deletePublication = async (req, res) => {
     }
   } catch (error) {
     console.error('Error deleting Publication:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -80,6 +80,6 @@ exports.findPublicationsByCommerceId = async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching Publications by Commerce ID:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };

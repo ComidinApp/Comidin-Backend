@@ -6,7 +6,7 @@ exports.createAddress = async (req, res) => {
     res.status(201).json(address);
   } catch (error) {
     console.error('Error creating Address:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -16,7 +16,7 @@ exports.findAllAddresses = async (req, res) => {
     res.status(200).json(addresses);
   } catch (error) {
     console.error('Error fetching Addresses:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -30,7 +30,7 @@ exports.findAddressById = async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching Address:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -47,7 +47,7 @@ exports.updateAddress = async (req, res) => {
     }
   } catch (error) {
     console.error('Error updating Address:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -63,7 +63,7 @@ exports.deleteAddress = async (req, res) => {
     }
   } catch (error) {
     console.error('Error deleting Address:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -73,6 +73,6 @@ exports.findAddressesByUserId = async (req, res) => {
     res.status(200).json(addresses);
   } catch (error) {
     console.error('Error finding Addresses by User ID:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };

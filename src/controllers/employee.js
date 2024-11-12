@@ -10,7 +10,7 @@ exports.createEmployee = async (req, res) => {
         res.status(201).json(employee);
     } catch (error) {
         console.error('Error creating Employee:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -20,7 +20,7 @@ exports.findAllEmployees = async (req, res) => {
         res.status(200).json(employees);
     } catch (error) {
         console.error('Error fetching Employees:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -34,7 +34,7 @@ exports.findEmployeeById = async (req, res) => {
         res.status(200).json(employee);
     } catch (error) {
         console.error('Error fetching Employee by ID:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -48,7 +48,7 @@ exports.findEmployeeByEmail = async (req, res) => {
         res.status(200).json(employee);
     } catch (error) {
         console.error('Error fetching Employee by email:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -64,7 +64,7 @@ exports.updateEmployee = async (req, res) => {
         res.status(200).json(employee);
     } catch (error) {
         console.error('Error updating Employee:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -81,7 +81,7 @@ exports.deleteEmployee = async (req, res) => {
         res.status(200).json({ message: 'Employee successfully deleted' }); 
     } catch (error) {
         console.error('Error deleting Employee:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -95,7 +95,7 @@ exports.findEmployeesByCommerceId = async (req, res) => {
         res.status(200).json(employees);
     } catch (error) {
         console.error('Error fetching Employees by Commerce ID:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -109,6 +109,6 @@ exports.findEmployeesByRoleId = async (req, res) => {
         res.status(200).json(employees);
     } catch (error) {
         console.error('Error fetching Employees by Role ID:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };

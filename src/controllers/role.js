@@ -7,7 +7,7 @@ exports.createRole = async (req, res) => {
     res.status(201).json(role);
   } catch (error) {
     console.error('Error creating Role:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -17,7 +17,7 @@ exports.findAllRoles = async (req, res) => {
     res.status(200).json(roles);
   } catch (error) {
     console.error('Error fetching Roles:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -32,7 +32,7 @@ exports.findRoleById = async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching Role by ID:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -49,7 +49,7 @@ exports.updateRole = async (req, res) => {
     }
   } catch (error) {
     console.error('Error updating Role:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -65,6 +65,6 @@ exports.deleteRole = async (req, res) => {
     }
   } catch (error) {
     console.error('Error deleting Role:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };

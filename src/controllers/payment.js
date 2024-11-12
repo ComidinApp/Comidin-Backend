@@ -7,7 +7,7 @@ exports.createPayment = async (req, res) => {
     res.status(201).json(payment);
   } catch (error) {
     console.error('Error creating Payment:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -17,7 +17,7 @@ exports.findAllPayments = async (req, res) => {
     res.status(200).json(payments);
   } catch (error) {
     console.error('Error fetching Payments:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -32,7 +32,7 @@ exports.findPaymentById = async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching Payment by ID:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -49,7 +49,7 @@ exports.updatePayment = async (req, res) => {
     }
   } catch (error) {
     console.error('Error updating Payment:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -65,6 +65,6 @@ exports.deletePayment = async (req, res) => {
     }
   } catch (error) {
     console.error('Error deleting Payment:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };

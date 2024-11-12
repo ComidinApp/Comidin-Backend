@@ -13,6 +13,7 @@ module.exports = {
       total_amount: '300',
       status: 'Finalizado',
       delivery_type: 'Retiro en local',
+      payment_method: 'Efectivo',
       items_quantity: 3
   },
   {
@@ -23,6 +24,7 @@ module.exports = {
       total_amount: '300',
       status: 'Finalizado',
       delivery_type: 'Retiro en local',
+      payment_method: 'Efectivo',
       items_quantity: 2
   },
   {
@@ -33,6 +35,7 @@ module.exports = {
       total_amount: '700',
       status: 'Finalizado',
       delivery_type: 'Delivery a domicilio',
+      payment_method: 'Efectivo',
       items_quantity: 1
   },
   {
@@ -43,6 +46,7 @@ module.exports = {
       total_amount: '800',
       status: 'Finalizado',
       delivery_type: 'Retiro en local',
+      payment_method: 'Efectivo',
       items_quantity: 1
   },
   {
@@ -53,6 +57,7 @@ module.exports = {
       total_amount: '900',
       status: 'Finalizado',
       delivery_type: 'Retiro en local',
+      payment_method: 'MercadoPago',
       items_quantity: 1
   },
 
@@ -65,6 +70,7 @@ module.exports = {
       total_amount: '1000',
       status: 'Finalizado',
       delivery_type: 'Retiro en local',
+      payment_method: 'MercadoPago',
       items_quantity: 3
   },
   {//7
@@ -75,6 +81,7 @@ module.exports = {
       total_amount: '1100',
       status: 'Finalizado',
       delivery_type: 'Retiro en local',
+      payment_method: 'MercadoPago',
       items_quantity: 2
   },
   {
@@ -85,6 +92,7 @@ module.exports = {
       total_amount: '1200',
       status: 'Finalizado',
       delivery_type: 'Delivery a domicilio',
+      payment_method: 'MercadoPago',
       items_quantity: 1
   },
   {
@@ -95,6 +103,7 @@ module.exports = {
       total_amount: '1300',
       status: 'Finalizado',
       delivery_type: 'Retiro en local',
+      payment_method: 'MercadoPago',
       items_quantity: 1
   },
 
@@ -107,6 +116,7 @@ module.exports = {
       total_amount: '1500',
       status: 'Finalizado',
       delivery_type: 'Delivery a domicilio',
+      payment_method: 'MercadoPago',
       items_quantity: 1
   },
   {
@@ -117,6 +127,7 @@ module.exports = {
       total_amount: '1600',
       status: 'Finalizado',
       delivery_type: 'Retiro en local',
+      payment_method: 'MercadoPago',
       items_quantity: 1
   },
   {
@@ -127,6 +138,7 @@ module.exports = {
       total_amount: '1700',
       status: 'Finalizado',
       delivery_type: 'Retiro en local',
+      payment_method: 'MercadoPago',
       items_quantity: 1
   },
 
@@ -139,6 +151,7 @@ module.exports = {
       total_amount: '3000',
       status: 'Finalizado',
       delivery_type: 'Delivery a domicilio',
+      payment_method: 'MercadoPago',
       items_quantity: 1
   },
   {
@@ -149,6 +162,7 @@ module.exports = {
       total_amount: '3500',
       status: 'Finalizado',
       delivery_type: 'Retiro en local',
+      payment_method: 'MercadoPago',
       items_quantity: 1
   },
   {
@@ -159,6 +173,7 @@ module.exports = {
       total_amount: '4000',
       status: 'Finalizado',
       delivery_type: 'Retiro en local',
+      payment_method: 'MercadoPago',
       items_quantity: 1
   },
   {
@@ -169,6 +184,7 @@ module.exports = {
       total_amount: '4500',
       status: 'Finalizado',
       delivery_type: 'Delivery a domicilio',
+      payment_method: 'MercadoPago',
       items_quantity: 5
   },
   ], {});

@@ -6,7 +6,7 @@ exports.createCommerceCategory = async (req, res) => {
         res.status(201).json(commerceCategory);
     } catch (error) {
         console.error('Error creating CommerceCategory:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -16,7 +16,7 @@ exports.findAllCommerceCategories = async (req, res) => {
         res.status(200).json(commerceCategories);
     } catch (error) {
         console.error('Error fetching CommerceCategories:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -30,7 +30,7 @@ exports.findCommerceCategoryById = async (req, res) => {
         res.status(200).json(commerceCategory);
     } catch (error) {
         console.error('Error fetching CommerceCategory by ID:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -46,7 +46,7 @@ exports.updateCommerceCategory = async (req, res) => {
         res.status(200).json(commerceCategory);
     } catch (error) {
         console.error('Error updating CommerceCategory:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -61,6 +61,6 @@ exports.deleteCommerceCategory = async (req, res) => {
         res.status(200).json(commerceCategory);
     } catch (error) {
         console.error('Error deleting CommerceCategory:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };

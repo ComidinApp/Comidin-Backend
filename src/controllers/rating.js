@@ -7,7 +7,7 @@ exports.createRating = async (req, res) => {
     res.status(201).json(rating);
   } catch (error) {
     console.error('Error creating Rating:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -17,7 +17,7 @@ exports.findAllRatings = async (req, res) => {
     res.status(200).json(ratings);
   } catch (error) {
     console.error('Error fetching Ratings:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -32,7 +32,7 @@ exports.findRatingById = async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching Rating by ID:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -49,7 +49,7 @@ exports.updateRating = async (req, res) => {
     }
   } catch (error) {
     console.error('Error updating Rating:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -65,7 +65,7 @@ exports.deleteRating = async (req, res) => {
     }
   } catch (error) {
     console.error('Error deleting Rating:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -80,7 +80,7 @@ exports.findRatingByUserId = async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching Ratings by User ID:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -95,7 +95,7 @@ exports.findRatingComplainByCommerceId = async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching Ratings by Commerce ID:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -110,6 +110,6 @@ exports.findRatingByOrderId = async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching Rating by Order ID:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };

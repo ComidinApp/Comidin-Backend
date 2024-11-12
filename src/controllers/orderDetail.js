@@ -7,7 +7,7 @@ exports.createOrderDetail = async (req, res) => {
     res.status(201).json(orderDetail);
   } catch (error) {
     console.error('Error creating OrderDetail:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -17,7 +17,7 @@ exports.findAllOrderDetails = async (req, res) => {
     res.status(200).json(orderDetails);
   } catch (error) {
     console.error('Error fetching OrderDetails:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -32,7 +32,7 @@ exports.findOrderDetailById = async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching OrderDetail by ID:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -49,7 +49,7 @@ exports.updateOrderDetail = async (req, res) => {
     }
   } catch (error) {
     console.error('Error updating OrderDetail:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -65,7 +65,7 @@ exports.deleteOrderDetail = async (req, res) => {
     }
   } catch (error) {
     console.error('Error deleting OrderDetail:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -80,7 +80,7 @@ exports.findOrderDetailsByOrderId = async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching OrderDetails by Order ID:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -95,6 +95,6 @@ exports.findOrderDetailsByPublicationId = async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching OrderDetails by Publication ID:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };

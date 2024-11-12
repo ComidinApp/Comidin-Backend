@@ -17,7 +17,7 @@ exports.createCommerce = async (req, res) => {
         res.status(201).json(commerce);
     } catch (error) {
         console.error('Error creating Commerce:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -27,7 +27,7 @@ exports.findAllCommerces = async (req, res) => {
         res.status(200).json(commerces);
     } catch (error) {
         console.error('Error fetching Commerces:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -41,7 +41,7 @@ exports.findCommerceById = async (req, res) => {
         res.status(200).json(commerce);
     } catch (error) {
         console.error('Error fetching Commerce by ID:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -57,7 +57,7 @@ exports.updateCommerce = async (req, res) => {
         res.status(200).json(commerce);
     } catch (error) {
         console.error('Error updating Commerce:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -91,7 +91,7 @@ exports.changeCommerceStatus = async (req, res) => {
         res.status(200).json(commerce);
     } catch (error) {
         console.error('Error updating Commerce:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -107,7 +107,7 @@ exports.activateCommerce = async (req, res) => {
         res.status(200).json(commerce);
     } catch (error) {
         console.error('Error updating Commerce:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -122,7 +122,7 @@ exports.deleteCommerce = async (req, res) => {
         res.status(200).json(commerce);
     } catch (error) {
         console.error('Error deleting Commerce:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -136,6 +136,6 @@ exports.findCommercesByCategoryId = async (req, res) => {
         res.status(200).json(commerces);
     } catch (error) {
         console.error('Error fetching Commerces by Category ID:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };

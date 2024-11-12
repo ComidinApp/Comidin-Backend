@@ -7,7 +7,7 @@ exports.createSubscription = async (req, res) => {
     res.status(201).json(subscription);
   } catch (error) {
     console.error('Error creating Subscription:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -17,7 +17,7 @@ exports.findAllSubscriptions = async (req, res) => {
     res.status(200).json(subscriptions);
   } catch (error) {
     console.error('Error fetching Subscriptions:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -32,7 +32,7 @@ exports.findSubscriptionById = async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching Subscription by ID:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -49,7 +49,7 @@ exports.updateSubscription = async (req, res) => {
     }
   } catch (error) {
     console.error('Error updating Subscription:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -65,7 +65,7 @@ exports.deleteSubscription = async (req, res) => {
     }
   } catch (error) {
     console.error('Error deleting Subscription:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -80,7 +80,7 @@ exports.findSubscriptionsByCommerceId = async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching Subscriptions by Commerce ID:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -95,6 +95,6 @@ exports.findSubscriptionsByPlanId = async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching Subscriptions by Plan ID:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };

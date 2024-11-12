@@ -1,12 +1,19 @@
 const Order = require('../models/order');
+const OrderDetail = require('../models/orderDetail');
 
 exports.createOrder = async (req, res) => {
     try {
-        const order = await Order.create(req.body);
+        const { details, ...orderData } = req.body;
+        const order = await Order.create(orderData);
+        const orderDetails = details.map((detail) => ({
+            ...detail,
+            order_id: order.id,
+        }));
+        await OrderDetail.bulkCreate(orderDetails);
         res.status(201).json(order);
     } catch (error) {
         console.error('Error creating Order:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -16,7 +23,7 @@ exports.findAllOrders = async (req, res) => {
         res.status(200).json(orders);
     } catch (error) {
         console.error('Error fetching Orders:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -30,7 +37,7 @@ exports.findOrderById = async (req, res) => {
         res.status(200).json(order);
     } catch (error) {
         console.error('Error fetching Order by ID:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -46,7 +53,7 @@ exports.updateOrder = async (req, res) => {
         res.status(200).json(order);
     } catch (error) {
         console.error('Error updating Order:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -61,7 +68,7 @@ exports.deleteOrder = async (req, res) => {
         res.status(200).json(order);
     } catch (error) {
         console.error('Error deleting Order:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -75,7 +82,7 @@ exports.findOrdersByUserId = async (req, res) => {
         res.status(200).json(orders);
     } catch (error) {
         console.error('Error fetching Orders by User ID:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -89,6 +96,6 @@ exports.findOrdersByCommerceId = async (req, res) => {
         res.status(200).json(orders);
     } catch (error) {
         console.error('Error fetching Orders by Commerce ID:', error);
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };

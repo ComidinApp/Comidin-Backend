@@ -6,7 +6,7 @@ exports.createProductCategory = async (req, res) => {
     res.status(201).json(productCategory);
   } catch (error) {
     console.error('Error creating ProductCategory:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -16,7 +16,7 @@ exports.findAllProductCategories = async (req, res) => {
     res.status(200).json(productCategories);
   } catch (error) {
     console.error('Error fetching ProductCategories:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -30,7 +30,7 @@ exports.findProductCategoryById = async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching ProductCategory:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -47,7 +47,7 @@ exports.updateProductCategory = async (req, res) => {
     }
   } catch (error) {
     console.error('Error updating ProductCategory:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -63,7 +63,7 @@ exports.deleteProductCategory = async (req, res) => {
     }
   } catch (error) {
     console.error('Error deleting ProductCategory:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -77,6 +77,6 @@ exports.findProductCategoriesByCommerceId = async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching ProductCategories by Commerce ID:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };

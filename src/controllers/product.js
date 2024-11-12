@@ -14,7 +14,7 @@ exports.createProduct = async (req, res) => {
     res.status(201).json(product);
   } catch (error) {
     console.error('Error creating Product:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -25,7 +25,7 @@ exports.findAllProducts = async (req, res) => {
     res.status(200).json(products);
   } catch (error) {
     console.error('Error fetching Products:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -39,7 +39,7 @@ exports.findProductById = async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching Product:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -65,7 +65,7 @@ exports.updateProduct = async (req, res) => {
     res.status(200).json(product);
   } catch (error) {
     console.error('Error updating Product:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -81,7 +81,7 @@ exports.deleteProduct = async (req, res) => {
     }
   } catch (error) {
     console.error('Error deleting Product:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -95,7 +95,7 @@ exports.findProductsByCommerceId = async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching Products by Commerce ID:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -109,6 +109,6 @@ exports.findProductsByCategoryId = async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching Products by Category ID:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };

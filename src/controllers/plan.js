@@ -6,7 +6,7 @@ exports.createPlan = async (req, res) => {
     res.status(201).json(plan);
   } catch (error) {
     console.error('Error creating Plan:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -16,7 +16,7 @@ exports.findAllPlans = async (req, res) => {
     res.status(200).json(plans);
   } catch (error) {
     console.error('Error fetching Plans:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -30,7 +30,7 @@ exports.findPlanById = async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching Plan:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -47,7 +47,7 @@ exports.updatePlan = async (req, res) => {
     }
   } catch (error) {
     console.error('Error updating Plan:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -63,6 +63,6 @@ exports.deletePlan = async (req, res) => {
     }
   } catch (error) {
     console.error('Error deleting Plan:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };

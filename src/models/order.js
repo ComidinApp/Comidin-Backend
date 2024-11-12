@@ -1,6 +1,7 @@
 const Sequelize = require('sequelize');
 const { sequelize } = require('../database'); // Import database connection
 const User = require('./user');
+const Address = require('./address');
 const Commerce = require('./commerce');
 const OrderDetail = require('./orderDetail');
 const Publication = require('./publication');
@@ -64,13 +65,41 @@ const Order = sequelize.define('order', {
 });
 
 Order.belongsTo(User, { foreignKey: 'user_id' });
+Order.belongsTo(Address, { foreignKey: 'address_id' });
 Order.belongsTo(Commerce, { foreignKey: 'commerce_id' });
 Order.hasMany(OrderDetail, { foreignKey: 'order_id' });
 
 Order.findOrdersByUserId = async function(userId) {
   try {
     const orders = await Order.findAll({
-      where: { user_id: userId }
+      where: { user_id: userId },
+      include: [
+        {
+          model: Address,
+          attributes: ['street_name','number','postal_code']
+        },
+        {
+          model: Commerce,
+          attributes: ['name']
+        },
+        {
+          model: OrderDetail,
+          attributes: ['publication_id', 'quantity', 'amount'],
+          include: [
+            {
+              model: Publication,
+              attributes: ['id','price','discounted_price'],
+              include: [
+                {
+                  model: Product,
+                  attributes: ['name', 'image_url']
+                }
+              ]
+            }
+          ]
+        }
+      ],
+      order: [['id', 'DESC']]
     });
 
     return orders;
@@ -98,7 +127,7 @@ Order.findAllOrders = async function() {
           include: [
             {
               model: Publication,
-              attributes: ['id','price'],
+              attributes: ['id','price','discounted_price'],
               include: [
                 {
                   model: Product,
@@ -108,7 +137,8 @@ Order.findAllOrders = async function() {
             }
           ]
         }
-      ]
+      ],
+      order: [['id', 'DESC']]
     });
 
     return orders;
@@ -137,7 +167,7 @@ Order.findOrdersByCommerceId = async function(commerceId) {
           include: [
             {
               model: Publication,
-              attributes: ['id','price'],
+              attributes: ['id','price','discounted_price'],
               include: [
                 {
                   model: Product,
@@ -147,7 +177,8 @@ Order.findOrdersByCommerceId = async function(commerceId) {
             }
           ]
         }
-      ]
+      ],
+      order: [['id', 'DESC']]
     });
 
     return orders;

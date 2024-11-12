@@ -8,7 +8,7 @@ exports.createUser = async (req, res) => {
     res.status(201).json(user);
   } catch (error) {
     console.error('Error creating User:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -18,7 +18,7 @@ exports.findAllUsers = async (req, res) => {
     res.status(200).json(users);
   } catch (error) {
     console.error('Error fetching Users:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -32,7 +32,7 @@ exports.findUserByEmail = async (req, res) => {
       res.status(200).json(user);
   } catch (error) {
       console.error('Error fetching user by email:', error);
-      res.status(500).json({ error: 'Internal Server Error' });
+      res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -47,7 +47,7 @@ exports.findUserById = async (req, res) => {
     }
   } catch (error) {
     console.error('Error fetching User by ID:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -64,7 +64,7 @@ exports.updateUser = async (req, res) => {
     }
   } catch (error) {
     console.error('Error updating User:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
@@ -82,6 +82,6 @@ exports.deleteUser = async (req, res) => {
     }
   } catch (error) {
     console.error('Error deleting User:', error);
-    res.status(500).json({ error: 'Internal Server Error' });
+    res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };

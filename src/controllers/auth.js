@@ -25,7 +25,7 @@ exports.sendEmployeeVerificationCode = async (req, res) => {
         res.status(200).json();
     } catch (error) {
         console.log(error)
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
 
@@ -72,6 +72,6 @@ exports.changeEmployeePassword = async (req, res) => {
         
     } catch (error) {
         console.log(error)
-        res.status(500).json({ error: 'Internal Server Error' });
+        res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };
