@@ -30,7 +30,7 @@ exports.findAllOrders = async (req, res) => {
 exports.findOrderById = async (req, res) => {
     try {
         const { id } = req.params;
-        const order = await Order.findByPk(id);
+        const order = await Order.findOrderById(id);
         if (!order) {
             return res.status(404).json({ error: 'Order not found with id: ' + id });
         }

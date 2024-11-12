@@ -155,7 +155,7 @@ Order.findOrdersByCommerceId = async function(commerceId) {
       include: [
         {
           model: User,
-          attributes: ['name']
+          attributes: ['first_name','last_name','email','phone_number']
         },
         {
           model: Commerce,
@@ -184,6 +184,48 @@ Order.findOrdersByCommerceId = async function(commerceId) {
     return orders;
   } catch (error) {
     console.error('Error finding Orders:', error);
+    throw error;
+  }
+};
+
+Order.findOrderById = async function(id) {
+  try {
+    const order = await Order.findByPk(id,{
+      include: [
+        {
+          model: Address,
+          attributes: ['street_name','number','postal_code']
+        },
+        {
+          model: User,
+          attributes: ['first_name','last_name','email','phone_number']
+        },
+        {
+          model: Commerce,
+          attributes: ['name']
+        },
+        {
+          model: OrderDetail,
+          attributes: ['publication_id', 'quantity', 'amount'],
+          include: [
+            {
+              model: Publication,
+              attributes: ['id','price','discounted_price'],
+              include: [
+                {
+                  model: Product,
+                  attributes: ['name', 'image_url']
+                }
+              ]
+            }
+          ]
+        }
+      ],
+    });
+
+    return order;
+  } catch (error) {
+    console.error('Error finding order with Role and Commerce:', error);
     throw error;
   }
 };
