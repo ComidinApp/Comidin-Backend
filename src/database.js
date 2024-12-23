@@ -1,8 +1,12 @@
 const { Sequelize } = require('sequelize');
+const host = process.env.MYSQLDB_HOST;
+const user = process.env.MYSQLDB_USER;
+const pass = process.env.MYSQLDB_PASSWORD;
+const database = process.env.MYSQLDB_DATABASE;
 
 //Sacar esto que esta hardcodeado ajio
-const sequelize = new Sequelize('fazt_db', 'fazt', '123456', {
-    host: 'mysqldb',
+const sequelize = new Sequelize(database, user, pass, {
+    host: host,
     dialect: 'mysql',
 });
 
