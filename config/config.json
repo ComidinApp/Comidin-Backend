@@ -1,9 +1,9 @@
 {
   "development": {
-    "username": "fazt",
-    "password": "123456",
-    "database": "fazt_db",
-    "host": "mysqldb",
+    "username": "freedb_comidin_team",
+    "password": "hqCjEQj#Vab%9hp",
+    "database": "freedb_comidin_db",
+    "host": "sql.freedb.tech",
     "dialect": "mysql"
   },
   "test": {
