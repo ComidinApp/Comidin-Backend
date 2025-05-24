@@ -32,6 +32,10 @@ exports.sendEmployeeVerificationCode = async (req, res) => {
 exports.changeEmployeePassword = async (req, res) => {
     try {
         const { email, newPassword, code } = req.body;
+        if (!email || !newPassword || !code) {
+            return res.status(400).json({ message: 'Faltan parámetros requeridos.' });
+        }
+
         const employee = await Employee.findEmployeeByEmail(email);
         if (!employee) {
             return res.status(404).json({ message: 'No employees found for this email.' });
@@ -45,13 +49,13 @@ exports.changeEmployeePassword = async (req, res) => {
         const listUsersCommand = new ListUsersCommand(listParams);
         const user = await client.send(listUsersCommand);
 
-        if (user.Users.length === 0) {
+        if (!user.Users || user.Users.length === 0) {
             return res.status(404).json({ message: 'User not found in Cognito' });
         }
 
         const cognitoUsername = user.Users[0].Username;
 
-        if (employee.verification_code == code.toString()) {
+        if (String(employee.verification_code) === String(code)) {
             const params = {
                 UserPoolId: process.env.COGNITO_EMPLOYEE_POOL_ID,
                 Username: cognitoUsername,
@@ -62,16 +66,15 @@ exports.changeEmployeePassword = async (req, res) => {
             const command = new AdminSetUserPasswordCommand(params);
             await client.send(command);
 
-            employee.password = newPassword;
             employee.verification_code = null;
             await employee.save();
-            res.status(200).json();
+            res.status(200).json({ message: 'Contraseña cambiada correctamente.' });
         } else {
             res.status(409).json({ error: 'Codigo no valido' });
         }
         
     } catch (error) {
         console.log(error)
-        res.status(409).json({ error: 'Conflict', meesage: error });
+        res.status(409).json({ error: 'Conflict', message: error.message || error });
     }
 };
