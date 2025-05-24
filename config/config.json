@@ -14,10 +14,10 @@
     "dialect": "mysql"
   },
   "production": {
-    "username": "admin",
-    "password": "0OFBqCJBWVe8a7u1wksx",
-    "database": "database-comidin",
-    "host": "database-comidin.c3aecigyw0ii.us-east-1.rds.amazonaws.com",
+    "username": "freedb_comidin_team",
+    "password": "hqCjEQj#Vab%9hp",
+    "database": "freedb_comidin_db",
+    "host": "sql.freedb.tech",
     "dialect": "mysql"
   }
 }

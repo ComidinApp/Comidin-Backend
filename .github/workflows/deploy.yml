@@ -30,4 +30,4 @@ jobs:
           sudo docker rm comidin-backend || true
 
           echo "Starting new container..."
-          sudo docker run -d --name comidin-backend -p 3000:3000 comidin-backend:latest
+          sudo docker run -d --name comidin-backend -p 3000:3000 --log-driver=awslogs --log-opt awslogs-region=us-east-1 --log-opt awslogs-group=/comidin/backend --log-opt awslogs-stream=comidin-backend-{{.ID}} comidin-backend:latest
