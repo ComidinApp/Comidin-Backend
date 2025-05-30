@@ -52,20 +52,76 @@ exports.findEmployeeByEmail = async (req, res) => {
     }
 };
 
-exports.updateEmployee = async (req, res) => {
+exports.changeEmployeePassword = async (req, res) => {
     try {
-        const { body } = req;
-        const { id } = req.params;
-        const employee = await Employee.findByPk(id);
-        if (!employee) {
-            return res.status(404).json({ error: 'Employee not found with id: ' + id });
+        const { email, newPassword, code } = req.body;
+
+        // Validación de parámetros (corregido el uso de los signos de admiración)
+        if (!email || !newPassword || !code) {
+            return res.status(400).json({ message: 'Faltan parámetros requeridos.' });
         }
-        await employee.update(body);
-        res.status(200).json(employee);
+
+        const employee = await Employee.findEmployeeByEmail(email);
+        if (!employee) {
+            return res.status(404).json({ message: 'No se encontró ningún empleado con ese email.' });
+        }
+
+        // Corregida interpolación del filtro
+        const listParams = {
+            UserPoolId: process.env.COGNITO_EMPLOYEE_POOL_ID,
+            Filter: `email = "${email}"`,
+        };
+
+        const listUsersCommand = new ListUsersCommand(listParams);
+        const user = await client.send(listUsersCommand);
+
+        // Corregida condición
+        if (!user.Users || user.Users.length === 0) {
+            return res.status(404).json({ message: 'Usuario no encontrado en Cognito.' });
+        }
+
+        const cognitoUsername = user.Users[0].Username;
+
+        if (String(employee.verification_code) === String(code)) {
+            const params = {
+                UserPoolId: process.env.COGNITO_EMPLOYEE_POOL_ID,
+                Username: cognitoUsername,
+                Password: newPassword,
+                Permanent: true,
+            };
+
+            const command = new AdminSetUserPasswordCommand(params);
+            await client.send(command);
+
+            employee.verification_code = null;
+            await employee.save();
+
+            res.status(200).json({ message: 'Contraseña cambiada correctamente.' });
+        } else {
+            res.status(409).json({ error: 'Código no válido.' });
+        }
+
     } catch (error) {
-        console.error('Error updating Employee:', error);
-        res.status(409).json({ error: 'Conflict', meesage: error });
+        console.error('Error al cambiar contraseña:', error);
+        res.status(409).json({ error: 'Conflict', message: error.message });
     }
+};
+
+exports.updateEmployee = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const employee = await Employee.findByPk(id);
+
+    if (!employee) {
+      return res.status(404).json({ error: 'Employee not found with id: ' + id });
+    }
+
+    await employee.update(req.body);
+    res.status(200).json(employee);
+  } catch (error) {
+    console.error('Error updating Employee:', error);
+    res.status(409).json({ error: 'Conflict', message: error.message });
+  }
 };
 
 exports.deleteEmployee = async (req, res) => {
