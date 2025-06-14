@@ -50,7 +50,7 @@ app.use(cors({
 
 connectDatabase();
 
-app.get('/', (req, res) => {res.send('Hello World!');});  
+app.get('/', (req, res) => {res.send('Hello World!!');});  
 app.use('/address', addressRouter);
 app.use('/commerce', commerceRouter);
 app.use('/commerceCategory', commerceCategoryRouter);
