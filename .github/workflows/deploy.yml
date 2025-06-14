@@ -19,7 +19,7 @@ jobs:
         key: ${{ secrets.EC2_SSH_KEY }}
         port: 22
         script: |
-          cd /home/ec2-user/Comidin-backend
+          cd /home/ec2-user/Comidin-Backend
           git pull origin main
 
           echo "Building new Docker image..."
