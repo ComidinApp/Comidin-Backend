@@ -2,7 +2,7 @@
   "name": "comidin-backend",
   "version": "1.0.0",
   "description": "Comidin API backend that powers the interactions between the mobile and the backoffices for merchants and administrators",
-  "main": "index.js",
+  "main": "main.js",
   "scripts": {
     "dev": "concurrently \"nodemon --legacy-watch --watch ./ src/app.js\" \"bash -c 'sleep 50 && sequelize-cli db:seed:all'\""
   },
