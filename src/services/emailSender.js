@@ -16,7 +16,7 @@ exports.sendVerificationCode = async (employee,verificationCode) => {
       };
       await sgMail.send(msg);
   } catch (error) {
-    console.error('Error deleting Product:', error);
+    console.error('Error al enviar codigo de verificacion:', error);
   }
 };
 
@@ -32,7 +32,7 @@ exports.sendCommerceWelcome = async (commerce) => {
       };
       await sgMail.send(msg);
   } catch (error) {
-    console.error('Error deleting Product:', error);
+    console.error('Error al enviar mensaje de bienvenida:', error);
   }
 };
 
@@ -49,7 +49,7 @@ exports.sendEmployeeWelcome = async (employee) => {
       };
       await sgMail.send(msg);
   } catch (error) {
-    console.error('Error deleting Product:', error);
+    console.error('Error al enviar mensaje de bienvenida:', error);
   }
 };
 
@@ -65,7 +65,7 @@ exports.sendAdmittedNoticeCommerce = async (adminEmployee) => {
       };
       await sgMail.send(msg);
   } catch (error) {
-    console.error('Error deleting Product:', error);
+    console.error('Error al enviar mensaje de admicion a comercio:', error);
   }
 };
 
@@ -82,6 +82,6 @@ exports.sendRejectedNoticeCommerce = async (adminEmployee) => {
       };
       await sgMail.send(msg);
   } catch (error) {
-    console.error('Error deleting Product:', error);
+    console.error('Error al enviar mensaje de rechazo al comercio:', error);
   }
 };

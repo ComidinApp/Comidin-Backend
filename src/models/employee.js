@@ -212,7 +212,7 @@ Employee.findEmployeeByEmail = async function(email) {
     const employees = await Employee.findOne({
       where: { email: email },
       include:{model: Role,attributes: ['name','id'], model: Commerce,attributes: ['name','status','id']},
-      attributes: ['id', 'role_id','first_name', 'last_name', 'email', 'avatar_url','status']
+      attributes: ['id', 'role_id','first_name', 'last_name', 'email', 'avatar_url','status', 'verification_code']
     });
 
     return employees;
