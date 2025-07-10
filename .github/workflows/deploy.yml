@@ -22,12 +22,8 @@ jobs:
           cd /home/ec2-user/Comidin-Backend
           git pull origin main
 
-          echo "Building new Docker image..."
-          sudo docker build -t comidin-backend:latest .
+          echo "Stopping and removing old containers..."
+          sudo docker-compose down
 
-          echo "Stopping and removing old container..."
-          sudo docker stop comidin-backend || true
-          sudo docker rm comidin-backend || true
-
-          echo "Starting new container..."
-          sudo docker run -d --name comidin-backend -p 3000:3000 --log-driver=awslogs --log-opt awslogs-region=us-east-1 --log-opt awslogs-group=/comidin/backend --log-opt awslogs-stream=comidin-backend-{{.ID}} comidin-backend:latest
+          echo "Building and starting containers with Docker Compose..."
+          sudo docker-compose up -d --build

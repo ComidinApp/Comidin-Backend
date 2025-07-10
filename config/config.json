@@ -1,9 +1,9 @@
 {
   "development": {
-    "username": "freedb_comidin_team",
-    "password": "hqCjEQj#Vab%9hp",
-    "database": "freedb_comidin_db",
-    "host": "sql.freedb.tech",
+    "username": "comidinteamfftj",
+    "password": "comidinteamfftj322",
+    "database": "comidin_db",
+    "host": "mysqldb",
     "dialect": "mysql"
   },
   "test": {
@@ -14,10 +14,10 @@
     "dialect": "mysql"
   },
   "production": {
-    "username": "freedb_comidin_team",
-    "password": "hqCjEQj#Vab%9hp",
-    "database": "freedb_comidin_db",
-    "host": "sql.freedb.tech",
+    "username": "comidinteamfftj",
+    "password": "comidinteamfftj322",
+    "database": "comidin_db",
+    "host": "mysqldb",
     "dialect": "mysql"
   }
 }
