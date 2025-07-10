@@ -23,7 +23,7 @@ jobs:
           git pull origin main
 
           echo "Stopping and removing old containers..."
-          sudo docker-compose down
+          sudo docker compose down
 
           echo "Building and starting containers with Docker Compose..."
-          sudo docker-compose up -d --build
+          sudo docker compose up -d --build
