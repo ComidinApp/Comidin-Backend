@@ -22,6 +22,18 @@ jobs:
           cd /home/ec2-user/Comidin-Backend
           git pull origin main
 
+          echo "Generating .env from SSM parameters under /comidin-back/"
+          aws ssm get-parameters-by-path \
+            --path "/comidin-back/" \
+            --with-decryption \
+            --recursive \
+            --region sa-east-1 \
+            --query "Parameters[*].[Name,Value]" \
+            --output text | while read name value; do
+              key=$(basename "$name")
+              echo "$key=$value" >> .env
+          done
+
           echo "Cleanup Docker system..."
           sudo docker system prune -a --volumes -f
 
