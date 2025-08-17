@@ -27,10 +27,6 @@ router.get('/',
   Subscription.findAllSubscriptions
 );
 
-router.get('/:id', 
-  Subscription.findSubscriptionById
-);
-
 router.put('/:id', 
   updateSubscriptionValidation, 
   validate, 
@@ -53,4 +49,9 @@ router.get('/commerce/:commerceId',
   Subscription.findSubscriptionsByCommerceId
 );
 
+router.get('/:id', 
+  Subscription.findSubscriptionById
+);
+
 module.exports = router;
+

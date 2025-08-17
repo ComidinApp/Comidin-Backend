@@ -1,100 +1,67 @@
+const mercadopago = require('mercadopago');
 const Subscription = require('../models/subscription');
+const mercadopago = require('mercadopago');
 
+// Configuración con token de prueba (sandbox)
+mercadopago.configure({
+  access_token: process.env.MP_ACCESS_TOKEN || 'TEST-420657664234961-081519-ad8b4d93df5c34207d2ab2930bf7d170-293639184'
+});
+
+// Crear suscripción recurrente (preapproval)
 exports.createSubscription = async (req, res) => {
   try {
-    const { body } = req;
-    const subscription = await Subscription.create(body); // Uso de create en lugar de instanciar manualmente
-    res.status(201).json(subscription);
+    const { plan_id, commerce_id } = req.body;
+
+    // Solo Estándar (2) y Premium (3)
+    const PLAN_PRICES = {
+      2: 5999,   // Estándar
+      3: 13999   // Premium
+    };
+
+    if (![2, 3].includes(plan_id)) {
+      return res.status(400).json({ error: 'Plan inválido. Solo Estándar o Premium.' });
+    }
+
+    const preapprovalData = {
+      reason: plan_id === 2 ? 'Suscripción Estándar' : 'Suscripción Premium',
+      auto_recurring: {
+        frequency: 1,               // cada 1
+        frequency_type: 'months',   // mes
+        transaction_amount: PLAN_PRICES[plan_id],
+        currency_id: 'ARS',
+        start_date: new Date().toISOString(),
+        end_date: new Date(new Date().setFullYear(new Date().getFullYear() + 1)).toISOString() // 12 meses
+      },
+      back_url: 'http://localhost:3000/success',
+      payer_email: 'test_user_365215538@testuser.com' // usar usuario de prueba de 
+    };
+
+    const mpResponse = await mercadopago.preapproval.create(preapprovalData);
+
+    res.status(201).json({
+      subscription_url: mpResponse.body.init_point, // link a enviar al front
+      subscription_id: mpResponse.body.id,
+      plan: plan_id === 2 ? 'Estándar' : 'Premium',
+      commerce_id,
+      start: preapprovalData.auto_recurring.start_date,
+      end: preapprovalData.auto_recurring.end_date
+    });
+
   } catch (error) {
-    console.error('Error creating Subscription:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
+    console.error('Error creando suscripción:', error);
+    res.status(500).json({ error: 'No se pudo crear la suscripción', message: error.message });
   }
 };
 
-exports.findAllSubscriptions = async (req, res) => {
-  try {
-    const subscriptions = await Subscription.findAll();
-    res.status(200).json(subscriptions);
-  } catch (error) {
-    console.error('Error fetching Subscriptions:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
-  }
-};
-
-exports.findSubscriptionById = async (req, res) => {
+// (Opcional) Consultar estado de suscripción por ID
+exports.getSubscriptionStatus = async (req, res) => {
   try {
     const { id } = req.params;
-    const subscription = await Subscription.findByPk(id);
-    if (subscription) {
-      res.status(200).json(subscription);
-    } else {
-      res.status(404).json({ error: `Subscription not found with id: ${id}` });
-    }
+    const mpResponse = await mercadopago.preapproval.findById(id);
+    res.status(200).json(mpResponse.body);
   } catch (error) {
-    console.error('Error fetching Subscription by ID:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
+    console.error('Error obteniendo suscripción:', error);
+    res.status(500).json({ error: 'No se pudo obtener la suscripción', message: error.message });
   }
 };
 
-exports.updateSubscription = async (req, res) => {
-  try {
-    const { body } = req;
-    const { id } = req.params;
-    const subscription = await Subscription.findByPk(id);
-    if (subscription) {
-      await subscription.update(body);
-      res.status(200).json(subscription);
-    } else {
-      res.status(404).json({ error: `Subscription not found with id: ${id}` });
-    }
-  } catch (error) {
-    console.error('Error updating Subscription:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
-  }
-};
-
-exports.deleteSubscription = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const subscription = await Subscription.findByPk(id);
-    if (subscription) {
-      await subscription.destroy();
-      res.status(200).json({ message: 'Subscription successfully deleted' });
-    } else {
-      res.status(404).json({ error: `Subscription not found with id: ${id}` });
-    }
-  } catch (error) {
-    console.error('Error deleting Subscription:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
-  }
-};
-
-exports.findSubscriptionsByCommerceId = async (req, res) => {
-  try {
-    const { commerceId } = req.params;
-    const subscriptions = await Subscription.findSubscriptionsByCommerceId(commerceId);
-    if (subscriptions && subscriptions.length > 0) {
-      res.status(200).json(subscriptions);
-    } else {
-      res.status(404).json({ message: 'No subscriptions found for this commerce.' });
-    }
-  } catch (error) {
-    console.error('Error fetching Subscriptions by Commerce ID:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
-  }
-};
-
-exports.findSubscriptionsByPlanId = async (req, res) => {
-  try {
-    const { planId } = req.params;
-    const subscriptions = await Subscription.findSubscriptionsByPlanId(planId);
-    if (subscriptions && subscriptions.length > 0) {
-      res.status(200).json(subscriptions);
-    } else {
-      res.status(404).json({ message: 'No subscriptions found for this plan.' });
-    }
-  } catch (error) {
-    console.error('Error fetching Subscriptions by Plan ID:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
-  }
-};
