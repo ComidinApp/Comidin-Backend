@@ -49,6 +49,24 @@ const subscriptionRouter = require('./routes/subscription'); // ← tiene /crear
 const userRouter = require('./routes/user');
 const authRouter = require('./routes/auth');
 
+
+const { normalizeBody, createSubscription } = require('./controllers/subscription');
+const { createSubscriptionValidation } = require('./validators/subscriptionValidation');
+const { validationResult } = require('express-validator');
+const validateInline = (req, res, next) => {
+  const errors = validationResult(req);
+  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
+  next();
+};
+
+
+app.post(
+  '/crear',
+  normalizeBody,
+  createSubscriptionValidation,
+  validateInline,
+  createSubscription
+);
 // ---- Rutas base / health ----
 app.get('/', (_req, res) => res.send('OK'));
 app.get('/health', (_req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
@@ -68,9 +86,17 @@ app.use('/publication', publicationRouter);
 app.use('/rating', ratingRouter);
 app.use('/role', roleRouter);
 
-// ✅ NUEVO: ruta plural y alias singular (para compatibilidad)
-app.use('/subscriptions', subscriptionRouter); // /subscriptions/crear (lo que usa tu front)
+// (para compatibilidad)
+app.use('/subscriptions', subscriptionRouter); //(lo que usa el front)
 app.use('/subscription', subscriptionRouter);  // alias opcional
+
+app.post(
+  '/crear',
+  normalizeBody,
+  createSubscriptionValidation,
+  validateInline,
+  createSubscription
+);
 
 app.use('/user', userRouter);
 app.use('/auth', authRouter);
@@ -90,7 +116,7 @@ app.use((err, _req, res, _next) => {
 // ---- Init DB y Start ----
 const init = async () => {
   try {
-    await sequelize.sync(); // si no querés sincronizar en prod, podés condicionar por NODE_ENV
+    await sequelize.sync(); 
     console.log('Database synchronized');
   } catch (error) {
     console.error('Error synchronizing the database:', error);
