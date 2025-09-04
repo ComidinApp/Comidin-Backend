@@ -1,8 +1,8 @@
-
 const Sequelize = require('sequelize');
 const { sequelize } = require('../database'); // Import database connection
 const Role = require('./role');
 const Commerce = require('./commerce');
+const Subscription = require('./subscription');
 
 const Employee = sequelize.define('employee', {
     id: {
@@ -98,6 +98,7 @@ const Employee = sequelize.define('employee', {
 
 Employee.belongsTo(Role, { foreignKey: 'role_id' });
 Employee.belongsTo(Commerce, { foreignKey: 'commerce_id' });
+Employee.hasMany(Subscription, { foreignKey: 'commerce_id', sourceKey: 'commerce_id' });
 
 Employee.findAllEmployees = async function() {
   try {
@@ -211,8 +212,25 @@ Employee.findEmployeeByEmail = async function(email) {
   try {
     const employees = await Employee.findOne({
       where: { email: email },
-      include:{model: Role,attributes: ['name','id'], model: Commerce,attributes: ['name','status','id']},
-      attributes: ['id', 'role_id','first_name', 'last_name', 'email', 'avatar_url','status', 'verification_code']
+      include: [
+        {
+          model: Role,
+          attributes: ['name', 'id']
+        },
+        {
+          model: Commerce,
+          attributes: ['name', 'status', 'id']
+        },
+        {
+          model: Subscription,
+          attributes: ['id', 'plan_id'],
+          include: {
+            model: sequelize.models.plan,
+            attributes: ['name']
+          }
+        }
+      ],
+      attributes: ['id', 'role_id', 'first_name', 'last_name', 'email', 'avatar_url', 'status', 'verification_code']
     });
 
     return employees;

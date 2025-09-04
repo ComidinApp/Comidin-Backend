@@ -1,6 +1,6 @@
-
 const Sequelize = require('sequelize');
 const { sequelize } = require('../database'); // Import database connection
+const Plan = require('./plan');
 
 const Subscription = sequelize.define('subscription', {
     id: {
@@ -35,6 +35,7 @@ const Subscription = sequelize.define('subscription', {
     freezeTableName: true
 });
 
+Subscription.belongsTo(Plan, { foreignKey: 'plan_id' });
 
 Subscription.findSubscriptionsByPlanId = async function(planId) {
   try {
