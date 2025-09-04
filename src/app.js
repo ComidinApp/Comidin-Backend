@@ -1,10 +1,37 @@
+// app.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
 const { connectDatabase, sequelize } = require('./database');
+
 const app = express();
-const PORT = 3000;
-//Routers
+
+// ---- Configuración por entorno ----
+const PORT = process.env.PORT || 3000;
+const ALLOWED_ORIGINS = (process.env.CORS_ORIGIN || 'http://localhost:5173,https://comidin.com.ar')
+  .split(',')
+  .map(s => s.trim());
+
+// ---- Middlewares ----
+app.use(express.json());
+
+// CORS: permite front local y prod (ajustable por env)
+app.use(cors({
+  origin(origin, callback) {
+    // Permitir requests sin origin (p. ej. curl, health checks)
+    if (!origin) return callback(null, true);
+    if (ALLOWED_ORIGINS.includes(origin)) return callback(null, true);
+    return callback(new Error(`Not allowed by CORS: ${origin}`));
+  },
+  credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS', 'HEAD'],
+  allowedHeaders: ['Content-Type', 'Authorization'],
+}));
+
+// ---- DB ----
+connectDatabase();
+
+// ---- Routers ----
 const addressRouter = require('./routes/address');
 const commerceRouter = require('./routes/commerce');
 const commerceCategoryRouter = require('./routes/commerceCategory');
@@ -18,39 +45,15 @@ const productCategoryRouter = require('./routes/productCategory');
 const publicationRouter = require('./routes/publication');
 const ratingRouter = require('./routes/rating');
 const roleRouter = require('./routes/role');
-const subscriptionRouter = require('./routes/subscription');
+const subscriptionRouter = require('./routes/subscription'); // ← tiene /crear
 const userRouter = require('./routes/user');
 const authRouter = require('./routes/auth');
-//Models
-const Address = require('./models/address');
-const Commerce = require('./models/commerce');
-const CommerceCategory = require('./models/commerceCategory');
-const CustomerComplain = require('./models/customerComplain');
-const Employee = require('./models/employee');
-const Order = require('./models/order');
-const OrderDetail = require('./models/orderDetail');
-const Plan = require('./models/plan');
-const Product = require('./models/product');
-const ProductCategory = require('./models/productCategory');
-const Publication = require('./models/publication');
-const Rating = require('./models/rating');
-const Role = require('./models/role');
-const Subscription = require('./models/subscription');
-const User = require('./models/user');
 
+// ---- Rutas base / health ----
+app.get('/', (_req, res) => res.send('OK'));
+app.get('/health', (_req, res) => res.json({ status: 'ok', time: new Date().toISOString() }));
 
-app.use(express.json());
-
-app.use(cors({
-    origin: '*', // Replace in other environments jiji
-    methods: 'GET, POST, PUT, DELETE',
-    credentials: false,
-    allowedHeaders: ['Content-Type', 'Authorization'],
-}));
-
-connectDatabase();
-
-app.get('/', (req, res) => {res.send('Hello World!!!');});  
+// ---- Montaje de rutas ----
 app.use('/address', addressRouter);
 app.use('/commerce', commerceRouter);
 app.use('/commerceCategory', commerceCategoryRouter);
@@ -64,21 +67,38 @@ app.use('/productCategory', productCategoryRouter);
 app.use('/publication', publicationRouter);
 app.use('/rating', ratingRouter);
 app.use('/role', roleRouter);
-app.use('/subscription', subscriptionRouter);
+
+// ✅ NUEVO: ruta plural y alias singular (para compatibilidad)
+app.use('/subscriptions', subscriptionRouter); // /subscriptions/crear (lo que usa tu front)
+app.use('/subscription', subscriptionRouter);  // alias opcional
+
 app.use('/user', userRouter);
 app.use('/auth', authRouter);
 
+// ---- 404 handler ----
+app.use((req, res, next) => {
+  if (res.headersSent) return next();
+  res.status(404).json({ error: 'Not Found', path: req.originalUrl });
+});
+
+// ---- Error handler ----
+app.use((err, _req, res, _next) => {
+  console.error('[ERROR]', err);
+  res.status(500).json({ error: 'Internal Server Error', message: err?.message });
+});
+
+// ---- Init DB y Start ----
 const init = async () => {
-    try {
-        await sequelize.sync();
-        console.log('Database synchronized');
-    } catch (error) {
-        console.error('Error synchronizing the database:', error);
-    }
+  try {
+    await sequelize.sync(); // si no querés sincronizar en prod, podés condicionar por NODE_ENV
+    console.log('Database synchronized');
+  } catch (error) {
+    console.error('Error synchronizing the database:', error);
+  }
 };
 
 init();
 
 app.listen(PORT, '0.0.0.0', () => {
-  console.log(`Server is running on http://0.0.0.0:${PORT}`);
+  console.log(`API listening on http://0.0.0.0:${PORT}`);
 });
