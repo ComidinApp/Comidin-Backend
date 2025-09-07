@@ -1,24 +1,21 @@
 
 const mercadopago = require('mercadopago');
 
-
 mercadopago.configure({
   access_token: process.env.MP_ACCESS_TOKEN,
 });
 
-// Mapa de planes
 const PLAN_PRICES = {
   2: 5999,   // Estándar
   3: 13999,  // Premium
 };
-
 
 function getMpBody(res) {
   return res?.body ?? res?.response ?? res;
 }
 
 
- function normalizeBody(req, _res, next) {
+function normalizeBody(req, _res, next) {
   const b = req.body || {};
   if (b.planId != null && req.body.plan_id == null) req.body.plan_id = b.planId;
   if (b.commerceId != null && req.body.commerce_id == null) req.body.commerce_id = b.commerceId;
@@ -26,11 +23,9 @@ function getMpBody(res) {
   if (req.body.plan_id != null) req.body.plan_id = Number(req.body.plan_id);
   if (req.body.commerce_id != null) req.body.commerce_id = Number(req.body.commerce_id);
   return next();
- }
-
-
-
+}
 exports.normalizeBody = normalizeBody;
+
 
 exports.createSubscription = async (req, res) => {
   try {
@@ -47,34 +42,60 @@ exports.createSubscription = async (req, res) => {
     }
 
     const reason = Number(plan_id) === 2 ? 'Suscripción Estándar' : 'Suscripción Premium';
+    const back_url = process.env.FRONTEND_URL || 'http://localhost:5173';
+    const external_reference = `commerce-${commerce_id}-${Date.now()}`;
 
-    const preapprovalData = {
-      reason,
-      payer_email,
-      auto_recurring: {
-        frequency: 1,
-        frequency_type: 'months',
-        transaction_amount: PLAN_PRICES[plan_id],
-        currency_id: 'ARS',
-        
-      },
-      back_url: process.env.FRONTEND_URL || 'http://localhost:5173', 
-      
-      external_reference: `commerce-${commerce_id}-${Date.now()}`,
+
+    const planIdMap = {
+      2: process.env.MP_PLAN_STD,   // Estándar
+      3: process.env.MP_PLAN_PREM,  // Premium
     };
+    const preapprovalPlanId = planIdMap[Number(plan_id)];
 
-    const mpRes = await mercadopago.preapproval.create(preapprovalData);
+    let mpRes;
+
+    if (preapprovalPlanId) {
+  
+      mpRes = await mercadopago.preapproval.create({
+        preapproval_plan_id: preapprovalPlanId,
+        payer_email,
+        back_url,
+        reason,
+        external_reference,
+ 
+      });
+    } else {
+
+      mpRes = await mercadopago.preapproval.create({
+        reason,
+        payer_email,
+        auto_recurring: {
+          frequency: 1,
+          frequency_type: 'months',
+          transaction_amount: PLAN_PRICES[plan_id],
+          currency_id: 'ARS',
+        },
+        back_url,
+        external_reference,
+      });
+    }
+
     const body = getMpBody(mpRes);
 
-    const link = body?.init_point || body?.sandbox_init_point || null;
+    const link =
+      body?.init_point ||
+      body?.sandbox_init_point ||
+      body?.redirect_url ||
+      null;
 
     return res.status(201).json({
-      link,                    
+      link,                                 
       id: body?.id || null,
-      plan: plan_id === 2 ? 'Estándar' : 'Premium',
+      status: body?.status || null,          
+      plan: Number(plan_id) === 2 ? 'Estándar' : 'Premium',
       commerce_id,
       next_payment_date: body?.auto_recurring?.next_payment_date || null,
-      external_reference: body?.external_reference || preapprovalData.external_reference,
+      external_reference: body?.external_reference || external_reference,
       raw: process.env.NODE_ENV === 'production' ? undefined : body,
     });
   } catch (error) {
@@ -85,7 +106,6 @@ exports.createSubscription = async (req, res) => {
     });
   }
 };
-
 
 exports.getSubscriptionStatus = async (req, res) => {
   try {
