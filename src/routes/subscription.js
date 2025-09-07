@@ -19,28 +19,43 @@ const validate = (req, res, next) => {
   next();
 };
 
-// 👇 Normaliza camelCase → snake_case ANTES de validar
-router.post('/crear',
+router.post(
+  '/',
   Subscription.normalizeBody,
   createSubscriptionValidation,
   validate,
   Subscription.createSubscription
 );
 
-// Ruta “REST” original (también sirve)
-router.post('/',
-  Subscription.normalizeBody,
-  createSubscriptionValidation,
-  validate,
-  Subscription.createSubscription
+router.get(
+  '/',
+  Subscription.findAllSubscriptions?.bind?.(Subscription) || ((_, res) => res.sendStatus(501))
 );
-
-// Consultas varias (dejar si ya las tenías implementadas)
-router.get('/', Subscription.findAllSubscriptions?.bind?.(Subscription) || ((_, res)=>res.sendStatus(501)));
-router.put('/:id', updateSubscriptionValidation, validate, Subscription.updateSubscription?.bind?.(Subscription) || ((_, res)=>res.sendStatus(501)));
-router.delete('/:id', Subscription.deleteSubscription?.bind?.(Subscription) || ((_, res)=>res.sendStatus(501)));
-router.get('/plan/:planId', planIdValidation, validate, Subscription.findSubscriptionsByPlanId?.bind?.(Subscription) || ((_, res)=>res.sendStatus(501)));
-router.get('/commerce/:commerceId', commerceIdValidation, validate, Subscription.findSubscriptionsByCommerceId?.bind?.(Subscription) || ((_, res)=>res.sendStatus(501)));
-router.get('/:id', Subscription.findSubscriptionById?.bind?.(Subscription) || Subscription.getSubscriptionStatus);
+router.put(
+  '/:id',
+  updateSubscriptionValidation,
+  validate,
+  Subscription.updateSubscription?.bind?.(Subscription) || ((_, res) => res.sendStatus(501))
+);
+router.delete(
+  '/:id',
+  Subscription.deleteSubscription?.bind?.(Subscription) || ((_, res) => res.sendStatus(501))
+);
+router.get(
+  '/plan/:planId',
+  planIdValidation,
+  validate,
+  Subscription.findSubscriptionsByPlanId?.bind?.(Subscription) || ((_, res) => res.sendStatus(501))
+);
+router.get(
+  '/commerce/:commerceId',
+  commerceIdValidation,
+  validate,
+  Subscription.findSubscriptionsByCommerceId?.bind?.(Subscription) || ((_, res) => res.sendStatus(501))
+);
+router.get(
+  '/:id',
+  Subscription.findSubscriptionById?.bind?.(Subscription) || Subscription.getSubscriptionStatus
+);
 
 module.exports = router;

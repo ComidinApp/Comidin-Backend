@@ -1,8 +1,7 @@
-// controllers/subscription.js
-const mercadopago = require('mercadopago');
-// const Subscription = require('../models/subscription'); // úsalo si vas a persistir en DB
 
-// Config por env (no hardcodees el token)
+const mercadopago = require('mercadopago');
+
+
 mercadopago.configure({
   access_token: process.env.MP_ACCESS_TOKEN,
 });
@@ -13,21 +12,24 @@ const PLAN_PRICES = {
   3: 13999,  // Premium
 };
 
-// Utilidad para leer tanto body.body como body.response (SDKs distintos)
+
 function getMpBody(res) {
   return res?.body ?? res?.response ?? res;
 }
 
-// Normaliza camelCase → snake_case (para que el validador funcione igual)
-function normalizeBody(req, _res, next) {
-  const b = req.body || {};
-  if (b.planId != null && b.plan_id == null) req.body.plan_id = Number(b.planId);
-  if (b.commerceId != null && b.commerce_id == null) req.body.commerce_id = Number(b.commerceId);
-  if (b.email && !b.payer_email) req.body.payer_email = b.email;
-  next();
-}
 
-// Crear suscripción recurrente (preapproval)
+ function normalizeBody(req, _res, next) {
+   const b = req.body || {};
+   if (b.planId != null && b.plan_id == null) req.body.plan_id = Number(b.planId);
+   if (b.commerceId != null && b.commerce_id == null) req.body.commerce_id = Number(b.commerceId);
+   if (b.email && !b.payer_email) req.body.payer_email = b.email;
+   if (req.body.plan_id != null) req.body.plan_id = Number(req.body.plan_id);
+   if (req.body.commerce_id != null) req.body.commerce_id = Number(req.body.commerce_id);
+   next();
+ }
+
+
+
 exports.normalizeBody = normalizeBody;
 
 exports.createSubscription = async (req, res) => {
@@ -54,10 +56,10 @@ exports.createSubscription = async (req, res) => {
         frequency_type: 'months',
         transaction_amount: PLAN_PRICES[plan_id],
         currency_id: 'ARS',
-        // Suscripción indefinida hasta cancelar (no pongas end_date)
+        
       },
-      back_url: process.env.FRONTEND_URL || 'http://localhost:5173', // vuelve al front
-      // status: 'authorized', // opcional
+      back_url: process.env.FRONTEND_URL || 'http://localhost:5173', 
+      
       external_reference: `commerce-${commerce_id}-${Date.now()}`,
     };
 
@@ -67,13 +69,13 @@ exports.createSubscription = async (req, res) => {
     const link = body?.init_point || body?.sandbox_init_point || null;
 
     return res.status(201).json({
-      link,                    // 👈 lo que espera el front
+      link,                    
       id: body?.id || null,
       plan: plan_id === 2 ? 'Estándar' : 'Premium',
       commerce_id,
       next_payment_date: body?.auto_recurring?.next_payment_date || null,
       external_reference: body?.external_reference || preapprovalData.external_reference,
-      raw: process.env.NODE_ENV === 'production' ? undefined : body, // útil en dev
+      raw: process.env.NODE_ENV === 'production' ? undefined : body,
     });
   } catch (error) {
     console.error('Error creando suscripción:', error);
@@ -84,7 +86,7 @@ exports.createSubscription = async (req, res) => {
   }
 };
 
-// (Opcional) Consultar estado de suscripción por ID
+
 exports.getSubscriptionStatus = async (req, res) => {
   try {
     const { id } = req.params;

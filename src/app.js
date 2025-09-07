@@ -1,4 +1,4 @@
-// src/app.js (rollback simple y estable)
+// src/app.js
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -7,7 +7,6 @@ const { connectDatabase, sequelize } = require('./database');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-// ---- Middlewares básicos ----
 app.use(express.json());
 app.use(
   cors({
@@ -18,7 +17,7 @@ app.use(
   })
 );
 
-// ---- DB ----
+
 connectDatabase();
 
 // ---- Routers ----
@@ -35,11 +34,10 @@ const productCategoryRouter = require('./routes/productCategory');
 const publicationRouter = require('./routes/publication');
 const ratingRouter = require('./routes/rating');
 const roleRouter = require('./routes/role');
-const subscriptionRouter = require('./routes/subscription');
 const userRouter = require('./routes/user');
 const authRouter = require('./routes/auth');
+const subscriptionRouter = require('./routes/subscription');
 
-// ---- Ping simple (como antes) ----
 app.get('/', (_req, res) => res.send('OK'));
 
 // ---- Montaje de rutas ----
@@ -58,12 +56,9 @@ app.use('/rating', ratingRouter);
 app.use('/role', roleRouter);
 app.use('/user', userRouter);
 app.use('/auth', authRouter);
-
-// (lo que ya tenías)
 app.use('/subscriptions', subscriptionRouter);
-app.use('/subscription', subscriptionRouter);
 
-// ---- 404 y error handler (como antes) ----
+// ---- 404 y error handler ----
 app.use((req, res, next) => {
   if (res.headersSent) return next();
   res.status(404).json({ error: 'Not Found', path: req.originalUrl });
@@ -74,7 +69,7 @@ app.use((err, _req, res, _next) => {
   res.status(500).json({ error: 'Internal Server Error', message: err?.message });
 });
 
-// ---- Init DB y Start ----
+
 const init = async () => {
   try {
     await sequelize.sync();
