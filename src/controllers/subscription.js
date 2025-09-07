@@ -19,13 +19,13 @@ function getMpBody(res) {
 
 
  function normalizeBody(req, _res, next) {
-   const b = req.body || {};
-   if (b.planId != null && b.plan_id == null) req.body.plan_id = Number(b.planId);
-   if (b.commerceId != null && b.commerce_id == null) req.body.commerce_id = Number(b.commerceId);
-   if (b.email && !b.payer_email) req.body.payer_email = b.email;
-   if (req.body.plan_id != null) req.body.plan_id = Number(req.body.plan_id);
-   if (req.body.commerce_id != null) req.body.commerce_id = Number(req.body.commerce_id);
-   next();
+  const b = req.body || {};
+  if (b.planId != null && req.body.plan_id == null) req.body.plan_id = b.planId;
+  if (b.commerceId != null && req.body.commerce_id == null) req.body.commerce_id = b.commerceId;
+  if (b.email && !req.body.payer_email) req.body.payer_email = b.email;
+  if (req.body.plan_id != null) req.body.plan_id = Number(req.body.plan_id);
+  if (req.body.commerce_id != null) req.body.commerce_id = Number(req.body.commerce_id);
+  return next();
  }
 
 
