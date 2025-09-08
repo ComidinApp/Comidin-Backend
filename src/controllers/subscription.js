@@ -2,21 +2,14 @@
 const mercadopago = require('mercadopago');
 const Subscription = require('../models/subscription');
 
-
 mercadopago.configure({
   access_token: process.env.MP_ACCESS_TOKEN,
 });
 
-
-const PLAN_PRICES = {
-  2: 5999,   // Estándar
-  3: 13999,  // Premium
-};
-
+// Helpers
 function getMpBody(res) {
   return res?.body ?? res?.response ?? res;
 }
-
 
 function normalizeBody(req, _res, next) {
   const b = req.body || {};
@@ -30,8 +23,10 @@ function normalizeBody(req, _res, next) {
 }
 exports.normalizeBody = normalizeBody;
 
-// ===================== CREATE (Mercado Pago) =====================
-// Crea preaprobación apuntando a un preapproval_plan de MP para obtener init_point
+/**
+ * Crea la suscripción de Mercado Pago usando un preapproval_plan_id
+ * (checkout de suscripciones). No hay fallback a tarjeta.
+ */
 exports.createSubscription = async (req, res) => {
   try {
     const { plan_id, commerce_id, payer_email } = req.body;
@@ -46,54 +41,62 @@ exports.createSubscription = async (req, res) => {
       return res.status(400).json({ error: 'payer_email (email) es requerido' });
     }
 
-    const reason = Number(plan_id) === 2 ? 'Suscripción Estándar' : 'Suscripción Premium';
+    const reason =
+      Number(plan_id) === 2 ? 'Suscripción Estándar' : 'Suscripción Premium';
     const back_url = process.env.FRONTEND_URL || 'http://localhost:5173';
     const external_reference = `commerce-${commerce_id}-${Date.now()}`;
 
+    // Map de planes desde variables de entorno
     const planIdMap = {
       2: process.env.MP_PLAN_STD,   // Estándar
       3: process.env.MP_PLAN_PREM,  // Premium
     };
     const preapprovalPlanId = planIdMap[Number(plan_id)];
 
-    let mpRes;
-    if (preapprovalPlanId) {
- 
-      mpRes = await mercadopago.preapproval.create({
-        preapproval_plan_id: preapprovalPlanId,
-        payer_email,
-        back_url,
-        reason,
-        external_reference,
-      
+    // Si falta el plan en .env, no llamamos a MP (evitamos "card_token_id is required")
+    if (!preapprovalPlanId) {
+      console.error('[Subscriptions] Falta preapproval_plan_id', {
+        plan_id,
+        MP_PLAN_STD: process.env.MP_PLAN_STD,
+        MP_PLAN_PREM: process.env.MP_PLAN_PREM,
       });
-    } else {
-
-      mpRes = await mercadopago.preapproval.create({
-        reason,
-        payer_email,
-        auto_recurring: {
-          frequency: 1,
-          frequency_type: 'months',
-          transaction_amount: PLAN_PRICES[plan_id],
-          currency_id: 'ARS',
-        },
-        back_url,
-        external_reference,
+      return res.status(500).json({
+        error: 'No se pudo crear la suscripción',
+        message:
+          'Falta configurar MP_PLAN_STD / MP_PLAN_PREM o el ID no corresponde a esta cuenta.',
       });
     }
 
+    // Payload estricto con preapproval_plan_id
+    const payload = {
+      preapproval_plan_id: preapprovalPlanId,
+      payer_email,
+      back_url,
+      reason,
+      external_reference,
+    };
+
+    console.log('[MP preapproval.create] payload =>', payload);
+
+    const mpRes = await mercadopago.preapproval.create(payload);
     const body = getMpBody(mpRes);
+
     const link =
       body?.init_point ||
       body?.sandbox_init_point ||
       body?.redirect_url ||
       null;
 
-
+    if (!link) {
+      console.error('[Subscriptions] MP sin link en la respuesta', body);
+      return res.status(500).json({
+        error: 'No se pudo crear la suscripción',
+        message: 'Mercado Pago no devolvió un enlace de checkout.',
+      });
+    }
 
     return res.status(201).json({
-      link,                                   
+      link,
       id: body?.id || null,
       status: body?.status || null,
       plan: Number(plan_id) === 2 ? 'Estándar' : 'Premium',
@@ -103,15 +106,17 @@ exports.createSubscription = async (req, res) => {
       raw: process.env.NODE_ENV === 'production' ? undefined : body,
     });
   } catch (error) {
+    const mpMsg =
+      error?.cause || error?.message || 'Error desconocido en Mercado Pago';
     console.error('Error creando suscripción:', error);
     return res.status(500).json({
       error: 'No se pudo crear la suscripción',
-      message: error?.message,
+      message: mpMsg,
     });
   }
 };
 
-// Consulta estado de suscripción en MP por ID 
+// Consulta estado de suscripción en MP por ID
 exports.getSubscriptionStatus = async (req, res) => {
   try {
     const { id } = req.params;
@@ -120,10 +125,11 @@ exports.getSubscriptionStatus = async (req, res) => {
     return res.status(200).json(body);
   } catch (error) {
     console.error('Error obteniendo suscripción:', error);
-    return res.status(500).json({ error: 'No se pudo obtener la suscripción', message: error.message });
+    return res
+      .status(500)
+      .json({ error: 'No se pudo obtener la suscripción', message: error.message });
   }
 };
-
 
 
 exports.findAllSubscriptions = async (_req, res) => {
@@ -187,11 +193,15 @@ exports.deleteSubscription = async (req, res) => {
 exports.findSubscriptionsByCommerceId = async (req, res) => {
   try {
     const { commerceId } = req.params;
-    const subscriptions = await Subscription.findSubscriptionsByCommerceId(commerceId);
+    const subscriptions = await Subscription.findSubscriptionsByCommerceId(
+      commerceId
+    );
     if (subscriptions && subscriptions.length > 0) {
       res.status(200).json(subscriptions);
     } else {
-      res.status(404).json({ message: 'No subscriptions found for this commerce.' });
+      res
+        .status(404)
+        .json({ message: 'No subscriptions found for this commerce.' });
     }
   } catch (error) {
     console.error('Error fetching Subscriptions by Commerce ID:', error);
