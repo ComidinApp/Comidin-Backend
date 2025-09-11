@@ -21,6 +21,8 @@ router.post('/', Subscription.normalizeBody, createSubscriptionValidation, valid
 // NUEVO
 router.post('/confirm', Subscription.normalizeBody, Subscription.confirmSubscription);
 
+router.post('/free', Subscription.normalizeBody, Subscription.downgradeToFree); 
+
 // Opcional
 router.post('/webhook', express.json({ type: '*/*' }), Subscription.webhook);
 

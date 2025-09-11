@@ -192,3 +192,23 @@ exports.findSubscriptionsByPlanId = async (req, res) => {
     res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
+
+exports.downgradeToFree = async (req, res) => {
+  try {
+    const { commerce_id, cancel_mp } = req.body || {};
+    if (!commerce_id) {
+      return res.status(400).json({ error: 'commerce_id es requerido' });
+    }
+
+    // Traer suscripciones del comercio
+    const subs = await Subscription.findSubscriptionsByCommerceId(commerce_id);
+
+    // Borrar suscripciones locales (todas las del comercio)
+    await Subscription.destroy({ where: { commerce_id: Number(commerce_id) } });
+
+    return res.status(200).json({ ok: true, message: 'Comercio pasado a plan gratuito' });
+  } catch (error) {
+    console.error('Error en downgrade a Free:', error);
+    return res.status(500).json({ error: 'No se pudo pasar a plan gratuito' });
+  }
+};
