@@ -1,5 +1,5 @@
-
 const Subscription = require('../models/subscription');
+const { sequelize } = require('../database'); // para usar transacciones
 
 // helper para normalizar el body que viene del front
 function normalizeBody(req, _res, next) {
@@ -84,13 +84,29 @@ exports.confirmSubscription = async (req, res) => {
       return res.status(400).json({ error: 'No pude resolver el plan local' });
     }
 
-    // guardamos la suscripción local, si ya existe no la duplica
-    const [sub, created] = await Subscription.findOrCreate({
-      where: { commerce_id: Number(commerce_id), plan_id: resolvedPlanId },
-      defaults: { commerce_id: Number(commerce_id), plan_id: resolvedPlanId }
+    // garantizamos solo un plan activo por comercio
+    let sub;
+    await sequelize.transaction(async (t) => {
+      const existing = await Subscription.findOne({
+        where: { commerce_id: Number(commerce_id) },
+        transaction: t,
+        lock: t.LOCK.UPDATE,
+      });
+
+      if (!existing) {
+        sub = await Subscription.create(
+          { commerce_id: Number(commerce_id), plan_id: resolvedPlanId },
+          { transaction: t }
+        );
+      } else if (existing.plan_id !== resolvedPlanId) {
+        await existing.update({ plan_id: resolvedPlanId }, { transaction: t });
+        sub = existing;
+      } else {
+        sub = existing; // ya estaba en el mismo plan
+      }
     });
 
-    return res.status(200).json({ ok: true, created, subscription: sub });
+    return res.status(200).json({ ok: true, subscription: sub });
   } catch (error) {
     console.error('Error confirmando suscripción:', error);
     return res.status(500).json({ error: 'Error interno confirmando la suscripción' });
@@ -98,7 +114,6 @@ exports.confirmSubscription = async (req, res) => {
 };
 
 // webhook opcional de MP (si configurás notificaciones)
-// en general no viene info suficiente para asociar, por eso el confirm del front es importante
 exports.webhook = async (req, res) => {
   try {
     const { type, data } = req.body || {};
