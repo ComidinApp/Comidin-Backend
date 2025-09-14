@@ -1,9 +1,7 @@
-// controllers/subscription.js
-// Node 18+ tiene fetch global. Si usas Node <18, instala node-fetch.
 
 const Subscription = require('../models/subscription');
 
-// --- helpers ---
+// helper para normalizar el body que viene del front
 function normalizeBody(req, _res, next) {
   const b = req.body || {};
   if (b.planId != null && req.body.plan_id == null) req.body.plan_id = b.planId;
@@ -16,12 +14,13 @@ function normalizeBody(req, _res, next) {
 }
 exports.normalizeBody = normalizeBody;
 
+// relación de planes locales con los preapproval de MP
 const PLAN_ID_MAP = {
   2: process.env.MP_PLAN_STD,   // Estándar
   3: process.env.MP_PLAN_PREM,  // Premium
 };
 
-// ===================== CREATE: devuelve link de checkout =====================
+// crea el link de checkout de MP según el plan elegido
 exports.createSubscription = async (req, res) => {
   try {
     const { plan_id, commerce_id, payer_email } = req.body;
@@ -34,7 +33,7 @@ exports.createSubscription = async (req, res) => {
 
     const preapprovalPlanId = PLAN_ID_MAP[Number(plan_id)];
     if (!preapprovalPlanId) {
-      return res.status(500).json({ error: 'Plan de MP no configurado en el servidor' });
+      return res.status(500).json({ error: 'El plan de MP no está configurado en el servidor' });
     }
 
     const link = `https://www.mercadopago.com.ar/subscriptions/checkout?preapproval_plan_id=${preapprovalPlanId}`;
@@ -51,7 +50,7 @@ exports.createSubscription = async (req, res) => {
   }
 };
 
-// ===================== CONFIRM: al volver del checkout =====================
+// se llama al volver del checkout, confirma con MP y guarda en la base
 exports.confirmSubscription = async (req, res) => {
   try {
     const { preapproval_id, commerce_id, payer_email, plan_id } = req.body;
@@ -60,32 +59,32 @@ exports.confirmSubscription = async (req, res) => {
     if (!commerce_id)   return res.status(400).json({ error: 'commerce_id es requerido' });
     if (!payer_email)   return res.status(400).json({ error: 'payer_email es requerido' });
 
-    // 1) Consulto detalle a MP para validar estado
+    // pedimos el detalle de la suscripción a MP
     const r = await fetch(`https://api.mercadopago.com/preapproval/${preapproval_id}`, {
       headers: { Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}` }
     });
     if (!r.ok) {
       const t = await r.text().catch(() => '');
-      return res.status(502).json({ error: 'Fallo al consultar Mercado Pago', details: t });
+      return res.status(502).json({ error: 'Error consultando Mercado Pago', details: t });
     }
     const mp = await r.json();
 
+    // solo seguimos si está autorizada
     if (mp.status !== 'authorized') {
-      return res.status(409).json({ error: 'La suscripción no está autorizada aún', mp_status: mp.status });
+      return res.status(409).json({ error: 'La suscripción todavía no está autorizada', mp_status: mp.status });
     }
 
-    // 2) Resolver plan local
+    // resolvemos qué plan local es (puede venir en el body o lo inferimos del preapproval_plan_id)
     let resolvedPlanId = Number(plan_id);
     if (!resolvedPlanId && mp.preapproval_plan_id) {
-      const entries = Object.entries(PLAN_ID_MAP);
-      const found = entries.find(([, planVal]) => planVal === mp.preapproval_plan_id);
+      const found = Object.entries(PLAN_ID_MAP).find(([, val]) => val === mp.preapproval_plan_id);
       if (found) resolvedPlanId = Number(found[0]);
     }
     if (![2, 3].includes(resolvedPlanId)) {
-      return res.status(400).json({ error: 'No pude resolver el plan local para este preapproval' });
+      return res.status(400).json({ error: 'No pude resolver el plan local' });
     }
 
-    // 3) Upsert MINIMO (tu modelo actual solo tiene plan_id, commerce_id)
+    // guardamos la suscripción local, si ya existe no la duplica
     const [sub, created] = await Subscription.findOrCreate({
       where: { commerce_id: Number(commerce_id), plan_id: resolvedPlanId },
       defaults: { commerce_id: Number(commerce_id), plan_id: resolvedPlanId }
@@ -98,13 +97,13 @@ exports.confirmSubscription = async (req, res) => {
   }
 };
 
-// ===================== (Opcional) WEBHOOK =====================
+// webhook opcional de MP (si configurás notificaciones)
+// en general no viene info suficiente para asociar, por eso el confirm del front es importante
 exports.webhook = async (req, res) => {
   try {
     const { type, data } = req.body || {};
     if (type === 'preapproval' && data?.id) {
-      // Podrías validar y, si querés, crear el registro mínimo (plan/comercio)
-      // pero sin plan_id ni commerce_id en el evento es difícil; por eso el /confirm es clave.
+      // acá se podría volver a consultar a MP con data.id
     }
     res.status(200).send('OK');
   } catch (e) {
@@ -113,7 +112,7 @@ exports.webhook = async (req, res) => {
   }
 };
 
-// ===================== CRUD locales (sin cambios) =====================
+// --------- CRUD locales ---------
 exports.findAllSubscriptions = async (_req, res) => {
   try {
     const subscriptions = await Subscription.findAll();
@@ -193,17 +192,14 @@ exports.findSubscriptionsByPlanId = async (req, res) => {
   }
 };
 
+// endpoint para bajar al plan gratis: elimina subs locales del comercio
 exports.downgradeToFree = async (req, res) => {
   try {
-    const { commerce_id, cancel_mp } = req.body || {};
+    const { commerce_id } = req.body || {};
     if (!commerce_id) {
       return res.status(400).json({ error: 'commerce_id es requerido' });
     }
 
-    // Traer suscripciones del comercio
-    const subs = await Subscription.findSubscriptionsByCommerceId(commerce_id);
-
-    // Borrar suscripciones locales (todas las del comercio)
     await Subscription.destroy({ where: { commerce_id: Number(commerce_id) } });
 
     return res.status(200).json({ ok: true, message: 'Comercio pasado a plan gratuito' });
