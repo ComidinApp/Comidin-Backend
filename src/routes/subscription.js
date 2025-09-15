@@ -26,9 +26,6 @@ router.post('/confirm', Subscription.normalizeBody, Subscription.confirmSubscrip
 // pasar al plan gratuito (borra subs locales del comercio)
 router.post('/free', Subscription.normalizeBody, Subscription.downgradeToFree);
 
-// webhook opcional de MP (si configurás notificaciones)
-router.post('/webhook', express.json({ type: '*/*' }), Subscription.webhook);
-
 // CRUD básico
 router.get('/', Subscription.findAllSubscriptions?.bind?.(Subscription) || ((_, res) => res.sendStatus(501)));
 router.put('/:id', updateSubscriptionValidation, validate, Subscription.updateSubscription?.bind?.(Subscription) || ((_, res) => res.sendStatus(501)));
