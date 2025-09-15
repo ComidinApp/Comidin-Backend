@@ -113,19 +113,6 @@ exports.confirmSubscription = async (req, res) => {
   }
 };
 
-// webhook opcional de MP (si configurás notificaciones)
-exports.webhook = async (req, res) => {
-  try {
-    const { type, data } = req.body || {};
-    if (type === 'preapproval' && data?.id) {
-      // acá se podría volver a consultar a MP con data.id
-    }
-    res.status(200).send('OK');
-  } catch (e) {
-    console.error('Webhook error', e);
-    res.status(200).send('OK');
-  }
-};
 
 // --------- CRUD locales ---------
 exports.findAllSubscriptions = async (_req, res) => {
