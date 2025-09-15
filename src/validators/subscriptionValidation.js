@@ -1,5 +1,5 @@
-const { check } = require('express-validator');
-
+const { check, oneOf } = require('express-validator');
+//Prueba 
 // Validaciones para crear una suscripción
 const createSubscriptionValidation = [
   oneOf(
