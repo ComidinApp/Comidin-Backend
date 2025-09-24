@@ -37,6 +37,8 @@ const roleRouter = require('./routes/role');
 const userRouter = require('./routes/user');
 const authRouter = require('./routes/auth');
 const subscriptionRouter = require('./routes/subscription');
+const analyticsRouter = require('./routes/analytics');
+
 
 app.get('/', (_req, res) => res.send('OK'));
 
@@ -57,6 +59,7 @@ app.use('/role', roleRouter);
 app.use('/user', userRouter);
 app.use('/auth', authRouter);
 app.use('/subscriptions', subscriptionRouter);
+app.use('/api/analytics',analyticsRouter);
 
 // ---- 404 y error handler ----
 app.use((req, res, next) => {
