@@ -1,5 +1,5 @@
 #Etapa de produccion
-FROM node:20-slim
+FROM public.ecr.aws/docker/library/node:20-slim
 
 #Establecemos directorio de trabajo dentro del contenedor
 WORKDIR /comidin
