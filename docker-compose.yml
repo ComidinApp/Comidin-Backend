@@ -2,7 +2,7 @@ version: "3.9"
 
 services:
   mysqldb:
-    image: mysql:5.7
+    image: public.ecr.aws/docker/library/mysql:5.7
     env_file: ./.env
     environment:
       - MYSQL_USER=${MYSQLDB_USER}
