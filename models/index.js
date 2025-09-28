@@ -16,8 +16,10 @@ if (config.use_env_variable) {
   sequelize = new Sequelize(config.database, config.username, config.password, config);
 }
 
+const modelsDir = path.join(__dirname, '../src/models');
+
 fs
-  .readdirSync(__dirname)
+  .readdirSync(modelsDir)
   .filter(file => {
     return (
       file.indexOf('.') !== 0 &&
@@ -27,7 +29,7 @@ fs
     );
   })
   .forEach(file => {
-    const model = require(path.join(__dirname, file))(sequelize, Sequelize.DataTypes);
+    const model = require(path.join(modelsDir, file))(sequelize, Sequelize.DataTypes);
     db[model.name] = model;
   });
 
