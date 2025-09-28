@@ -26,7 +26,7 @@ module.exports = {
         // order 6: total 1000 = 5*200
         { order_id: 6,  publication_id: 2, created_at: new Date('2024-09-30'), quantity: 5, amount: 1000 },
 
-        // order 7: total 1100 = 3*200 + 1*500
+        // order 7: total 1100= 3*200 + 1*500
         { order_id: 7,  publication_id: 3, created_at: new Date('2024-10-01'), quantity: 3, amount: 600 },
         { order_id: 7,  publication_id: 4, created_at: new Date('2024-10-01'), quantity: 1, amount: 500 },
 
