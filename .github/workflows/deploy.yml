@@ -27,7 +27,7 @@ jobs:
             --path "/comidin-back/" \
             --with-decryption \
             --recursive \
-            --region sa-east-1 \
+            --region us-east-1 \
             --query "Parameters[*].[Name,Value]" \
             --output text | while read name value; do
               key=$(basename "$name")
