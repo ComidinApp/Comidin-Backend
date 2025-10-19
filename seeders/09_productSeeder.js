@@ -225,6 +225,42 @@ module.exports = {
       product_category_id: 23,
       created_at: new Date()
     },
+     { //24
+        commerce_id: 20,
+        name: 'Hamburguesa Clásica',
+        description: 'Hamburguesa con cheddar, tomate y lechuga.',
+        image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/hamburguesaClasica.jpg',
+        product_code: '2001',
+        product_category_id: 30,
+        created_at: new Date(),
+      },
+      {
+        commerce_id: 20,
+        name: 'Hamburguesa Doble',
+        description: 'Doble carne, doble cheddar, pan brioche.',
+        image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/hamburguesaDoble.jpg',
+        product_code: '2002',
+        product_category_id: 30,
+        created_at: new Date(),
+      },
+      {
+        commerce_id: 20,
+        name: 'Papas Fritas',
+        description: 'Porción mediana de papas fritas.',
+        image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/papasFritas.jpg',
+        product_code: '2003',
+        product_category_id: 31,
+        created_at: new Date(),
+      },
+      {
+        commerce_id: 20,
+        name: 'Coca-Cola 500ml',
+        description: 'Bebida gaseosa fría 500ml.',
+        image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/cocaCola500.jpg',
+        product_code: '2004',
+        product_category_id: 32,
+        created_at: new Date(),
+      }
   ], {});
       
 } catch (error) {

@@ -58,6 +58,43 @@ module.exports = {
 
         // order 16: total 4500 = 5*900
         { order_id: 16, publication_id: 7, created_at: new Date('2024-10-10'), quantity: 5, amount: 4500 },
+
+
+      { order_id: 100, publication_id: 24, created_at: new Date('2024-11-15'), quantity: 1, amount: 1800 },
+      { order_id: 100, publication_id: 26, created_at: new Date('2024-11-15'), quantity: 1, amount: 900 },
+
+      { order_id: 101, publication_id: 25, created_at: new Date('2024-12-10'), quantity: 1, amount: 2300 },
+      { order_id: 101, publication_id: 27, created_at: new Date('2024-12-10'), quantity: 1, amount: 800 },
+
+      { order_id: 102, publication_id: 24, created_at: new Date('2025-01-20'), quantity: 1, amount: 1800 },
+
+      { order_id: 103, publication_id: 25, created_at: new Date('2025-02-08'), quantity: 1, amount: 2300 },
+      { order_id: 103, publication_id: 26, created_at: new Date('2025-02-08'), quantity: 1, amount: 900 },
+
+      { order_id: 104, publication_id: 24, created_at: new Date('2025-03-18'), quantity: 1, amount: 1800 },
+      { order_id: 104, publication_id: 26, created_at: new Date('2025-03-18'), quantity: 1, amount: 900 },
+      { order_id: 104, publication_id: 27, created_at: new Date('2025-03-18'), quantity: 1, amount: 800 },
+
+      { order_id: 105, publication_id: 24, created_at: new Date('2025-04-09'), quantity: 2, amount: 3600 },
+      { order_id: 105, publication_id: 26, created_at: new Date('2025-04-09'), quantity: 1, amount: 900 },
+
+      { order_id: 106, publication_id: 25, created_at: new Date('2025-05-23'), quantity: 1, amount: 2300 },
+      { order_id: 106, publication_id: 27, created_at: new Date('2025-05-23'), quantity: 1, amount: 800 },
+
+      { order_id: 107, publication_id: 24, created_at: new Date('2025-06-13'), quantity: 1, amount: 1800 },
+      { order_id: 107, publication_id: 25, created_at: new Date('2025-06-13'), quantity: 1, amount: 2300 },
+
+      { order_id: 108, publication_id: 26, created_at: new Date('2025-07-02'), quantity: 2, amount: 1800 },
+      { order_id: 108, publication_id: 24, created_at: new Date('2025-07-02'), quantity: 1, amount: 1800 },
+
+      { order_id: 109, publication_id: 25, created_at: new Date('2025-08-16'), quantity: 1, amount: 2300 },
+
+      { order_id: 110, publication_id: 24, created_at: new Date('2025-09-11'), quantity: 1, amount: 1800 },
+      { order_id: 110, publication_id: 26, created_at: new Date('2025-09-11'), quantity: 1, amount: 900 },
+      { order_id: 110, publication_id: 27, created_at: new Date('2025-09-11'), quantity: 1, amount: 800 },
+
+      { order_id: 111, publication_id: 25, created_at: new Date('2025-10-05'), quantity: 1, amount: 2300 },
+      { order_id: 111, publication_id: 26, created_at: new Date('2025-10-05'), quantity: 1, amount: 900 },
       ], {});
     } catch (error) {
       console.error('Error executing seeder (order_detail):', error);

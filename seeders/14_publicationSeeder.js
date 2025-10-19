@@ -287,7 +287,51 @@ module.exports = {
       created_at: new Date(),
       price:'1200',
       expiration_date:new Date(),
-    }
+    },
+     {
+        available_stock: 100,
+        price: 2000,
+        discounted_price: 1800,
+        discount_percentaje: 10,
+        is_active: 'active',
+        commerce_id: 20,
+        product_id: 24,
+        created_at: new Date('2025-01-01'),
+        expiration_date: new Date('2026-01-01'),
+      },
+      {
+        available_stock: 80,
+        price: 2500,
+        discounted_price: 2300,
+        discount_percentaje: 8,
+        is_active: 'active',
+        commerce_id: 20,
+        product_id: 25,
+        created_at: new Date('2025-01-01'),
+        expiration_date: new Date('2026-01-01'),
+      },
+      {
+        available_stock: 150,
+        price: 1000,
+        discounted_price: 900,
+        discount_percentaje: 10,
+        is_active: 'active',
+        commerce_id: 20,
+        product_id: 26,
+        created_at: new Date('2025-01-01'),
+        expiration_date: new Date('2026-01-01'),
+      },
+      {
+        available_stock: 200,
+        price: 800,
+        discounted_price: 800,
+        discount_percentaje: 0,
+        is_active: 'active',
+        commerce_id: 20,
+        product_id: 27,
+        created_at: new Date('2025-01-01'),
+        expiration_date: new Date('2026-01-01'),
+      }
   ], {});
       
 } catch (error) {
