@@ -1,60 +1,16 @@
-const Sequelize = require('sequelize');
-const { Op, fn, col, where } = Sequelize;
-
-const Order = require('../models/order');
-const OrderDetail = require('../models/orderDetail');
-
-// Asegura la relación si no existe
-if (!OrderDetail.associations.order) {
-  OrderDetail.belongsTo(Order, { foreignKey: 'order_id' });
-}
-
-/**
- * Devuelve ventana temporal según 'period'
- * - last30d (default): últimos 30 días
- * - prev_month: mes calendario anterior (UTC seguro)
- * - all: sin filtro de fechas
- */
-function getDateWindow(period) {
-  const now = new Date();
-
-  if (period === 'all') {
-    // señal: no aplicar filtro de fechas
-    return { from: null, to: null };
-  }
-
-  if (period === 'prev_month') {
-    const firstOfCurrent = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth(), 1));
-    const firstOfPrev = new Date(Date.UTC(now.getUTCFullYear(), now.getUTCMonth() - 1, 1));
-    const endPrev = new Date(firstOfCurrent.getTime() - 1); // último ms del mes anterior
-    return { from: firstOfPrev, to: endPrev };
-  }
-
-  // default: últimos 30 días
-  const from = new Date(now.getTime() - 30 * 24 * 60 * 60 * 1000);
-  return { from, to: now };
-}
-
-/**
- * Obtiene métricas de overview para un commerce.
- * - validStatuses: array de estados válidos o 'ALL' para no filtrar
- * - period: 'last30d' | 'prev_month' | 'all'
- */
 exports.getOverview = async ({
   commerceId,
   period = 'last30d',
-  validStatuses = ['PAID', 'DELIVERED', 'PENDING'],
-  timezone = 'America/Argentina/Buenos_Aires', // reservado para futuros ajustes TZ
+  validStatuses = ['PAID', 'DELIVERED', 'COMPLETED'],
+  timezone = 'America/Argentina/Buenos_Aires',
 }) => {
-  // Construcción del filtro de status (case-insensitive).
-  // Si validStatuses === 'ALL' o [], no se aplica filtro por status.
-  let statusCondition = undefined;
+  // ---- Filtro base por status + comercio ----
+  let statusCondition;
   if (validStatuses !== 'ALL' && Array.isArray(validStatuses) && validStatuses.length > 0) {
     const statusesLower = validStatuses.map((s) => String(s).toLowerCase());
     statusCondition = where(fn('LOWER', col('status')), { [Op.in]: statusesLower });
   }
 
-  // Filtro base por comercio
   const baseFilter = { commerce_id: commerceId };
   if (statusCondition) {
     baseFilter[Op.and] = baseFilter[Op.and] ? [baseFilter[Op.and], statusCondition] : [statusCondition];
@@ -62,24 +18,15 @@ exports.getOverview = async ({
 
   const { from, to } = getDateWindow(period);
 
-  // 1) Pedidos totales (histórico, con filtro de status si aplica)
+  // ---- KPIs actuales (sin cambios) ----
   const ordersCountPromise = Order.count({ where: baseFilter });
 
-  // 2) Productos vendidos (histórico): suma de quantity en OrderDetail con join a Order
   const productsSoldPromise = OrderDetail.findOne({
     attributes: [[fn('COALESCE', fn('SUM', col('quantity')), 0), 'qty']],
-    include: [
-      {
-        model: Order,
-        attributes: [],
-        where: baseFilter, // respeta comercio + status
-        required: true,
-      },
-    ],
+    include: [{ model: Order, attributes: [], where: baseFilter, required: true }],
     raw: true,
   });
 
-  // 3) Ventas del período (monto y cantidad de pedidos)
   const monthlyWhere = from && to
     ? { ...baseFilter, created_at: { [Op.between]: [from, to] } }
     : { ...baseFilter };
@@ -93,30 +40,112 @@ exports.getOverview = async ({
     raw: true,
   });
 
-  // 4) Cantidad de usuarios (distintos compradores históricos del comercio)
   const totalUsersPromise = Order.findOne({
     attributes: [[fn('COUNT', fn('DISTINCT', col('user_id'))), 'buyers']],
     where: baseFilter,
     raw: true,
   });
 
-  const [ordersCount, productsSoldRow, monthlyAggRow, totalUsersRow] = await Promise.all([
-    ordersCountPromise,
-    productsSoldPromise,
-    monthlyAggPromise,
-    totalUsersPromise,
-  ]);
+  // ---- NUEVO: ventas mensuales de los últimos 12 meses ----
+  const now = new Date();
+  const startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1); // hace 12 meses exactos
 
+  const monthlySalesPromise = Order.findAll({
+    attributes: [
+      [fn('DATE_TRUNC', 'month', col('created_at')), 'month'],
+      [fn('COUNT', col('id')), 'ordersCount'],
+      [fn('SUM', col('total_amount')), 'totalAmount'],
+    ],
+    where: {
+      ...baseFilter,
+      created_at: { [Op.between]: [startDate, now] },
+    },
+    group: [fn('DATE_TRUNC', 'month', col('created_at'))],
+    order: [[fn('DATE_TRUNC', 'month', col('created_at')), 'ASC']],
+    raw: true,
+  });
+
+  // ---- NUEVO: top 3 productos últimos 12 meses ----
+  const topProductsPromise = OrderDetail.findAll({
+    attributes: [
+      [col('Publication->Product.name'), 'productName'],
+      [fn('SUM', col('quantity')), 'quantitySold'],
+    ],
+    include: [
+      {
+        model: Order,
+        attributes: [],
+        where: {
+          ...baseFilter,
+          created_at: { [Op.between]: [startDate, now] },
+        },
+        required: true,
+      },
+      {
+        model: Publication,
+        attributes: [],
+        include: [{ model: Product, attributes: [] }],
+        required: true,
+      },
+    ],
+    group: [col('Publication->Product.name')],
+    order: [[fn('SUM', col('quantity')), 'DESC']],
+    limit: 3,
+    raw: true,
+  });
+
+  // ---- Esperar todo en paralelo ----
+  const [ordersCount, productsSoldRow, monthlyAggRow, totalUsersRow, monthlySales, topProductsRaw] =
+    await Promise.all([
+      ordersCountPromise,
+      productsSoldPromise,
+      monthlyAggPromise,
+      totalUsersPromise,
+      monthlySalesPromise,
+      topProductsPromise,
+    ]);
+
+  // ---- Calcular y formatear resultados ----
   const productsSold = Number(productsSoldRow?.qty ?? 0);
   const monthlySalesAmount = Number(monthlyAggRow?.amount ?? 0);
   const monthlyOrdersCount = Number(monthlyAggRow?.count ?? 0);
   const totalUsers = Number(totalUsersRow?.buyers ?? 0);
 
+  // Completar meses faltantes con 0
+  const monthMap = {};
+  monthlySales.forEach((row) => {
+    const month = new Date(row.month);
+    const key = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`;
+    monthMap[key] = {
+      month: key,
+      ordersCount: Number(row.ordersCount),
+      totalAmount: Number(row.totalAmount ?? 0),
+    };
+  });
+
+  const salesByMonth = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    salesByMonth.push(monthMap[key] ?? { month: key, ordersCount: 0, totalAmount: 0 });
+  }
+
+  // Calcular top 3 productos
+  const totalQty = topProductsRaw.reduce((acc, p) => acc + Number(p.quantitySold ?? 0), 0) || 1;
+  const topProducts = topProductsRaw.map((p) => ({
+    productName: p.productName ?? 'Desconocido',
+    quantitySold: Number(p.quantitySold ?? 0),
+    percentage: Math.round((Number(p.quantitySold) / totalQty) * 100),
+  }));
+
+  // ---- Devolver todo ----
   return {
     ordersCount: Number(ordersCount),
     productsSold,
     monthlySalesAmount,
     monthlyOrdersCount,
     totalUsers,
+    salesByMonth,
+    topProducts,
   };
 };
