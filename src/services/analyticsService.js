@@ -13,7 +13,7 @@ exports.getOverview = async ({
   let statusCondition;
   if (validStatuses !== 'ALL' && Array.isArray(validStatuses) && validStatuses.length > 0) {
     const statusesLower = validStatuses.map((s) => String(s).toLowerCase());
-    statusCondition = where(fn('LOWER', col('status')), Op.in, statusesLower);
+    statusCondition = where(fn('LOWER', col('status')), { [Op.in]: statusesLower });
   }
 
   const baseFilter = { commerce_id: commerceId };
