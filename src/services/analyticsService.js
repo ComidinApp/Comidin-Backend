@@ -1,3 +1,8 @@
+// services/analyticsService.js
+const { Op, fn, col, where, literal } = require('sequelize');
+const { Order, OrderDetail, Publication, Product } = require('../models');
+const { getDateWindow } = require('../utils/getDateWindow'); // ajustá la ruta según tu estructura
+
 exports.getOverview = async ({
   commerceId,
   period = 'last30d',
@@ -8,17 +13,19 @@ exports.getOverview = async ({
   let statusCondition;
   if (validStatuses !== 'ALL' && Array.isArray(validStatuses) && validStatuses.length > 0) {
     const statusesLower = validStatuses.map((s) => String(s).toLowerCase());
-    statusCondition = where(fn('LOWER', col('status')), { [Op.in]: statusesLower });
+    statusCondition = where(fn('LOWER', col('status')), Op.in, statusesLower);
   }
 
   const baseFilter = { commerce_id: commerceId };
   if (statusCondition) {
-    baseFilter[Op.and] = baseFilter[Op.and] ? [baseFilter[Op.and], statusCondition] : [statusCondition];
+    baseFilter[Op.and] = baseFilter[Op.and]
+      ? [baseFilter[Op.and], statusCondition]
+      : [statusCondition];
   }
 
   const { from, to } = getDateWindow(period);
 
-  // ---- KPIs actuales (sin cambios) ----
+  // ---- KPIs actuales ----
   const ordersCountPromise = Order.count({ where: baseFilter });
 
   const productsSoldPromise = OrderDetail.findOne({
@@ -46,13 +53,14 @@ exports.getOverview = async ({
     raw: true,
   });
 
-  // ---- NUEVO: ventas mensuales de los últimos 12 meses ----
+  // ---- Ventas mensuales últimos 12 meses (MySQL compatible) ----
   const now = new Date();
-  const startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1); // hace 12 meses exactos
+  const startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+  const monthExpr = fn('DATE_FORMAT', col('created_at'), '%Y-%m-01'); // yyyy-mm-01
 
   const monthlySalesPromise = Order.findAll({
     attributes: [
-      [fn('DATE_TRUNC', 'month', col('created_at')), 'month'],
+      [monthExpr, 'month'],
       [fn('COUNT', col('id')), 'ordersCount'],
       [fn('SUM', col('total_amount')), 'totalAmount'],
     ],
@@ -60,12 +68,12 @@ exports.getOverview = async ({
       ...baseFilter,
       created_at: { [Op.between]: [startDate, now] },
     },
-    group: [fn('DATE_TRUNC', 'month', col('created_at'))],
-    order: [[fn('DATE_TRUNC', 'month', col('created_at')), 'ASC']],
+    group: [literal("DATE_FORMAT(created_at, '%Y-%m-01')")],
+    order: [literal("DATE_FORMAT(created_at, '%Y-%m-01') ASC")],
     raw: true,
   });
 
-  // ---- NUEVO: top 3 productos últimos 12 meses ----
+  // ---- Top 3 productos últimos 12 meses ----
   const topProductsPromise = OrderDetail.findAll({
     attributes: [
       [col('Publication->Product.name'), 'productName'],
@@ -94,24 +102,30 @@ exports.getOverview = async ({
     raw: true,
   });
 
-  // ---- Esperar todo en paralelo ----
-  const [ordersCount, productsSoldRow, monthlyAggRow, totalUsersRow, monthlySales, topProductsRaw] =
-    await Promise.all([
-      ordersCountPromise,
-      productsSoldPromise,
-      monthlyAggPromise,
-      totalUsersPromise,
-      monthlySalesPromise,
-      topProductsPromise,
-    ]);
+  // ---- Ejecutar en paralelo ----
+  const [
+    ordersCount,
+    productsSoldRow,
+    monthlyAggRow,
+    totalUsersRow,
+    monthlySales,
+    topProductsRaw,
+  ] = await Promise.all([
+    ordersCountPromise,
+    productsSoldPromise,
+    monthlyAggPromise,
+    totalUsersPromise,
+    monthlySalesPromise,
+    topProductsPromise,
+  ]);
 
-  // ---- Calcular y formatear resultados ----
+  // ---- Procesar resultados ----
   const productsSold = Number(productsSoldRow?.qty ?? 0);
   const monthlySalesAmount = Number(monthlyAggRow?.amount ?? 0);
   const monthlyOrdersCount = Number(monthlyAggRow?.count ?? 0);
   const totalUsers = Number(totalUsersRow?.buyers ?? 0);
 
-  // Completar meses faltantes con 0
+  // Completar meses faltantes
   const monthMap = {};
   monthlySales.forEach((row) => {
     const month = new Date(row.month);
@@ -130,7 +144,7 @@ exports.getOverview = async ({
     salesByMonth.push(monthMap[key] ?? { month: key, ordersCount: 0, totalAmount: 0 });
   }
 
-  // Calcular top 3 productos
+  // ---- Top 3 productos ----
   const totalQty = topProductsRaw.reduce((acc, p) => acc + Number(p.quantitySold ?? 0), 0) || 1;
   const topProducts = topProductsRaw.map((p) => ({
     productName: p.productName ?? 'Desconocido',
@@ -138,7 +152,7 @@ exports.getOverview = async ({
     percentage: Math.round((Number(p.quantitySold) / totalQty) * 100),
   }));
 
-  // ---- Devolver todo ----
+  // ---- Retornar resultado final ----
   return {
     ordersCount: Number(ordersCount),
     productsSold,
