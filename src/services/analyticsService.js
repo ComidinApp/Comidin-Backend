@@ -121,8 +121,8 @@ exports.getOverview = async ({
 
   // ---- Procesar resultados ----
   const productsSold = Number(productsSoldRow?.qty ?? 0);
-  const monthlySalesAmount = Number(monthlyAggRow?.amount ?? 0);
-  const monthlyOrdersCount = Number(monthlyAggRow?.count ?? 0);
+  const monthlySalesAmount = Number(monthlyAggRow?.amount || 0);
+  const monthlyOrdersCount = Number(monthlyAggRow?.count || 0);
   const totalUsers = Number(totalUsersRow?.buyers ?? 0);
 
   // Completar meses faltantes
