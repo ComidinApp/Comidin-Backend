@@ -1,6 +1,6 @@
 // services/analyticsService.js
 const { Op, fn, col, where, literal } = require('sequelize');
-const { Order, OrderDetail, Publication, Product } = require('../../models');
+const { order: Order, order_detail: OrderDetail, publication: Publication, product: Product } = require('../../models');
 const { getDateWindow } = require('../utils/getDateWindow'); // ajustá la ruta según tu estructura
 
 exports.getOverview = async ({
