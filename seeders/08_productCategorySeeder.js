@@ -170,6 +170,24 @@ module.exports = {
     name: 'Gaseosas',
     description: 'Variedad de gaseosas y juegos.'
   }
+  ,
+  {//31
+    commerce_id: 20,
+    name: 'Hamburguesas',
+    description: 'Variedad de hamburguesas.'
+  }
+  ,
+  {//32
+    commerce_id: 20,
+    name: 'Fritas',
+    description: 'Variedad de papas o batatas fritas.'
+  }
+  ,
+  {//33
+    commerce_id: 20,
+    name: 'Gaseosas',
+    description: 'Variedad de gaseosas y juegos.'
+  }
 
   ], {});
       
