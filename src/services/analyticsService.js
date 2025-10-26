@@ -99,7 +99,7 @@ exports.getOverview = async ({
       ? Promise.resolve([])
       : OrderDetail.findAll({
           attributes: [
-            [col('Publication->Product.name'), 'productName'],
+            [col('publication->product.name'), 'productName'],
             [fn('SUM', col('quantity')), 'quantitySold'],
           ],
           where: {
@@ -109,12 +109,20 @@ exports.getOverview = async ({
           include: [
             {
               model: Publication,
+              as: 'publication',
               attributes: [],
-              include: [{ model: Product, attributes: [] }],
               required: true,
+              include: [
+                {
+                  model: Product,
+                  as: 'product',
+                  attributes: [],
+                  required: false,
+                },
+              ],
             },
           ],
-          group: [col('Publication->Product.name')],
+          group: [col('publication->product.name')],
           order: [[fn('SUM', col('quantity')), 'DESC']],
           limit: 3,
           raw: true,
