@@ -21,26 +21,20 @@ const PLAN_ID_MAP = {
   3: process.env.MP_PLAN_PREM,  // Premium
 };
 
-// util para llamadas a MP con mejor manejo de errores
-async function mpPost(path, body) {
+// ---- Helpers Mercado Pago
+async function mpFetch(path, init = {}) {
   const url = `https://api.mercadopago.com${path}`;
-  const r = await fetch(url, {
-    method: 'POST',
-    headers: {
-      Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`,
-      'Content-Type': 'application/json',
-    },
-    body: JSON.stringify(body),
-  });
-
+  const headers = {
+    Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}`,
+    'Content-Type': 'application/json',
+    ...(init.headers || {}),
+  };
+  const r = await fetch(url, { ...init, headers });
   const text = await r.text();
   let json;
   try { json = JSON.parse(text); } catch { json = { raw: text }; }
-
   if (!r.ok) {
-    // Log interno (nunca logear el token)
-    console.error('[MP POST ERROR]', path, r.status, json);
-    const err = new Error(json?.message || json?.error || 'Mercado Pago rechazó la solicitud');
+    const err = new Error(json?.message || json?.error || `Mercado Pago ${r.status}`);
     err.status = r.status;
     err.details = json;
     throw err;
@@ -49,24 +43,14 @@ async function mpPost(path, body) {
 }
 
 async function mpGet(path) {
-  const url = `https://api.mercadopago.com${path}`;
-  const r = await fetch(url, {
-    headers: { Authorization: `Bearer ${process.env.MP_ACCESS_TOKEN}` },
-  });
-  const text = await r.text();
-  let json;
-  try { json = JSON.parse(text); } catch { json = { raw: text }; }
-  if (!r.ok) {
-    console.error('[MP GET ERROR]', path, r.status, json);
-    const err = new Error(json?.message || json?.error || 'Mercado Pago rechazó la solicitud');
-    err.status = r.status;
-    err.details = json;
-    throw err;
-  }
-  return json;
+  return mpFetch(path, { method: 'GET' });
 }
 
-// crea el preapproval en MP y devuelve id/init_point (en lugar de solo armar un link)
+async function mpPost(path, body) {
+  return mpFetch(path, { method: 'POST', body: JSON.stringify(body) });
+}
+
+// crea el preapproval en MP y devuelve id/init_point
 exports.createSubscription = async (req, res) => {
   try {
     const { plan_id, commerce_id, payer_email } = req.body;
@@ -86,29 +70,53 @@ exports.createSubscription = async (req, res) => {
     }
 
     const preapprovalPlanId = PLAN_ID_MAP[Number(plan_id)];
-    if (!preapprovalPlanId) {
-      return res.status(500).json({ error: 'El plan de MP no está configurado en el servidor' });
+    if (!preapprovalPlanId || String(preapprovalPlanId).trim() === '') {
+      return res.status(500).json({ error: 'El preapproval_plan_id de MP no está configurado' });
     }
 
-    // ⚠️ Payload mínimo para flujo con plan:
-    // SIN status (ni 'authorized'), SIN auto_recurring. MP devuelve init_point.
+    // (1) Verificar que el plan exista y pertenezca al token actual
+    let planInfo;
+    try {
+      planInfo = await mpGet(`/preapproval_plan/${preapprovalPlanId}`);
+      // opcional: podrías validar acá owner/collector_id si lo necesitas
+    } catch (e) {
+      // Si el plan no existe / no pertenece, típicamente devuelve 404 ó 401/403.
+      const status = e?.status || 502;
+      return res.status(status).json({
+        error: 'El preapproval_plan_id no es válido para este access token',
+        details: e?.details || { message: e?.message || 'Plan inválido o inaccesible' },
+      });
+    }
+
+    // Payload mínimo para flujo con plan (redirección), forzamos 'pending'
     const payload = {
       preapproval_plan_id: preapprovalPlanId,
       reason: Number(plan_id) === 2 ? 'Suscripción Estándar' : 'Suscripción Premium',
       payer_email: String(payer_email).trim(),
       external_reference: String(commerce_id),
       back_url: `${process.env.FRONTEND_URL}/mi-cuenta/suscripciones/resultado`,
+      status: 'pending', // <= importante para evitar modo "authorized" (tarjeta requerida)
     };
+
+    // Log de diagnóstico (sanitizado)
+    try {
+      console.info('[MP PREAPPROVAL CREATE] payload:', {
+        preapproval_plan_id: payload.preapproval_plan_id,
+        reason: payload.reason,
+        payer_email: payload.payer_email,
+        external_reference: payload.external_reference,
+        back_url: payload.back_url,
+        status: payload.status,
+      });
+      console.info('[MP PREAPPROVAL PLAN CHECK] id:', preapprovalPlanId, 'active:', planInfo?.status || 'unknown');
+    } catch {}
 
     const mp = await mpPost('/preapproval', payload);
 
-    // Devolvemos lo importante para el front (redirigir y guardar id)
     return res.status(201).json({
       id: mp.id,
       init_point: mp.init_point,
       sandbox_init_point: mp.sandbox_init_point,
-      // opcional: devolver todo mp si lo necesitás
-      // ...mp
     });
   } catch (error) {
     const status = error?.status || 400;
@@ -164,7 +172,7 @@ exports.confirmSubscription = async (req, res) => {
           {
             commerce_id: Number(commerce_id),
             plan_id: resolvedPlanId,
-            // Si tenés columnas adicionales, podés guardar datos de MP:
+            // opcional: si tenés columnas, podés guardar info útil de MP:
             // mp_preapproval_id: mp.id,
             // next_payment_date: mp?.next_payment_date ? new Date(mp.next_payment_date) : null,
             // external_reference: mp?.external_reference || String(commerce_id),
