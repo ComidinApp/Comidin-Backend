@@ -1,6 +1,6 @@
 // src/controllers/subscription.js
 const Subscription = require('../models/subscription');
-const { sequelize } = require('../database'); // para usar transacciones
+const { sequelize } = require('../database');
 
 // helper para normalizar el body que viene del front
 function normalizeBody(req, _res, next) {
@@ -41,16 +41,10 @@ async function mpFetch(path, init = {}) {
   }
   return json;
 }
+const mpGet  = (path) => mpFetch(path, { method: 'GET' });
+const mpPost = (path, body) => mpFetch(path, { method: 'POST', body: JSON.stringify(body) });
 
-async function mpGet(path) {
-  return mpFetch(path, { method: 'GET' });
-}
-
-async function mpPost(path, body) {
-  return mpFetch(path, { method: 'POST', body: JSON.stringify(body) });
-}
-
-// crea el preapproval en MP y devuelve id/init_point
+// crea el preapproval en MP y, si MP exige card_token, hace fallback a init_point del plan
 exports.createSubscription = async (req, res) => {
   try {
     const { plan_id, commerce_id, payer_email } = req.body;
@@ -74,50 +68,56 @@ exports.createSubscription = async (req, res) => {
       return res.status(500).json({ error: 'El preapproval_plan_id de MP no está configurado' });
     }
 
-    // (1) Verificar que el plan exista y pertenezca al token actual
-    let planInfo;
-    try {
-      planInfo = await mpGet(`/preapproval_plan/${preapprovalPlanId}`);
-      // opcional: podrías validar acá owner/collector_id si lo necesitas
-    } catch (e) {
-      // Si el plan no existe / no pertenece, típicamente devuelve 404 ó 401/403.
-      const status = e?.status || 502;
-      return res.status(status).json({
-        error: 'El preapproval_plan_id no es válido para este access token',
-        details: e?.details || { message: e?.message || 'Plan inválido o inaccesible' },
-      });
-    }
-
-    // Payload mínimo para flujo con plan (redirección), forzamos 'pending'
+    // 1) Intento “API”: crear preapproval (algunas cuentas lo permiten)
     const payload = {
       preapproval_plan_id: preapprovalPlanId,
       reason: Number(plan_id) === 2 ? 'Suscripción Estándar' : 'Suscripción Premium',
       payer_email: String(payer_email).trim(),
       external_reference: String(commerce_id),
       back_url: `${process.env.FRONTEND_URL}/mi-cuenta/suscripciones/resultado`,
-      status: 'pending', // <= importante para evitar modo "authorized" (tarjeta requerida)
+      // sin 'authorized' ni auto_recurring
+      status: 'pending',
     };
 
-    // Log de diagnóstico (sanitizado)
     try {
-      console.info('[MP PREAPPROVAL CREATE] payload:', {
-        preapproval_plan_id: payload.preapproval_plan_id,
-        reason: payload.reason,
-        payer_email: payload.payer_email,
-        external_reference: payload.external_reference,
-        back_url: payload.back_url,
-        status: payload.status,
+      const mp = await mpPost('/preapproval', payload);
+      return res.status(201).json({
+        id: mp.id,
+        init_point: mp.init_point,
+        sandbox_init_point: mp.sandbox_init_point,
+        mode: 'preapproval_api',
       });
-      console.info('[MP PREAPPROVAL PLAN CHECK] id:', preapprovalPlanId, 'active:', planInfo?.status || 'unknown');
-    } catch {}
+    } catch (e) {
+      // 2) Fallback “checkout del plan”: si MP pide tarjeta, devolvemos el init_point del plan
+      const needsCardToken =
+        (e?.details?.message || '').toLowerCase().includes('card_token_id is required');
 
-    const mp = await mpPost('/preapproval', payload);
+      if (!needsCardToken) {
+        // Error real distinto → propagarlo
+        const status = e?.status || 400;
+        return res.status(status).json({
+          error: 'Error creando preapproval en MP',
+          details: e?.details || { message: e?.message || 'Solicitud rechazada por MP' },
+        });
+      }
 
-    return res.status(201).json({
-      id: mp.id,
-      init_point: mp.init_point,
-      sandbox_init_point: mp.sandbox_init_point,
-    });
+      // Plan válido → usar su init_point (redirige a checkout de suscripciones)
+      const planInfo = await mpGet(`/preapproval_plan/${preapprovalPlanId}`);
+      if (!planInfo?.init_point) {
+        return res.status(502).json({
+          error: 'No se pudo obtener el init_point del plan',
+          details: planInfo || null,
+        });
+      }
+
+      // Devolvemos URL de redirección del plan (el front redirige y al volver confirmamos)
+      return res.status(200).json({
+        id: null,
+        init_point: planInfo.init_point,
+        sandbox_init_point: planInfo.init_point, // MP usa misma URL y enruta según modo
+        mode: 'plan_init_point_fallback',
+      });
+    }
   } catch (error) {
     const status = error?.status || 400;
     return res.status(status).json({
@@ -135,15 +135,12 @@ exports.confirmSubscription = async (req, res) => {
     if (!preapproval_id) return res.status(400).json({ error: 'preapproval_id es requerido' });
     if (!commerce_id)   return res.status(400).json({ error: 'commerce_id es requerido' });
 
-    // pedimos el detalle de la suscripción a MP
     const mp = await mpGet(`/preapproval/${preapproval_id}`);
 
-    // solo seguimos si está autorizada
     if (mp.status !== 'authorized') {
       return res.status(409).json({ error: 'La suscripción todavía no está autorizada', mp_status: mp.status });
     }
 
-    // resolvemos qué plan local es (puede venir en el body o lo inferimos del preapproval_plan_id)
     const INVERSE_PLAN_ID_MAP = Object.entries(PLAN_ID_MAP).reduce((acc, [localId, mpPlanId]) => {
       if (mpPlanId) acc[mpPlanId] = Number(localId);
       return acc;
@@ -158,7 +155,6 @@ exports.confirmSubscription = async (req, res) => {
       return res.status(400).json({ error: 'No pude resolver el plan local' });
     }
 
-    // garantizamos solo un plan activo por comercio
     let sub;
     await sequelize.transaction(async (t) => {
       const existing = await Subscription.findOne({
@@ -169,29 +165,14 @@ exports.confirmSubscription = async (req, res) => {
 
       if (!existing) {
         sub = await Subscription.create(
-          {
-            commerce_id: Number(commerce_id),
-            plan_id: resolvedPlanId,
-            // opcional: si tenés columnas, podés guardar info útil de MP:
-            // mp_preapproval_id: mp.id,
-            // next_payment_date: mp?.next_payment_date ? new Date(mp.next_payment_date) : null,
-            // external_reference: mp?.external_reference || String(commerce_id),
-          },
+          { commerce_id: Number(commerce_id), plan_id: resolvedPlanId },
           { transaction: t }
         );
       } else if (existing.plan_id !== resolvedPlanId) {
-        await existing.update(
-          {
-            plan_id: resolvedPlanId,
-            // mp_preapproval_id: mp.id,
-            // next_payment_date: mp?.next_payment_date ? new Date(mp.next_payment_date) : null,
-            // external_reference: mp?.external_reference || String(commerce_id),
-          },
-          { transaction: t }
-        );
+        await existing.update({ plan_id: resolvedPlanId }, { transaction: t });
         sub = existing;
       } else {
-        sub = existing; // ya estaba en el mismo plan
+        sub = existing;
       }
     });
 
@@ -218,7 +199,7 @@ exports.findSubscriptionById = async (req, res) => {
   try {
     const { id } = req.params;
     const subscription = await Subscription.findByPk(id);
-    if (subscription) res.status(200).json(subscription);
+  if (subscription) res.status(200).json(subscription);
     else res.status(404).json({ error: `Subscription not found with id: ${id}` });
   } catch (error) {
     console.error('Error fetching Subscription by ID:', error);
@@ -290,9 +271,7 @@ exports.downgradeToFree = async (req, res) => {
     if (!commerce_id) {
       return res.status(400).json({ error: 'commerce_id es requerido' });
     }
-
     await Subscription.destroy({ where: { commerce_id: Number(commerce_id) } });
-
     return res.status(200).json({ ok: true, message: 'Comercio pasado a plan gratuito' });
   } catch (error) {
     console.error('Error en downgrade a Free:', error);
