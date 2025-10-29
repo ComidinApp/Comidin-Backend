@@ -75,7 +75,6 @@ exports.createSubscription = async (req, res) => {
       payer_email: String(payer_email).trim(),
       external_reference: String(commerce_id),
       back_url: `${process.env.FRONTEND_URL}/mi-cuenta/suscripciones/resultado`,
-      // sin 'authorized' ni auto_recurring
       status: 'pending',
     };
 
@@ -93,7 +92,6 @@ exports.createSubscription = async (req, res) => {
         (e?.details?.message || '').toLowerCase().includes('card_token_id is required');
 
       if (!needsCardToken) {
-        // Error real distinto → propagarlo
         const status = e?.status || 400;
         return res.status(status).json({
           error: 'Error creando preapproval en MP',
@@ -101,7 +99,6 @@ exports.createSubscription = async (req, res) => {
         });
       }
 
-      // Plan válido → usar su init_point (redirige a checkout de suscripciones)
       const planInfo = await mpGet(`/preapproval_plan/${preapprovalPlanId}`);
       if (!planInfo?.init_point) {
         return res.status(502).json({
@@ -110,11 +107,10 @@ exports.createSubscription = async (req, res) => {
         });
       }
 
-      // Devolvemos URL de redirección del plan (el front redirige y al volver confirmamos)
       return res.status(200).json({
         id: null,
         init_point: planInfo.init_point,
-        sandbox_init_point: planInfo.init_point, // MP usa misma URL y enruta según modo
+        sandbox_init_point: planInfo.init_point,
         mode: 'plan_init_point_fallback',
       });
     }
@@ -128,19 +124,47 @@ exports.createSubscription = async (req, res) => {
 };
 
 // se llama al volver del checkout, confirma con MP y guarda en la base
+// Opción B: si NO viene preapproval_id, buscamos con /preapproval/search por external_reference (+ plan)
 exports.confirmSubscription = async (req, res) => {
   try {
     const { preapproval_id, commerce_id, plan_id } = req.body;
 
-    if (!preapproval_id) return res.status(400).json({ error: 'preapproval_id es requerido' });
-    if (!commerce_id)   return res.status(400).json({ error: 'commerce_id es requerido' });
-
-    const mp = await mpGet(`/preapproval/${preapproval_id}`);
-
-    if (mp.status !== 'authorized') {
-      return res.status(409).json({ error: 'La suscripción todavía no está autorizada', mp_status: mp.status });
+    if (!commerce_id) {
+      return res.status(400).json({ error: 'commerce_id es requerido' });
     }
 
+    // Traer info de MP:
+    let mp;
+    if (preapproval_id) {
+      mp = await mpGet(`/preapproval/${preapproval_id}`);
+    } else {
+      // Fallback: buscar por external_reference (y plan si vino)
+      const preapprovalPlanId = PLAN_ID_MAP[Number(plan_id)] || null;
+      const params = new URLSearchParams({
+        external_reference: String(commerce_id),
+        sort: 'date_created',
+        criteria: 'desc',
+        limit: '1',
+      });
+      if (preapprovalPlanId) params.set('preapproval_plan_id', preapprovalPlanId);
+
+      const list = await mpGet(`/preapproval/search?${params.toString()}`);
+      const found = list?.results?.[0];
+      if (!found) {
+        return res.status(409).json({
+          error: 'No encontré preapproval para este comercio en MP',
+          hint: 'Revisá el back_url del plan y que el flujo haya completado el checkout',
+        });
+      }
+      mp = found;
+    }
+
+    // Para TESTING: persistimos mientras no esté cancelada
+    if (String(mp.status || '').toLowerCase() === 'cancelled') {
+      return res.status(409).json({ error: 'La suscripción está cancelada', mp_status: mp.status, mp_id: mp.id });
+    }
+
+    // Resolver plan local desde el preapproval_plan_id si no lo mandaron
     const INVERSE_PLAN_ID_MAP = Object.entries(PLAN_ID_MAP).reduce((acc, [localId, mpPlanId]) => {
       if (mpPlanId) acc[mpPlanId] = Number(localId);
       return acc;
@@ -148,13 +172,14 @@ exports.confirmSubscription = async (req, res) => {
 
     let resolvedPlanId = Number(plan_id);
     if (!resolvedPlanId && mp.preapproval_plan_id) {
-      const found = INVERSE_PLAN_ID_MAP[mp.preapproval_plan_id];
-      if (found) resolvedPlanId = Number(found);
+      const foundLocal = INVERSE_PLAN_ID_MAP[mp.preapproval_plan_id];
+      if (foundLocal) resolvedPlanId = Number(foundLocal);
     }
     if (![2, 3].includes(resolvedPlanId)) {
       return res.status(400).json({ error: 'No pude resolver el plan local' });
     }
 
+    // Upsert por commerce_id
     let sub;
     await sequelize.transaction(async (t) => {
       const existing = await Subscription.findOne({
@@ -176,7 +201,7 @@ exports.confirmSubscription = async (req, res) => {
       }
     });
 
-    return res.status(200).json({ ok: true, subscription: sub });
+    return res.status(200).json({ ok: true, subscription: sub, mp_status: mp.status, mp_id: mp.id });
   } catch (error) {
     console.error('Error confirmando suscripción:', error);
     return res.status(500).json({ error: 'Error interno confirmando la suscripción' });

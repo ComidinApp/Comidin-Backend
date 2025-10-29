@@ -1,3 +1,4 @@
+// routes/subscription.js
 const express = require('express');
 const { validationResult } = require('express-validator');
 const Subscription = require('../controllers/subscription');
