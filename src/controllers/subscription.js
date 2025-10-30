@@ -124,7 +124,7 @@ exports.createSubscription = async (req, res) => {
 };
 
 // se llama al volver del checkout, confirma con MP y guarda en la base
-// Opción B: si NO viene preapproval_id, buscamos con /preapproval/search por external_reference (+ plan)
+// Opción B robusta: si NO viene preapproval_id, buscamos por external_reference con reintentos de "sort"
 exports.confirmSubscription = async (req, res) => {
   try {
     const { preapproval_id, commerce_id, plan_id } = req.body;
@@ -133,81 +133,82 @@ exports.confirmSubscription = async (req, res) => {
       return res.status(400).json({ error: 'commerce_id es requerido' });
     }
 
-    // Traer info de MP:
-    let mp;
+    // 1) Si vino el id directo, lo leemos y listo
     if (preapproval_id) {
-      mp = await mpGet(`/preapproval/${preapproval_id}`);
-    } else {
-      // Fallback: buscar por external_reference (y plan si vino)
-      const preapprovalPlanId = PLAN_ID_MAP[Number(plan_id)] || null;
-      const params = new URLSearchParams({
-        external_reference: String(commerce_id),
-        sort: 'date_created',
-        criteria: 'desc',
-        limit: '1',
-      });
-      if (preapprovalPlanId) params.set('preapproval_plan_id', preapprovalPlanId);
+      const mp = await mpGet(`/preapproval/${preapproval_id}`);
+      if (String(mp.status || '').toLowerCase() === 'cancelled') {
+        return res.status(409).json({ error: 'La suscripción está cancelada', mp_status: mp.status, mp_id: mp.id });
+      }
+      return await persistLocalAndReply({ mp, plan_id, commerce_id, res });
+    }
 
-      const list = await mpGet(`/preapproval/search?${params.toString()}`);
-      const found = list?.results?.[0];
-      if (!found) {
-        return res.status(409).json({
-          error: 'No encontré preapproval para este comercio en MP',
-          hint: 'Revisá el back_url del plan y que el flujo haya completado el checkout',
+    // 2) Fallback por búsqueda: armamos params base
+    const preapprovalPlanId = PLAN_ID_MAP[Number(plan_id)] || null;
+
+    const baseParams = {
+      external_reference: String(commerce_id),
+      limit: '1',
+    };
+    if (preapprovalPlanId) baseParams.preapproval_plan_id = preapprovalPlanId;
+
+    // Estrategia de reintentos por variación de "sort"
+    const searchVariants = [
+      // a) formato 1: todo en el mismo parámetro
+      (p) => new URLSearchParams({ ...p, sort: 'date_created:desc' }),
+      // b) formato 2 (formato original)
+      (p) => new URLSearchParams({ ...p, sort: 'date_created', criteria: 'desc' }),
+      // c) sin sort (default + limit=1)
+      (p) => new URLSearchParams({ ...p }),
+    ];
+
+    let found = null;
+    let lastErr = null;
+
+    for (const build of searchVariants) {
+      const qs = build(baseParams).toString();
+      try {
+        const list = await mpGet(`/preapproval/search?${qs}`);
+        if (Array.isArray(list?.results) && list.results.length > 0) {
+          found = list.results[0];
+          break;
+        }
+      } catch (e) {
+        lastErr = e;
+        // si es 400 por sort inválido, probamos la siguiente variante
+        const msg = (e?.details?.message || e?.message || '').toLowerCase();
+        if (!msg.includes('invalid sorting')) {
+          // otro tipo de error → corto y respondo
+          break;
+        }
+      }
+    }
+
+    if (!found) {
+      if (lastErr) {
+        const status = lastErr?.status || 400;
+        return res.status(status).json({
+          error: 'Error buscando preapproval en MP',
+          details: lastErr?.details || { message: lastErr?.message || 'Solicitud rechazada por MP' },
         });
       }
-      mp = found;
-    }
-
-    // Para TESTING: persistimos mientras no esté cancelada
-    if (String(mp.status || '').toLowerCase() === 'cancelled') {
-      return res.status(409).json({ error: 'La suscripción está cancelada', mp_status: mp.status, mp_id: mp.id });
-    }
-
-    // Resolver plan local desde el preapproval_plan_id si no lo mandaron
-    const INVERSE_PLAN_ID_MAP = Object.entries(PLAN_ID_MAP).reduce((acc, [localId, mpPlanId]) => {
-      if (mpPlanId) acc[mpPlanId] = Number(localId);
-      return acc;
-    }, {});
-
-    let resolvedPlanId = Number(plan_id);
-    if (!resolvedPlanId && mp.preapproval_plan_id) {
-      const foundLocal = INVERSE_PLAN_ID_MAP[mp.preapproval_plan_id];
-      if (foundLocal) resolvedPlanId = Number(foundLocal);
-    }
-    if (![2, 3].includes(resolvedPlanId)) {
-      return res.status(400).json({ error: 'No pude resolver el plan local' });
-    }
-
-    // Upsert por commerce_id
-    let sub;
-    await sequelize.transaction(async (t) => {
-      const existing = await Subscription.findOne({
-        where: { commerce_id: Number(commerce_id) },
-        transaction: t,
-        lock: t.LOCK.UPDATE,
+      return res.status(409).json({
+        error: 'No encontré preapproval para este comercio en MP',
+        hint: 'Verificá que el checkout haya finalizado y que el back_url del plan apunte a tu front.',
       });
+    }
 
-      if (!existing) {
-        sub = await Subscription.create(
-          { commerce_id: Number(commerce_id), plan_id: resolvedPlanId },
-          { transaction: t }
-        );
-      } else if (existing.plan_id !== resolvedPlanId) {
-        await existing.update({ plan_id: resolvedPlanId }, { transaction: t });
-        sub = existing;
-      } else {
-        sub = existing;
-      }
-    });
+    if (String(found.status || '').toLowerCase() === 'cancelled') {
+      return res.status(409).json({ error: 'La suscripción está cancelada', mp_status: found.status, mp_id: found.id });
+    }
 
-    return res.status(200).json({ ok: true, subscription: sub, mp_status: mp.status, mp_id: mp.id });
+    // Persistir local (resuelve plan si no vino)
+    return await persistLocalAndReply({ mp: found, plan_id, commerce_id, res });
+
   } catch (error) {
     console.error('Error confirmando suscripción:', error);
     return res.status(500).json({ error: 'Error interno confirmando la suscripción' });
   }
 };
-
 
 // --------- CRUD locales ---------
 exports.findAllSubscriptions = async (_req, res) => {
@@ -224,7 +225,7 @@ exports.findSubscriptionById = async (req, res) => {
   try {
     const { id } = req.params;
     const subscription = await Subscription.findByPk(id);
-  if (subscription) res.status(200).json(subscription);
+    if (subscription) res.status(200).json(subscription);
     else res.status(404).json({ error: `Subscription not found with id: ${id}` });
   } catch (error) {
     console.error('Error fetching Subscription by ID:', error);
@@ -303,3 +304,46 @@ exports.downgradeToFree = async (req, res) => {
     return res.status(500).json({ error: 'No se pudo pasar a plan gratuito' });
   }
 };
+
+/* ----------------- Helpers internos ----------------- */
+
+// helper reutilizable para upsert local y responder
+async function persistLocalAndReply({ mp, plan_id, commerce_id, res }) {
+  // Resolver plan local desde el preapproval_plan_id si no lo mandaron
+  const INVERSE_PLAN_ID_MAP = Object.entries(PLAN_ID_MAP).reduce((acc, [localId, mpPlanId]) => {
+    if (mpPlanId) acc[mpPlanId] = Number(localId);
+    return acc;
+  }, {});
+
+  let resolvedPlanId = Number(plan_id);
+  if (!resolvedPlanId && mp.preapproval_plan_id) {
+    const foundLocal = INVERSE_PLAN_ID_MAP[mp.preapproval_plan_id];
+    if (foundLocal) resolvedPlanId = Number(foundLocal);
+  }
+  if (![2, 3].includes(resolvedPlanId)) {
+    return res.status(400).json({ error: 'No pude resolver el plan local' });
+  }
+
+  let sub;
+  await sequelize.transaction(async (t) => {
+    const existing = await Subscription.findOne({
+      where: { commerce_id: Number(commerce_id) },
+      transaction: t,
+      lock: t.LOCK.UPDATE,
+    });
+
+    if (!existing) {
+      sub = await Subscription.create(
+        { commerce_id: Number(commerce_id), plan_id: resolvedPlanId },
+        { transaction: t }
+      );
+    } else if (existing.plan_id !== resolvedPlanId) {
+      await existing.update({ plan_id: resolvedPlanId }, { transaction: t });
+      sub = existing;
+    } else {
+      sub = existing;
+    }
+  });
+
+  return res.status(200).json({ ok: true, subscription: sub, mp_status: mp.status, mp_id: mp.id });
+}
