@@ -15,13 +15,12 @@ function normalizeBody(req, _res, next) {
 }
 exports.normalizeBody = normalizeBody;
 
-// relación de planes locales con los preapproval de MP
 const PLAN_ID_MAP = {
-  2: process.env.MP_PLAN_STD,   // Estándar
-  3: process.env.MP_PLAN_PREM,  // Premium
+  2: process.env.MP_PLAN_STD,
+  3: process.env.MP_PLAN_PREM,
 };
 
-// ---- Helpers Mercado Pago
+// Helpers Mercado Pago
 async function mpFetch(path, init = {}) {
   const url = `https://api.mercadopago.com${path}`;
   const headers = {
@@ -44,31 +43,15 @@ async function mpFetch(path, init = {}) {
 const mpGet  = (path) => mpFetch(path, { method: 'GET' });
 const mpPost = (path, body) => mpFetch(path, { method: 'POST', body: JSON.stringify(body) });
 
-// crea el preapproval en MP y, si MP exige card_token, hace fallback a init_point del plan
+// crea el preapproval
 exports.createSubscription = async (req, res) => {
   try {
     const { plan_id, commerce_id, payer_email } = req.body;
-
-    // Validaciones básicas
-    if (![2, 3].includes(Number(plan_id))) {
-      return res.status(400).json({ error: 'Plan inválido. Solo Estándar (2) o Premium (3).' });
-    }
+    if (![2, 3].includes(Number(plan_id))) return res.status(400).json({ error: 'Plan inválido.' });
     if (!commerce_id) return res.status(400).json({ error: 'commerce_id es requerido' });
     if (!payer_email) return res.status(400).json({ error: 'payer_email es requerido' });
 
-    if (!process.env.MP_ACCESS_TOKEN) {
-      return res.status(500).json({ error: 'MP_ACCESS_TOKEN no configurado en el servidor' });
-    }
-    if (!process.env.FRONTEND_URL) {
-      return res.status(500).json({ error: 'FRONTEND_URL no configurado en el servidor' });
-    }
-
     const preapprovalPlanId = PLAN_ID_MAP[Number(plan_id)];
-    if (!preapprovalPlanId || String(preapprovalPlanId).trim() === '') {
-      return res.status(500).json({ error: 'El preapproval_plan_id de MP no está configurado' });
-    }
-
-    // 1) Intento “API”: crear preapproval (algunas cuentas lo permiten)
     const payload = {
       preapproval_plan_id: preapprovalPlanId,
       reason: Number(plan_id) === 2 ? 'Suscripción Estándar' : 'Suscripción Premium',
@@ -87,26 +70,11 @@ exports.createSubscription = async (req, res) => {
         mode: 'preapproval_api',
       });
     } catch (e) {
-      // 2) Fallback “checkout del plan”
       const needsCardToken =
         (e?.details?.message || '').toLowerCase().includes('card_token_id is required');
-
-      if (!needsCardToken) {
-        const status = e?.status || 400;
-        return res.status(status).json({
-          error: 'Error creando preapproval en MP',
-          details: e?.details || { message: e?.message || 'Solicitud rechazada por MP' },
-        });
-      }
+      if (!needsCardToken) throw e;
 
       const planInfo = await mpGet(`/preapproval_plan/${preapprovalPlanId}`);
-      if (!planInfo?.init_point) {
-        return res.status(502).json({
-          error: 'No se pudo obtener el init_point del plan',
-          details: planInfo || null,
-        });
-      }
-
       return res.status(200).json({
         id: null,
         init_point: planInfo.init_point,
@@ -115,202 +83,93 @@ exports.createSubscription = async (req, res) => {
       });
     }
   } catch (error) {
-    const status = error?.status || 400;
-    return res.status(status).json({
-      error: 'Error creando preapproval en MP',
-      details: error?.details || { message: error?.message || 'Solicitud rechazada por MP' },
-    });
+    return res.status(error?.status || 400).json({ error: error.message, details: error.details });
   }
 };
 
-// se llama al volver del checkout, confirma con MP y guarda en la base
-// Opción B robusta: si NO viene preapproval_id, buscamos por external_reference con reintentos de "sort"
+// confirmar suscripción (versión mejorada)
 exports.confirmSubscription = async (req, res) => {
   try {
     const { preapproval_id, commerce_id, plan_id } = req.body;
+    if (!commerce_id) return res.status(400).json({ error: 'commerce_id es requerido' });
 
-    if (!commerce_id) {
-      return res.status(400).json({ error: 'commerce_id es requerido' });
-    }
-
-    // 1) Si vino el id directo, lo leemos y listo
     if (preapproval_id) {
       const mp = await mpGet(`/preapproval/${preapproval_id}`);
       if (String(mp.status || '').toLowerCase() === 'cancelled') {
-        return res.status(409).json({ error: 'La suscripción está cancelada', mp_status: mp.status, mp_id: mp.id });
+        return res.status(409).json({ error: 'La suscripción está cancelada', mp_status: mp.status });
       }
       return await persistLocalAndReply({ mp, plan_id, commerce_id, res });
     }
 
-    // 2) Fallback por búsqueda: params base
     const preapprovalPlanId = PLAN_ID_MAP[Number(plan_id)] || null;
-
-    const baseParams = {
-      external_reference: String(commerce_id),
-      limit: '1',
-    };
+    const baseParams = { external_reference: String(commerce_id), limit: '5' };
     if (preapprovalPlanId) baseParams.preapproval_plan_id = preapprovalPlanId;
 
-    // Reintentos por variación de "sort"
     const searchVariants = [
-      (p) => new URLSearchParams({ ...p, sort: 'date_created:desc' }),        // formato 1
-      (p) => new URLSearchParams({ ...p, sort: 'date_created', criteria: 'desc' }), // formato 2
-      (p) => new URLSearchParams({ ...p }),                                   // sin sort
+      (p) => new URLSearchParams({ ...p, sort: 'date_created:desc' }),
+      (p) => new URLSearchParams({ ...p, sort: 'date_created', criteria: 'desc' }),
+      (p) => new URLSearchParams({ ...p }),
     ];
 
-    let found = null;
-    let lastErr = null;
+    const pickLatestAuthorized = (results) => {
+      if (!Array.isArray(results)) return null;
+      const filtered = results
+        .filter(r => String(r.status || '').toLowerCase() !== 'cancelled')
+        .filter(r => !preapprovalPlanId || r.preapproval_plan_id === preapprovalPlanId);
+      filtered.sort((a, b) => {
+        const ta = new Date(a.date_created || a.created_at || 0).getTime();
+        const tb = new Date(b.date_created || b.created_at || 0).getTime();
+        return tb - ta;
+      });
+      return filtered[0];
+    };
 
+    let found = null, lastErr = null;
     for (const build of searchVariants) {
       const qs = build(baseParams).toString();
       try {
         const list = await mpGet(`/preapproval/search?${qs}`);
-        if (Array.isArray(list?.results) && list.results.length > 0) {
-          found = list.results[0];
-          break;
-        }
+        const chosen = pickLatestAuthorized(list?.results);
+        if (chosen) { found = chosen; break; }
       } catch (e) {
         lastErr = e;
         const msg = (e?.details?.message || e?.message || '').toLowerCase();
-        if (!msg.includes('invalid sorting')) break; // otro tipo de error: corto
+        if (!msg.includes('invalid sorting')) break;
       }
     }
 
     if (!found) {
       if (lastErr) {
-        const status = lastErr?.status || 400;
-        return res.status(status).json({
-          error: 'Error buscando preapproval en MP',
-          details: lastErr?.details || { message: lastErr?.message || 'Solicitud rechazada por MP' },
-        });
+        return res.status(lastErr?.status || 400).json({ error: 'Error buscando preapproval en MP', details: lastErr.details });
       }
-      return res.status(409).json({
-        error: 'No encontré preapproval para este comercio en MP',
-        hint: 'Verificá que el checkout haya finalizado y que el back_url del plan apunte a tu front.',
-      });
+      return res.status(409).json({ error: 'No encontré preapproval para este comercio en MP' });
     }
 
     if (String(found.status || '').toLowerCase() === 'cancelled') {
-      return res.status(409).json({ error: 'La suscripción está cancelada', mp_status: found.status, mp_id: found.id });
+      return res.status(409).json({ error: 'La suscripción está cancelada', mp_status: found.status });
     }
 
     return await persistLocalAndReply({ mp: found, plan_id, commerce_id, res });
-
   } catch (error) {
     console.error('Error confirmando suscripción:', error);
     return res.status(500).json({ error: 'Error interno confirmando la suscripción' });
   }
 };
 
-// --------- CRUD locales ---------
-exports.findAllSubscriptions = async (_req, res) => {
-  try {
-    const subscriptions = await Subscription.findAll();
-    res.status(200).json(subscriptions);
-  } catch (error) {
-    console.error('Error fetching Subscriptions:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
-  }
-};
-
-exports.findSubscriptionById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const subscription = await Subscription.findByPk(id);
-    if (subscription) res.status(200).json(subscription);
-    else res.status(404).json({ error: `Subscription not found with id: ${id}` });
-  } catch (error) {
-    console.error('Error fetching Subscription by ID:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
-  }
-};
-
-exports.updateSubscription = async (req, res) => {
-  try {
-    const { body } = req;
-    const { id } = req.params;
-    const subscription = await Subscription.findByPk(id);
-    if (subscription) {
-      await subscription.update(body);
-      res.status(200).json(subscription);
-    } else {
-      res.status(404).json({ error: `Subscription not found with id: ${id}` });
-    }
-  } catch (error) {
-    console.error('Error updating Subscription:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
-  }
-};
-
-exports.deleteSubscription = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const subscription = await Subscription.findByPk(id);
-    if (subscription) {
-      await subscription.destroy();
-      res.status(200).json({ message: 'Subscription successfully deleted' });
-    } else {
-      res.status(404).json({ error: `Subscription not found with id: ${id}` });
-    }
-  } catch (error) {
-    console.error('Error deleting Subscription:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
-  }
-};
-
-exports.findSubscriptionsByCommerceId = async (req, res) => {
-  try {
-    const { commerceId } = req.params;
-    const subscriptions = await Subscription.findSubscriptionsByCommerceId(commerceId);
-    // ⚠️ siempre 200 con array (vacío si no hay)
-    res.status(200).json(Array.isArray(subscriptions) ? subscriptions : []);
-  } catch (error) {
-    console.error('Error fetching Subscriptions by Commerce ID:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
-  }
-};
-
-exports.findSubscriptionsByPlanId = async (req, res) => {
-  try {
-    const { planId } = req.params;
-    const subscriptions = await Subscription.findSubscriptionsByPlanId(planId);
-    // ⚠️ siempre 200 con array (vacío si no hay)
-    res.status(200).json(Array.isArray(subscriptions) ? subscriptions : []);
-  } catch (error) {
-    console.error('Error fetching Subscriptions by Plan ID:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
-  }
-};
-
-// endpoint para bajar al plan gratis: upsert a plan_id = 1 (no borra)
+// Downgrade to Free
 exports.downgradeToFree = async (req, res) => {
   try {
     const { commerce_id } = req.body || {};
-    if (!commerce_id) {
-      return res.status(400).json({ error: 'commerce_id es requerido' });
-    }
-
+    if (!commerce_id) return res.status(400).json({ error: 'commerce_id es requerido' });
     let sub;
     await sequelize.transaction(async (t) => {
-      const existing = await Subscription.findOne({
-        where: { commerce_id: Number(commerce_id) },
-        transaction: t,
-        lock: t.LOCK.UPDATE,
-      });
-
-      if (!existing) {
-        sub = await Subscription.create(
-          { commerce_id: Number(commerce_id), plan_id: 1 },
-          { transaction: t }
-        );
-      } else if (existing.plan_id !== 1) {
-        await existing.update({ plan_id: 1 }, { transaction: t });
-        sub = existing;
-      } else {
-        sub = existing;
-      }
+      const existing = await Subscription.findOne({ where: { commerce_id }, transaction: t, lock: t.LOCK.UPDATE });
+      if (!existing)
+        sub = await Subscription.create({ commerce_id, plan_id: 1 }, { transaction: t });
+      else if (existing.plan_id !== 1)
+        sub = await existing.update({ plan_id: 1 }, { transaction: t });
+      else sub = existing;
     });
-
     return res.status(200).json({ ok: true, message: 'Comercio pasado a plan gratuito', subscription: sub });
   } catch (error) {
     console.error('Error en downgrade a Free:', error);
@@ -318,45 +177,21 @@ exports.downgradeToFree = async (req, res) => {
   }
 };
 
-/* ----------------- Helpers internos ----------------- */
-
-// helper reutilizable para upsert local y responder
+// Helper persist
 async function persistLocalAndReply({ mp, plan_id, commerce_id, res }) {
-  // Resolver plan local desde el preapproval_plan_id si no lo mandaron
-  const INVERSE_PLAN_ID_MAP = Object.entries(PLAN_ID_MAP).reduce((acc, [localId, mpPlanId]) => {
-    if (mpPlanId) acc[mpPlanId] = Number(localId);
-    return acc;
-  }, {});
-
+  const INVERSE_PLAN_ID_MAP = Object.entries(PLAN_ID_MAP).reduce((a, [k, v]) => { if (v) a[v] = Number(k); return a; }, {});
   let resolvedPlanId = Number(plan_id);
-  if (!resolvedPlanId && mp.preapproval_plan_id) {
-    const foundLocal = INVERSE_PLAN_ID_MAP[mp.preapproval_plan_id];
-    if (foundLocal) resolvedPlanId = Number(foundLocal);
-  }
-  if (![2, 3].includes(resolvedPlanId)) {
-    return res.status(400).json({ error: 'No pude resolver el plan local' });
-  }
+  if (!resolvedPlanId && mp.preapproval_plan_id) resolvedPlanId = INVERSE_PLAN_ID_MAP[mp.preapproval_plan_id];
+  if (![2, 3].includes(resolvedPlanId)) return res.status(400).json({ error: 'No pude resolver el plan local' });
 
   let sub;
   await sequelize.transaction(async (t) => {
-    const existing = await Subscription.findOne({
-      where: { commerce_id: Number(commerce_id) },
-      transaction: t,
-      lock: t.LOCK.UPDATE,
-    });
-
-    if (!existing) {
-      sub = await Subscription.create(
-        { commerce_id: Number(commerce_id), plan_id: resolvedPlanId },
-        { transaction: t }
-      );
-    } else if (existing.plan_id !== resolvedPlanId) {
-      await existing.update({ plan_id: resolvedPlanId }, { transaction: t });
-      sub = existing;
-    } else {
-      sub = existing;
-    }
+    const existing = await Subscription.findOne({ where: { commerce_id }, transaction: t, lock: t.LOCK.UPDATE });
+    if (!existing)
+      sub = await Subscription.create({ commerce_id, plan_id: resolvedPlanId }, { transaction: t });
+    else if (existing.plan_id !== resolvedPlanId)
+      sub = await existing.update({ plan_id: resolvedPlanId }, { transaction: t });
+    else sub = existing;
   });
-
   return res.status(200).json({ ok: true, subscription: sub, mp_status: mp.status, mp_id: mp.id });
 }
