@@ -1,21 +1,9 @@
 // src/services/analyticsService.js
-const { Op, fn, col, where, literal } = require('sequelize');
+const { Op, fn, col, literal, where } = require('sequelize');
 
-/* ===== Resolver modelos y util con fallback de rutas ===== */
 let Models;
-try {
-  // Caso habitual: src/models
-  Models = require('../models');
-} catch (_e1) {
-  try {
-    // Alternativa: models en la raíz del proyecto
-    Models = require('../../models');
-  } catch (_e2) {
-    throw new Error(
-      "No se pudo cargar 'models' desde '../models' ni '../../models'. Verifica la ubicación de la carpeta models."
-    );
-  }
-}
+try { Models = require('../models'); } catch { Models = require('../../models'); }
+
 const {
   order: Order,
   order_detail: OrderDetail,
@@ -24,191 +12,146 @@ const {
 } = Models;
 
 let getDateWindow;
-try {
-  ({ getDateWindow } = require('../utils/getDateWindow'));
-} catch (_e1) {
-  try {
-    ({ getDateWindow } = require('../../utils/getDateWindow'));
-  } catch (_e2) {
-    throw new Error(
-      "No se pudo cargar 'getDateWindow' desde '../utils/getDateWindow' ni '../../utils/getDateWindow'."
-    );
-  }
-}
+try { ({ getDateWindow } = require('../utils/getDateWindow')); }
+catch { ({ getDateWindow } = require('../../utils/getDateWindow')); }
 
-/* ================== Servicio ================== */
+// Estados (según lo que definiste)
+const DONE_STATUSES = ['PAID', 'DELIVERED', 'COMPLETED'];
+const RETURN_STATUSES = ['CLAIMED', 'RETURNED'];
+const CLAIM_STATUSES = ['CLAIMED']; // para la torta de "reclamados"
+
 exports.getOverview = async ({
   commerceId,
   period = 'last30d',
   validStatuses = ['PAID', 'DELIVERED', 'COMPLETED'],
   timezone = 'America/Argentina/Buenos_Aires',
 }) => {
-  // ---- Filtro base por status + comercio (sobre ORDER) ----
+  // Filtro base por comercio, con opción de status cuando toque
   let statusCondition;
   if (validStatuses !== 'ALL' && Array.isArray(validStatuses) && validStatuses.length > 0) {
     const statusesLower = validStatuses.map((s) => String(s).toLowerCase());
     statusCondition = where(fn('LOWER', col('status')), { [Op.in]: statusesLower });
   }
-
   const baseFilter = { commerce_id: commerceId };
   if (statusCondition) {
-    baseFilter[Op.and] = baseFilter[Op.and]
-      ? [baseFilter[Op.and], statusCondition]
-      : [statusCondition];
+    baseFilter[Op.and] = baseFilter[Op.and] ? [baseFilter[Op.and], statusCondition] : [statusCondition];
   }
 
-  const { from, to } = getDateWindow(period, timezone);
+  // ===== KPIs (históricos) =====
 
-  // ---- 1) Obtener IDs de órdenes que cumplen el filtro (para usar en OrderDetail) ----
+  // Ingresos históricos (no hay costo → no calculamos ganancia)
+  const totalRevenueRow = await Order.findOne({
+    attributes: [[fn('COALESCE', fn('SUM', col('total_amount')), 0), 'revenue']],
+    where: { commerce_id: commerceId },
+    raw: true,
+  });
+  const totalRevenue = Number(totalRevenueRow?.revenue ?? 0);
+
+  // Pedidos realizados históricos
+  const totalOrders = await Order.count({
+    where: {
+      commerce_id: commerceId,
+      status: { [Op.in]: DONE_STATUSES },
+    },
+  });
+
+  // Pedidos devueltos históricos
+  const returnedOrders = await Order.count({
+    where: {
+      commerce_id: commerceId,
+      status: { [Op.in]: RETURN_STATUSES },
+    },
+  });
+
+  // Productos vencidos históricos (por fecha): sum(available_stock) de publicaciones vencidas
+  const expiredRows = await Publication.findAll({
+    attributes: [[fn('COALESCE', fn('SUM', col('available_stock')), 0), 'expiredStock']],
+    where: {
+      commerce_id: commerceId,
+      expiration_date: { [Op.lt]: new Date() }, // vencidas por fecha
+    },
+    raw: true,
+  });
+  const expiredProducts = Number(expiredRows?.[0]?.expiredStock ?? 0);
+
+  // ===== Gráfico de barras: Top 3 productos por unidades (últimos 12 meses) =====
+  const now = new Date();
+  const startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
+
+  // Buscar IDs de órdenes del comercio (para filtrar order_detail)
   const orderIdsRows = await Order.findAll({
     attributes: ['id'],
-    where: baseFilter,
+    where: { commerce_id: commerceId },
     raw: true,
   });
   const orderIds = orderIdsRows.map((r) => r.id);
 
-  // ---- KPIs actuales ----
-  const ordersCountPromise = Order.count({ where: baseFilter });
+  let topProductsBar = [];
+  if (orderIds.length) {
+    const top3Raw = await OrderDetail.findAll({
+      attributes: [
+        [col('publication->product.name'), 'productName'],
+        [fn('SUM', col('quantity')), 'units'],
+      ],
+      where: {
+        order_id: { [Op.in]: orderIds },
+        created_at: { [Op.between]: [startDate, now] },
+      },
+      include: [
+        {
+          model: Publication,
+          as: 'publication',
+          attributes: [],
+          required: true,
+          include: [{ model: Product, as: 'product', attributes: [], required: false }],
+        },
+      ],
+      group: [col('publication->product.name')],
+      order: [[fn('SUM', col('quantity')), 'DESC']],
+      limit: 3,
+      raw: true,
+    });
 
-  // Sumatoria de cantidades vendidas (sobre order_detail) filtrando por order_id ∈ orderIds
-  const productsSoldPromise =
-    orderIds.length === 0
-      ? Promise.resolve({ qty: 0 })
-      : OrderDetail.findOne({
-          attributes: [[fn('COALESCE', fn('SUM', col('quantity')), 0), 'qty']],
-          where: { order_id: { [Op.in]: orderIds } },
-          raw: true,
-        });
-
-  const monthlyWhere =
-    from && to
-      ? { ...baseFilter, created_at: { [Op.between]: [from, to] } }
-      : { ...baseFilter };
-
-  const monthlyAggPromise = Order.findOne({
-    attributes: [
-      [fn('COALESCE', fn('SUM', col('total_amount')), 0), 'amount'],
-      [fn('COUNT', col('id')), 'count'],
-    ],
-    where: monthlyWhere,
-    raw: true,
-  });
-
-  const totalUsersPromise = Order.findOne({
-    attributes: [[fn('COUNT', fn('DISTINCT', col('user_id'))), 'buyers']],
-    where: baseFilter,
-    raw: true,
-  });
-
-  // ---- Ventas mensuales últimos 12 meses (MySQL compatible) ----
-  const now = new Date();
-  const startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
-  const monthExpr = fn('DATE_FORMAT', col('created_at'), '%Y-%m-01'); // yyyy-mm-01
-
-  const monthlySalesPromise = Order.findAll({
-    attributes: [
-      [monthExpr, 'month'],
-      [fn('COUNT', col('id')), 'ordersCount'],
-      [fn('SUM', col('total_amount')), 'totalAmount'],
-    ],
-    where: {
-      ...baseFilter,
-      created_at: { [Op.between]: [startDate, now] },
-    },
-    group: [literal("DATE_FORMAT(created_at, '%Y-%m-01')")],
-    order: [literal("DATE_FORMAT(created_at, '%Y-%m-01') ASC")],
-    raw: true,
-  });
-
-  // ---- Top 3 productos últimos 12 meses ----
-  // NOTA: como order_detail NO tiene asociación con order,
-  // filtramos por order_id IN (IDs válidos) y por fecha en order_detail.created_at
-  const topProductsPromise =
-    orderIds.length === 0
-      ? Promise.resolve([])
-      : OrderDetail.findAll({
-          attributes: [
-            [col('publication->product.name'), 'productName'],
-            [fn('SUM', col('quantity')), 'quantitySold'],
-          ],
-          where: {
-            order_id: { [Op.in]: orderIds },
-            created_at: { [Op.between]: [startDate, now] },
-          },
-          include: [
-            {
-              model: Publication,
-              as: 'publication',
-              attributes: [],
-              required: true,
-              include: [
-                {
-                  model: Product,
-                  as: 'product',
-                  attributes: [],
-                  required: false,
-                },
-              ],
-            },
-          ],
-          group: [col('publication->product.name')],
-          order: [[fn('SUM', col('quantity')), 'DESC']],
-          limit: 3,
-          raw: true,
-        });
-
-  // ---- Ejecutar en paralelo ----
-  const [ordersCount, productsSoldRow, monthlyAggRow, totalUsersRow, monthlySales, topProductsRaw] =
-    await Promise.all([
-      ordersCountPromise,
-      productsSoldPromise,
-      monthlyAggPromise,
-      totalUsersPromise,
-      monthlySalesPromise,
-      topProductsPromise,
-    ]);
-
-  // ---- Procesar resultados ----
-  const productsSold = Number(productsSoldRow?.qty ?? 0);
-  const monthlySalesAmount = Number(monthlyAggRow?.amount ?? 0);
-  const monthlyOrdersCount = Number(monthlyAggRow?.count ?? 0);
-  const totalUsers = Number(totalUsersRow?.buyers ?? 0);
-
-  // Completar meses faltantes
-  const monthMap = {};
-  monthlySales.forEach((row) => {
-    const month = new Date(row.month);
-    const key = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`;
-    monthMap[key] = {
-      month: key,
-      ordersCount: Number(row.ordersCount),
-      totalAmount: Number(row.totalAmount ?? 0),
-    };
-  });
-
-  const salesByMonth = [];
-  for (let i = 11; i >= 0; i--) {
-    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
-    salesByMonth.push(monthMap[key] ?? { month: key, ordersCount: 0, totalAmount: 0 });
+    topProductsBar = top3Raw.map((r) => ({
+      productName: r.productName ?? 'Desconocido',
+      units: Number(r.units ?? 0),
+    }));
   }
 
-  // Top 3 productos (con porcentajes)
-  const totalQty = topProductsRaw.reduce((acc, p) => acc + Number(p.quantitySold ?? 0), 0) || 1;
-  const topProducts = topProductsRaw.map((p) => ({
-    productName: p.productName ?? 'Desconocido',
-    quantitySold: Number(p.quantitySold ?? 0),
-    percentage: Math.round((Number(p.quantitySold) / totalQty) * 100),
-  }));
+  // ===== Tortas =====
 
-  // ---- Respuesta final ----
+  // Productos: vendidos vs vencidos
+  const soldUnitsRow = orderIds.length
+    ? await OrderDetail.findOne({
+        attributes: [[fn('COALESCE', fn('SUM', col('quantity')), 0), 'sold']],
+        where: { order_id: { [Op.in]: orderIds } },
+        raw: true,
+      })
+    : { sold: 0 };
+
+  const soldUnits = Number(soldUnitsRow?.sold ?? 0);
+
+  // Pedidos: realizados vs reclamados
+  const claimedOrders = await Order.count({
+    where: { commerce_id: commerceId, status: { [Op.in]: CLAIM_STATUSES } },
+  });
+
+  const completedOrders = Math.max(0, Number(totalOrders)); // ya son "realizados"
+
+  // ===== Respuesta =====
   return {
-    ordersCount: Number(ordersCount),
-    productsSold,
-    monthlySalesAmount,
-    monthlyOrdersCount,
-    totalUsers,
-    salesByMonth,
-    topProducts,
+    totalRevenue,             // Ingresos (histórico)
+    totalOrders,              // Pedidos realizados (histórico)
+    returnedOrders,           // Pedidos devueltos (histórico)
+    expiredProducts,          // Productos vencidos (histórico) = stock vencido
+    topProductsBar,           // Barras (Top 3 por unidades)
+    pieProducts: {            // Torta productos
+      soldUnits,
+      expiredUnits: expiredProducts,
+    },
+    pieOrders: {              // Torta pedidos
+      completedOrders,
+      claimedOrders,
+    },
   };
 };
