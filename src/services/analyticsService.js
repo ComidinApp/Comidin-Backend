@@ -1,11 +1,6 @@
 // src/services/analyticsService.js
 const { Op, fn, col, where, literal } = require('sequelize');
-const {
-  order: Order,
-  order_detail: OrderDetail,
-  publication: Publication,
-  product: Product,
-} = require('../../models');
+const { order: Order, order_detail: OrderDetail, publication: Publication, product: Product } = require('../models');
 const { getDateWindow } = require('../utils/getDateWindow');
 
 exports.getOverview = async ({
