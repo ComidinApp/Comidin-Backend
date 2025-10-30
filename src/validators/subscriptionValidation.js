@@ -1,46 +1,48 @@
-const { check, oneOf } = require('express-validator');
-// Validaciones para crear una suscripción
+// src/validators/subscriptionValidation.js
+const { body, param, oneOf } = require('express-validator');
+
+// ✅ Crear suscripción (POST /subscriptions)
+// - Acepta plan_id o planId en el body (int >= 1)
+// - Acepta commerce_id o commerceId en el body (int >= 1)
+// - payer_email opcional pero, si viene, debe ser email válido
 const createSubscriptionValidation = [
   oneOf(
-    [ check('plan_id').isInt({ min: 1 }), check('planId').isInt({ min: 1 }) ],
+    [body('plan_id').isInt({ min: 1 }), body('planId').isInt({ min: 1 })],
     'Plan ID must be a positive integer and is required'
   ),
   oneOf(
-    [ check('commerce_id').isInt({ min: 1 }), check('commerceId').isInt({ min: 1 }) ],
+    [body('commerce_id').isInt({ min: 1 }), body('commerceId').isInt({ min: 1 })],
     'Commerce ID must be a positive integer and is required'
   ),
-  check('payer_email').optional().isEmail().withMessage('payer_email must be a valid email'),
+  body('payer_email').optional().isEmail().withMessage('payer_email must be a valid email'),
+
+  // Normalización (por si el front envía camelCase)
   (req, _res, next) => {
-    if (req.body.plan_id == null && req.body.planId != null) req.body.plan_id = Number(req.body.planId);
-    if (req.body.commerce_id == null && req.body.commerceId != null) req.body.commerce_id = Number(req.body.commerceId);
-    if (!req.body.payer_email && req.body.email) req.body.payer_email = req.body.email;
+    const b = req.body || {};
+    if (b.plan_id == null && b.planId != null) req.body.plan_id = Number(b.planId);
+    if (b.commerce_id == null && b.commerceId != null) req.body.commerce_id = Number(b.commerceId);
+    if (!b.payer_email && b.email) req.body.payer_email = b.email;
     next();
-  }
+  },
 ];
 
-// Validaciones para actualizar una suscripción
+// ✅ Actualizar suscripción (PUT /subscriptions/:id)
+// - Valida el :id de la ruta
+// - plan_id y commerce_id opcionales en body, pero si vienen deben ser enteros >=1
 const updateSubscriptionValidation = [
-  check('plan_id')
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage('Plan ID must be a positive integer'),
-  check('commerce_id')
-    .optional()
-    .isInt({ min: 1 })
-    .withMessage('Commerce ID must be a positive integer'),
+  param('id').isInt({ min: 1 }).withMessage('id must be a positive integer'),
+  body('plan_id').optional().isInt({ min: 1 }).withMessage('Plan ID must be a positive integer'),
+  body('commerce_id').optional().isInt({ min: 1 }).withMessage('Commerce ID must be a positive integer'),
 ];
 
-// Validaciones para los parámetros de la ruta
+// ✅ GET /subscriptions/plan/:planId
 const planIdValidation = [
-  check('planId')
-    .isInt({ min: 1 })
-    .withMessage('Plan ID must be a positive integer'),
+  param('planId').isInt({ min: 1 }).withMessage('Plan ID must be a positive integer'),
 ];
 
+// ✅ GET /subscriptions/commerce/:commerceId
 const commerceIdValidation = [
-  check('commerceId')
-    .isInt({ min: 1 })
-    .withMessage('Commerce ID must be a positive integer'),
+  param('commerceId').isInt({ min: 1 }).withMessage('Commerce ID must be a positive integer'),
 ];
 
 module.exports = {
