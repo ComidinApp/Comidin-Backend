@@ -1,0 +1,20 @@
+{
+  "watch": ["src", "config", "app.js", "server.js"],
+  "ignore": [
+    "**/*.jsx",
+    "**/*.tsx",
+    "frontend/**",
+    "web/**",
+    "ui/**",
+    "apps/frontend/**",
+    "packages/frontend/**",
+    "src/sections/**",
+    "src/assets/**",
+    "**/.git/**",
+    "**/node_modules/**",
+    "**/dist/**",
+    "**/build/**"
+  ],
+  "ext": "js,json",
+  "exec": "node app.js"
+}
