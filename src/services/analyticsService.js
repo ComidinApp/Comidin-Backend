@@ -1,8 +1,42 @@
 // src/services/analyticsService.js
 const { Op, fn, col, where, literal } = require('sequelize');
-const { order: Order, order_detail: OrderDetail, publication: Publication, product: Product } = require('../models');
-const { getDateWindow } = require('../utils/getDateWindow');
 
+/* ===== Resolver modelos y util con fallback de rutas ===== */
+let Models;
+try {
+  // Caso habitual: src/models
+  Models = require('../models');
+} catch (_e1) {
+  try {
+    // Alternativa: models en la raíz del proyecto
+    Models = require('../../models');
+  } catch (_e2) {
+    throw new Error(
+      "No se pudo cargar 'models' desde '../models' ni '../../models'. Verifica la ubicación de la carpeta models."
+    );
+  }
+}
+const {
+  order: Order,
+  order_detail: OrderDetail,
+  publication: Publication,
+  product: Product,
+} = Models;
+
+let getDateWindow;
+try {
+  ({ getDateWindow } = require('../utils/getDateWindow'));
+} catch (_e1) {
+  try {
+    ({ getDateWindow } = require('../../utils/getDateWindow'));
+  } catch (_e2) {
+    throw new Error(
+      "No se pudo cargar 'getDateWindow' desde '../utils/getDateWindow' ni '../../utils/getDateWindow'."
+    );
+  }
+}
+
+/* ================== Servicio ================== */
 exports.getOverview = async ({
   commerceId,
   period = 'last30d',
@@ -23,7 +57,7 @@ exports.getOverview = async ({
       : [statusCondition];
   }
 
-  const { from, to } = getDateWindow(period);
+  const { from, to } = getDateWindow(period, timezone);
 
   // ---- 1) Obtener IDs de órdenes que cumplen el filtro (para usar en OrderDetail) ----
   const orderIdsRows = await Order.findAll({
