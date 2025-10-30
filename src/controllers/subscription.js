@@ -87,7 +87,7 @@ exports.createSubscription = async (req, res) => {
         mode: 'preapproval_api',
       });
     } catch (e) {
-      // 2) Fallback “checkout del plan”: si MP pide tarjeta, devolvemos el init_point del plan
+      // 2) Fallback “checkout del plan”
       const needsCardToken =
         (e?.details?.message || '').toLowerCase().includes('card_token_id is required');
 
@@ -142,7 +142,7 @@ exports.confirmSubscription = async (req, res) => {
       return await persistLocalAndReply({ mp, plan_id, commerce_id, res });
     }
 
-    // 2) Fallback por búsqueda: armamos params base
+    // 2) Fallback por búsqueda: params base
     const preapprovalPlanId = PLAN_ID_MAP[Number(plan_id)] || null;
 
     const baseParams = {
@@ -151,14 +151,11 @@ exports.confirmSubscription = async (req, res) => {
     };
     if (preapprovalPlanId) baseParams.preapproval_plan_id = preapprovalPlanId;
 
-    // Estrategia de reintentos por variación de "sort"
+    // Reintentos por variación de "sort"
     const searchVariants = [
-      // a) formato 1: todo en el mismo parámetro
-      (p) => new URLSearchParams({ ...p, sort: 'date_created:desc' }),
-      // b) formato 2 (formato original)
-      (p) => new URLSearchParams({ ...p, sort: 'date_created', criteria: 'desc' }),
-      // c) sin sort (default + limit=1)
-      (p) => new URLSearchParams({ ...p }),
+      (p) => new URLSearchParams({ ...p, sort: 'date_created:desc' }),        // formato 1
+      (p) => new URLSearchParams({ ...p, sort: 'date_created', criteria: 'desc' }), // formato 2
+      (p) => new URLSearchParams({ ...p }),                                   // sin sort
     ];
 
     let found = null;
@@ -174,12 +171,8 @@ exports.confirmSubscription = async (req, res) => {
         }
       } catch (e) {
         lastErr = e;
-        // si es 400 por sort inválido, probamos la siguiente variante
         const msg = (e?.details?.message || e?.message || '').toLowerCase();
-        if (!msg.includes('invalid sorting')) {
-          // otro tipo de error → corto y respondo
-          break;
-        }
+        if (!msg.includes('invalid sorting')) break; // otro tipo de error: corto
       }
     }
 
@@ -201,7 +194,6 @@ exports.confirmSubscription = async (req, res) => {
       return res.status(409).json({ error: 'La suscripción está cancelada', mp_status: found.status, mp_id: found.id });
     }
 
-    // Persistir local (resuelve plan si no vino)
     return await persistLocalAndReply({ mp: found, plan_id, commerce_id, res });
 
   } catch (error) {
@@ -270,8 +262,8 @@ exports.findSubscriptionsByCommerceId = async (req, res) => {
   try {
     const { commerceId } = req.params;
     const subscriptions = await Subscription.findSubscriptionsByCommerceId(commerceId);
-    if (subscriptions && subscriptions.length > 0) res.status(200).json(subscriptions);
-    else res.status(404).json({ message: 'No subscriptions found for this commerce.' });
+    // ⚠️ siempre 200 con array (vacío si no hay)
+    res.status(200).json(Array.isArray(subscriptions) ? subscriptions : []);
   } catch (error) {
     console.error('Error fetching Subscriptions by Commerce ID:', error);
     res.status(409).json({ error: 'Conflict', meesage: error });
@@ -282,23 +274,44 @@ exports.findSubscriptionsByPlanId = async (req, res) => {
   try {
     const { planId } = req.params;
     const subscriptions = await Subscription.findSubscriptionsByPlanId(planId);
-    if (subscriptions && subscriptions.length > 0) res.status(200).json(subscriptions);
-    else res.status(404).json({ message: 'No subscriptions found for this plan.' });
+    // ⚠️ siempre 200 con array (vacío si no hay)
+    res.status(200).json(Array.isArray(subscriptions) ? subscriptions : []);
   } catch (error) {
     console.error('Error fetching Subscriptions by Plan ID:', error);
     res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 
-// endpoint para bajar al plan gratis: elimina subs locales del comercio
+// endpoint para bajar al plan gratis: upsert a plan_id = 1 (no borra)
 exports.downgradeToFree = async (req, res) => {
   try {
     const { commerce_id } = req.body || {};
     if (!commerce_id) {
       return res.status(400).json({ error: 'commerce_id es requerido' });
     }
-    await Subscription.destroy({ where: { commerce_id: Number(commerce_id) } });
-    return res.status(200).json({ ok: true, message: 'Comercio pasado a plan gratuito' });
+
+    let sub;
+    await sequelize.transaction(async (t) => {
+      const existing = await Subscription.findOne({
+        where: { commerce_id: Number(commerce_id) },
+        transaction: t,
+        lock: t.LOCK.UPDATE,
+      });
+
+      if (!existing) {
+        sub = await Subscription.create(
+          { commerce_id: Number(commerce_id), plan_id: 1 },
+          { transaction: t }
+        );
+      } else if (existing.plan_id !== 1) {
+        await existing.update({ plan_id: 1 }, { transaction: t });
+        sub = existing;
+      } else {
+        sub = existing;
+      }
+    });
+
+    return res.status(200).json({ ok: true, message: 'Comercio pasado a plan gratuito', subscription: sub });
   } catch (error) {
     console.error('Error en downgrade a Free:', error);
     return res.status(500).json({ error: 'No se pudo pasar a plan gratuito' });
