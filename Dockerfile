@@ -1,34 +1,24 @@
-# Etapa de producción (o dev estable)
+# Etapa única (producción / staging)
 FROM public.ecr.aws/docker/library/node:20-slim
 
-# Para builds reproducibles y mejores stack traces
 ENV NODE_ENV=production
 ENV TZ=America/Argentina/Buenos_Aires
 
 # Directorio de trabajo
 WORKDIR /comidin
 
-# 1) Instalar dependencias
+# 1) Instalar dependencias a partir de package.json / package-lock.json
 COPY package*.json ./
-# Si preferís dev dentro del contenedor, podés sacar --only=production
+# Si necesitás devDependencies en runtime, cambiá a: RUN npm ci
 RUN npm ci --only=production
 
-# 2) Copiar SOLO el código del backend (evitamos traer el front)
-# Ajustá esta lista si tenés más carpetas del backend
-COPY app.js ./app.js
-COPY database ./database
-COPY routes ./routes
-COPY controllers ./controllers
-COPY models ./models
-COPY validators ./validators
-COPY utils ./utils
-COPY config ./config
+# 2) Copiar SOLO el código del backend (vive dentro de src/)
+#    Ajustá si tenés otras carpetas necesarias dentro de src (p.ej. src/config, src/utils, etc.)
+COPY src ./src
 
-# Puerto
+# 3) Exponer puerto
 EXPOSE 3000
 
-# Comando
-# - En producción: usar "start" (sin nodemon)
-# - En testing local con el contenedor: podés usar "start:dev"
-# CMD ["npm","run","start"]
-CMD ["npm","run","start"]
+# 4) Comando de arranque
+#    En contenedores se recomienda no usar nodemon; para dev local, corré fuera del contenedor o crea otro Dockerfile.dev
+CMD ["node", "src/app.js"]
