@@ -74,17 +74,17 @@ exports.getOverview = async ({
   });
   const expiredProducts = Number(expiredRows?.[0]?.expiredStock ?? 0);
 
-  // ===== Gráfico de barras: Top 3 productos por unidades (últimos 12 meses) =====
-  const now = new Date();
-  const startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
-
-  // Buscar IDs de órdenes del comercio (para filtrar order_detail)
+  // ===== IDs de órdenes para joins / tortas / top3 =====
   const orderIdsRows = await Order.findAll({
     attributes: ['id'],
     where: { commerce_id: commerceId },
     raw: true,
   });
   const orderIds = orderIdsRows.map((r) => r.id);
+
+  // ===== Barras: Top 3 productos por unidades (últimos 12 meses) =====
+  const now = new Date();
+  const startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
 
   let topProductsBar = [];
   if (orderIds.length) {
@@ -138,20 +138,57 @@ exports.getOverview = async ({
 
   const completedOrders = Math.max(0, Number(totalOrders)); // ya son "realizados"
 
+  // ===== Histórico por mes (para tu gráfico combinado) =====
+  // Respetamos ventana "últimos 12 meses" y el filtro de status (validStatuses)
+  const monthExpr = fn('DATE_FORMAT', col('created_at'), '%Y-%m-01'); // yyyy-mm-01
+  const monthlyWhere = {
+    ...baseFilter,
+    created_at: { [Op.between]: [startDate, now] },
+  };
+
+  const monthlyRows = await Order.findAll({
+    attributes: [
+      [monthExpr, 'month'],
+      [fn('COUNT', col('id')), 'ordersCount'],
+      [fn('COALESCE', fn('SUM', col('total_amount')), 0), 'totalAmount'],
+    ],
+    where: monthlyWhere,
+    group: [literal("DATE_FORMAT(created_at, '%Y-%m-01')")],
+    order: [literal("DATE_FORMAT(created_at, '%Y-%m-01') ASC")],
+    raw: true,
+  });
+
+  // Completar meses faltantes y tipar números
+  const monthMap = {};
+  monthlyRows.forEach((row) => {
+    const month = new Date(row.month);
+    const key = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`;
+    monthMap[key] = {
+      month: key,
+      ordersCount: Number(row.ordersCount ?? 0),
+      totalAmount: Number(row.totalAmount ?? 0),
+    };
+  });
+
+  const salesByMonth = [];
+  for (let i = 11; i >= 0; i--) {
+    const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
+    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    salesByMonth.push(monthMap[key] ?? { month: key, ordersCount: 0, totalAmount: 0 });
+  }
+
   // ===== Respuesta =====
   return {
-    totalRevenue,             // Ingresos (histórico)
-    totalOrders,              // Pedidos realizados (histórico)
-    returnedOrders,           // Pedidos devueltos (histórico)
-    expiredProducts,          // Productos vencidos (histórico) = stock vencido
-    topProductsBar,           // Barras (Top 3 por unidades)
-    pieProducts: {            // Torta productos
-      soldUnits,
-      expiredUnits: expiredProducts,
-    },
-    pieOrders: {              // Torta pedidos
-      completedOrders,
-      claimedOrders,
-    },
+    // KPIs
+    totalRevenue,
+    totalOrders,
+    returnedOrders,
+    expiredProducts,
+
+    // Gráficos
+    topProductsBar,                       // barras (Top 3)
+    pieProducts: { soldUnits, expiredUnits: expiredProducts }, // torta productos
+    pieOrders: { completedOrders, claimedOrders },             // torta pedidos
+    salesByMonth,                         // 👈 necesario para tu gráfico combinado
   };
 };
