@@ -1,42 +1,85 @@
-// routes/subscription.js
+// src/routes/subscription.js
 const express = require('express');
 const { validationResult } = require('express-validator');
+
+// Controladores
 const Subscription = require('../controllers/subscription');
+
+// Validaciones
 const {
   createSubscriptionValidation,
   updateSubscriptionValidation,
   planIdValidation,
-  commerceIdValidation
+  commerceIdValidation,
 } = require('../validators/subscriptionValidation');
 
 const router = express.Router();
 
-// helper para devolver errores de validación en formato JSON
-const validate = (req, res, next) => {
+/** Devuelve errores de validación en JSON */
+function validate(req, res, next) {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) return res.status(400).json({ errors: errors.array() });
-  next();
-};
+  if (!errors || errors.isEmpty()) return next();
+  return res.status(400).json({ errors: errors.array() });
+}
 
-// crear suscripción → genera el link de checkout de MP
-router.post('/', Subscription.normalizeBody, createSubscriptionValidation, validate, Subscription.createSubscription);
+/* ---- Rutas de negocio ---- */
 
-// confirmar suscripción al volver de MP
-router.post('/confirm', Subscription.normalizeBody, Subscription.confirmSubscription);
+// Crear suscripción → genera link de MP o init_point de plan (fallback)
+router.post(
+  '/',
+  Subscription.normalizeBody,
+  createSubscriptionValidation,
+  validate,
+  Subscription.createSubscription
+);
 
-// pasar al plan gratuito (borra subs locales del comercio)
-router.post('/free', Subscription.normalizeBody, Subscription.downgradeToFree);
+// Confirmar suscripción al volver de MP (soporta preapproval_id o búsqueda)
+router.post(
+  '/confirm',
+  Subscription.normalizeBody,
+  Subscription.confirmSubscription
+);
 
-// CRUD básico
-router.get('/', Subscription.findAllSubscriptions?.bind?.(Subscription) || ((_, res) => res.sendStatus(501)));
-router.put('/:id', updateSubscriptionValidation, validate, Subscription.updateSubscription?.bind?.(Subscription) || ((_, res) => res.sendStatus(501)));
-router.delete('/:id', Subscription.deleteSubscription?.bind?.(Subscription) || ((_, res) => res.sendStatus(501)));
+// Pasar al plan gratuito (upsert plan_id = 1)
+router.post(
+  '/free',
+  Subscription.normalizeBody,
+  Subscription.downgradeToFree
+);
 
-// filtros por plan o por comercio
-router.get('/plan/:planId', planIdValidation, validate, Subscription.findSubscriptionsByPlanId?.bind?.(Subscription) || ((_, res) => res.sendStatus(501)));
-router.get('/commerce/:commerceId', commerceIdValidation, validate, Subscription.findSubscriptionsByCommerceId?.bind?.(Subscription) || ((_, res) => res.sendStatus(501)));
+/* ---- Consultas/CRUD ---- */
 
-// buscar por id puntual
-router.get('/:id', Subscription.findSubscriptionById?.bind?.(Subscription) || Subscription.getSubscriptionStatus);
+// Todas
+router.get('/', Subscription.findAllSubscriptions);
+
+// Por plan
+router.get(
+  '/plan/:planId',
+  planIdValidation,
+  validate,
+  Subscription.findSubscriptionsByPlanId
+);
+
+// Por comercio
+router.get(
+  '/commerce/:commerceId',
+  commerceIdValidation,
+  validate,
+  Subscription.findSubscriptionsByCommerceId
+);
+
+// Por id puntual
+router.get('/:id', Subscription.findSubscriptionById);
+
+// Update por id
+router.put(
+  '/:id',
+  updateSubscriptionValidation,
+  validate,
+  Subscription.updateSubscription
+);
+
+// Delete por id
+router.delete('/:id', Subscription.deleteSubscription);
 
 module.exports = router;
