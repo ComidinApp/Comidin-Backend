@@ -20,13 +20,56 @@ const DONE_STATUSES = ['PAID', 'DELIVERED', 'COMPLETED'];
 const RETURN_STATUSES = ['CLAIMED', 'RETURNED'];
 const CLAIM_STATUSES = ['CLAIMED']; // para la torta de "reclamados"
 
+// ----- Helpers de ventana temporal -----
+function resolveMonths(period) {
+  // Acepta: last1m | last3m | last6m | last12m | last30d | prev_month | all
+  const p = String(period || '').toLowerCase();
+
+  if (p === 'all') return { mode: 'all', months: 0 };
+
+  if (p === 'last30d' || p === 'last1m') return { mode: 'months', months: 1 };
+  if (p === 'last3m') return { mode: 'months', months: 3 };
+  if (p === 'last6m') return { mode: 'months', months: 6 };
+  if (p === 'last12m' || p === 'prev_month') return { mode: 'months', months: 12 };
+
+  // fallback sensato
+  return { mode: 'months', months: 3 };
+}
+
+function computeWindow(period) {
+  // Si existe util getDateWindow (tuyo), úsalo en 'last30d'/'prev_month'.
+  const { mode, months } = resolveMonths(period);
+
+  if (mode === 'all') {
+    return { startDate: null, endDate: new Date() };
+  }
+
+  // Ventana "últimos N meses" (incluye el mes corriente, hasta ahora)
+  const endDate = new Date();
+  const startDate = new Date(endDate.getFullYear(), endDate.getMonth() - (months - 1), 1);
+  return { startDate, endDate };
+}
+
+function between(field, startDate, endDate) {
+  if (!startDate) return {};
+  return { [field]: { [Op.between]: [startDate, endDate] } };
+}
+
+function monthKey(date) {
+  return `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+}
+
 exports.getOverview = async ({
   commerceId,
-  period = 'last30d',
+  period = 'last3m', // default nuevo
   validStatuses = ['PAID', 'DELIVERED', 'COMPLETED'],
   timezone = 'America/Argentina/Buenos_Aires',
 }) => {
-  // Filtro base por comercio, con opción de status cuando toque
+  // Ventana temporal
+  const { startDate, endDate } = computeWindow(period);
+  const useWindow = !!startDate;
+
+  // Filtro base por comercio + status dinámico
   let statusCondition;
   if (validStatuses !== 'ALL' && Array.isArray(validStatuses) && validStatuses.length > 0) {
     const statusesLower = validStatuses.map((s) => String(s).toLowerCase());
@@ -37,55 +80,59 @@ exports.getOverview = async ({
     baseFilter[Op.and] = baseFilter[Op.and] ? [baseFilter[Op.and], statusCondition] : [statusCondition];
   }
 
-  // ===== KPIs (históricos) =====
-
-  // Ingresos históricos (no hay costo → no calculamos ganancia)
+  // ===== KPIs (filtrados por ventana temporal) =====
+  const revenueWhere = {
+    ...baseFilter,
+    ...between('created_at', startDate, endDate),
+  };
   const totalRevenueRow = await Order.findOne({
     attributes: [[fn('COALESCE', fn('SUM', col('total_amount')), 0), 'revenue']],
-    where: { commerce_id: commerceId },
+    where: revenueWhere,
     raw: true,
   });
   const totalRevenue = Number(totalRevenueRow?.revenue ?? 0);
 
-  // Pedidos realizados históricos
   const totalOrders = await Order.count({
     where: {
-      commerce_id: commerceId,
+      ...baseFilter,
+      ...between('created_at', startDate, endDate),
       status: { [Op.in]: DONE_STATUSES },
     },
   });
 
-  // Pedidos devueltos históricos
   const returnedOrders = await Order.count({
     where: {
-      commerce_id: commerceId,
+      ...baseFilter,
+      ...between('created_at', startDate, endDate),
       status: { [Op.in]: RETURN_STATUSES },
     },
   });
 
-  // Productos vencidos históricos (por fecha): sum(available_stock) de publicaciones vencidas
+  // Productos vencidos en la ventana (fecha de vencimiento dentro del rango)
   const expiredRows = await Publication.findAll({
     attributes: [[fn('COALESCE', fn('SUM', col('available_stock')), 0), 'expiredStock']],
     where: {
       commerce_id: commerceId,
-      expiration_date: { [Op.lt]: new Date() }, // vencidas por fecha
+      ...(useWindow
+        ? { expiration_date: { [Op.between]: [startDate, endDate] } }
+        : { expiration_date: { [Op.lt]: new Date() } }), // si "all" mantenemos tu criterio original
     },
     raw: true,
   });
   const expiredProducts = Number(expiredRows?.[0]?.expiredStock ?? 0);
 
-  // ===== IDs de órdenes para joins / tortas / top3 =====
+  // ===== IDs de órdenes del período =====
   const orderIdsRows = await Order.findAll({
     attributes: ['id'],
-    where: { commerce_id: commerceId },
+    where: {
+      ...baseFilter,
+      ...between('created_at', startDate, endDate),
+    },
     raw: true,
   });
   const orderIds = orderIdsRows.map((r) => r.id);
 
-  // ===== Barras: Top 3 productos por unidades (últimos 12 meses) =====
-  const now = new Date();
-  const startDate = new Date(now.getFullYear(), now.getMonth() - 11, 1);
-
+  // ===== Barras: Top 3 productos por unidades (en la ventana) =====
   let topProductsBar = [];
   if (orderIds.length) {
     const top3Raw = await OrderDetail.findAll({
@@ -95,7 +142,7 @@ exports.getOverview = async ({
       ],
       where: {
         order_id: { [Op.in]: orderIds },
-        created_at: { [Op.between]: [startDate, now] },
+        ...between('created_at', startDate, endDate),
       },
       include: [
         {
@@ -119,31 +166,34 @@ exports.getOverview = async ({
   }
 
   // ===== Tortas =====
-
-  // Productos: vendidos vs vencidos
   const soldUnitsRow = orderIds.length
     ? await OrderDetail.findOne({
         attributes: [[fn('COALESCE', fn('SUM', col('quantity')), 0), 'sold']],
-        where: { order_id: { [Op.in]: orderIds } },
+        where: {
+          order_id: { [Op.in]: orderIds },
+          ...between('created_at', startDate, endDate),
+        },
         raw: true,
       })
     : { sold: 0 };
-
   const soldUnits = Number(soldUnitsRow?.sold ?? 0);
 
-  // Pedidos: realizados vs reclamados
   const claimedOrders = await Order.count({
-    where: { commerce_id: commerceId, status: { [Op.in]: CLAIM_STATUSES } },
+    where: {
+      ...baseFilter,
+      ...between('created_at', startDate, endDate),
+      status: { [Op.in]: CLAIM_STATUSES },
+    },
   });
 
-  const completedOrders = Math.max(0, Number(totalOrders)); // ya son "realizados"
+  const completedOrders = Math.max(0, Number(totalOrders));
 
-  // ===== Histórico por mes (para tu gráfico combinado) =====
-  // Respetamos ventana "últimos 12 meses" y el filtro de status (validStatuses)
+  // ===== Histórico por mes (N = meses de la ventana) =====
+  const { months } = resolveMonths(period);
   const monthExpr = fn('DATE_FORMAT', col('created_at'), '%Y-%m-01'); // yyyy-mm-01
   const monthlyWhere = {
     ...baseFilter,
-    created_at: { [Op.between]: [startDate, now] },
+    ...between('created_at', startDate, endDate),
   };
 
   const monthlyRows = await Order.findAll({
@@ -158,11 +208,10 @@ exports.getOverview = async ({
     raw: true,
   });
 
-  // Completar meses faltantes y tipar números
   const monthMap = {};
   monthlyRows.forEach((row) => {
     const month = new Date(row.month);
-    const key = `${month.getFullYear()}-${String(month.getMonth() + 1).padStart(2, '0')}`;
+    const key = monthKey(month);
     monthMap[key] = {
       month: key,
       ordersCount: Number(row.ordersCount ?? 0),
@@ -170,25 +219,27 @@ exports.getOverview = async ({
     };
   });
 
+  const now = new Date();
   const salesByMonth = [];
-  for (let i = 11; i >= 0; i--) {
+  const totalMonths = months || 12; // si por algún motivo llegó 0, asegurar algo
+  for (let i = totalMonths - 1; i >= 0; i--) {
     const d = new Date(now.getFullYear(), now.getMonth() - i, 1);
-    const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
+    const key = monthKey(d);
     salesByMonth.push(monthMap[key] ?? { month: key, ordersCount: 0, totalAmount: 0 });
   }
 
   // ===== Respuesta =====
   return {
-    // KPIs
+    // KPIs (filtrados por período)
     totalRevenue,
     totalOrders,
     returnedOrders,
     expiredProducts,
 
     // Gráficos
-    topProductsBar,                       // barras (Top 3)
+    topProductsBar, // barras (Top 3)
     pieProducts: { soldUnits, expiredUnits: expiredProducts }, // torta productos
     pieOrders: { completedOrders, claimedOrders },             // torta pedidos
-    salesByMonth,                         // 👈 necesario para tu gráfico combinado
+    salesByMonth, // meses según período seleccionado
   };
 };
