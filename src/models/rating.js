@@ -32,6 +32,14 @@ const Rating = sequelize.define('rating', {
         key: 'id'
       }
     },
+    product_id: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'product',
+        key: 'id'
+      }
+    },
     rate_order: {
       type: Sequelize.INTEGER,
       allowNull: false

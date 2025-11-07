@@ -11,6 +11,9 @@ const createRatingValidation = [
   check('order_id')
     .isInt({ min: 1 })
     .withMessage('Order ID must be a positive integer'),
+  check('product_id')
+    .isInt({ min: 1 })
+    .withMessage('Product ID must be a positive integer'),
   check('rate_order')
     .isInt({ min: 1, max: 5 })
     .withMessage('Rate order must be an integer between 1 and 5'),
@@ -30,6 +33,10 @@ const updateRatingValidation = [
     .optional()
     .isInt({ min: 1 })
     .withMessage('Order ID must be a positive integer'),
+  check('product_id')
+    .optional()
+    .isInt({ min: 1 })
+    .withMessage('Product ID must be a positive integer'),
   check('rate_order')
     .optional()
     .isInt({ min: 1, max: 5 })
@@ -55,10 +62,17 @@ const orderIdValidation = [
     .withMessage('Order ID must be a positive integer'),
 ];
 
+const productIdValidation = [
+  check('productId')
+    .isInt({ min: 1 })
+    .withMessage('Product ID must be a positive integer'),
+];
+
 module.exports = {
   createRatingValidation,
   updateRatingValidation,
   userIdValidation,
   commerceIdValidation,
   orderIdValidation,
+  productIdValidation
 };
