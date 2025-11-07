@@ -7,7 +7,7 @@ const path = require('path');
 
 let Models;
 try { Models = require('../models'); } catch { Models = require('../../models'); }
-const { order: Order } = Models;
+const { order: Order, publication: Publication } = Models;
 
 /* ==========================
    Helpers de período
@@ -23,17 +23,30 @@ function resolveMonths(period) {
 }
 function computeWindow(period) {
   const { mode, months } = resolveMonths(period);
-  if (mode === 'all') return { startDate: null, endDate: new Date() };
+  if (mode === 'all') return { startDate: null, endDate: new Date(), months: 0 };
   const endDate = new Date();
   const startDate = new Date(endDate.getFullYear(), endDate.getMonth() - (months - 1), 1);
-  return { startDate, endDate };
+  return { startDate, endDate, months };
+}
+function computePrevWindow(window) {
+  if (!window.startDate) return { startDate: null, endDate: null };
+  const months = resolveMonths(`${window.months ?? 0}m`).months || 1;
+  const prevEnd = new Date(window.startDate.getFullYear(), window.startDate.getMonth(), 0, 23, 59, 59, 999);
+  const prevStart = new Date(prevEnd.getFullYear(), prevEnd.getMonth() - (months - 1), 1);
+  return { startDate: prevStart, endDate: prevEnd };
 }
 function between(field, startDate, endDate) {
-  if (!startDate) return {};
+  if (!startDate || !endDate) return {};
   return { [field]: { [Op.between]: [startDate, endDate] } };
 }
 const ciStatusIn = (values) =>
   where(fn('LOWER', col('status')), { [Op.in]: values.map((v) => String(v).toLowerCase()) });
+
+/* ==========================
+   Constantes de estados (para KPIs por período)
+   ========================== */
+const DONE_STATUSES = ['PAID', 'DELIVERED', 'COMPLETED'];
+const RETURN_STATUSES = ['CLAIMED', 'RETURNED'];
 
 /* ==========================
    Excel (R6) robusto al esquema
@@ -143,6 +156,61 @@ exports.buildOrdersXLSX = async (rows, meta = {}) => {
 };
 
 /* ==========================
+   KPIs por período + comparativas
+   ========================== */
+async function getPeriodKPIs({ commerceId, startDate, endDate }) {
+  // Ventas totales (sum total_amount) con estados completados
+  const revenueRow = await Order.findOne({
+    attributes: [[fn('COALESCE', fn('SUM', col('total_amount')), 0), 'revenue']],
+    where: {
+      commerce_id: commerceId,
+      ...between('created_at', startDate, endDate),
+      [Op.and]: [ciStatusIn(DONE_STATUSES)],
+    },
+    raw: true,
+  });
+  const revenue = Number(revenueRow?.revenue ?? 0);
+
+  // Pedidos realizados (DONE_STATUSES)
+  const doneCount = await Order.count({
+    where: {
+      commerce_id: commerceId,
+      ...between('created_at', startDate, endDate),
+      [Op.and]: [ciStatusIn(DONE_STATUSES)],
+    },
+  });
+
+  // Pedidos devueltos (RETURN_STATUSES)
+  const returnedCount = await Order.count({
+    where: {
+      commerce_id: commerceId,
+      ...between('created_at', startDate, endDate),
+      [Op.and]: [ciStatusIn(RETURN_STATUSES)],
+    },
+  });
+
+  // Productos vencidos: snapshot actual (no tiene sentido comparar por período porque es estado a la fecha)
+  // De todas formas lo devolvemos para mostrarlo.
+  const expiredRows = await Publication.findAll({
+    attributes: [[fn('COALESCE', fn('SUM', col('available_stock')), 0), 'expiredStock']],
+    where: { commerce_id: commerceId, expiration_date: { [Op.lt]: new Date() } },
+    raw: true,
+  });
+  const expiredProducts = Number(expiredRows?.[0]?.expiredStock ?? 0);
+
+  return { revenue, doneCount, returnedCount, expiredProducts };
+}
+
+function pctChange(curr, prev) {
+  const delta = curr - prev;
+  if (!prev || prev === 0) {
+    return { delta, pct: prev === 0 && curr !== 0 ? 100 : 0, dir: delta >= 0 ? 'up' : 'down' };
+  }
+  const pct = (delta / prev) * 100;
+  return { delta, pct, dir: delta >= 0 ? 'up' : 'down' };
+}
+
+/* ==========================
    PDF estilizado (R1)
    ========================== */
 // Tema corporativo (Comidín)
@@ -155,7 +223,7 @@ const THEME = {
   card:    '#F7FAFC',
 };
 
-// Resolver primera ruta existente (logo / fuentes)
+// Resolver primera ruta existente (logo)
 function resolveFirstExisting(candidates = []) {
   for (const pth of candidates) {
     if (!pth) continue;
@@ -174,19 +242,6 @@ const LOGO_PATH = resolveFirstExisting([
   path.resolve(process.cwd(), 'assets/logo.png'),
 ]);
 
-const FONT_REGULAR = resolveFirstExisting([
-  '/comidin/assets/fonts/Roboto-Regular.ttf',
-  '/app/assets/fonts/Roboto-Regular.ttf',
-  path.resolve(__dirname, '../../assets/fonts/Roboto-Regular.ttf'),
-  path.resolve(__dirname, '../assets/fonts/Roboto-Regular.ttf'),
-]);
-const FONT_BOLD = resolveFirstExisting([
-  '/comidin/assets/fonts/Roboto-Bold.ttf',
-  '/app/assets/fonts/Roboto-Bold.ttf',
-  path.resolve(__dirname, '../../assets/fonts/Roboto-Bold.ttf'),
-  path.resolve(__dirname, '../assets/fonts/Roboto-Bold.ttf'),
-]);
-
 /* ===== Helpers de dibujo ===== */
 
 // Header “1-D”: franja superior + logo centrado + títulos centrados
@@ -199,16 +254,18 @@ function headerCentered(doc, title, subtitle, options = {}) {
   // franja superior
   doc.save().rect(0, 0, width, 8).fill(THEME.primary).restore();
 
-  // logo centrado
-  const logoW = 130; // ancho consistente
+  // LOGO centrado con tamaño controlado y buen espaciado
+  const LOGO_W = 120;
+  const LOGO_H_PAD = 6;
   let y = 18;
+
   if (logoPath) {
     try {
-      const x = left + (usable - logoW) / 2;
-      doc.image(logoPath, x, y, { width: logoW });
-      y += 30;
+      const x = left + (usable - LOGO_W) / 2;
+      doc.image(logoPath, x, y, { width: LOGO_W });
+      y += 30 + LOGO_H_PAD;
     } catch {
-      // si no carga, seguimos sin romper
+      y += 8;
     }
   }
 
@@ -216,22 +273,23 @@ function headerCentered(doc, title, subtitle, options = {}) {
   doc
     .fontSize(20)
     .fillColor(THEME.text)
-    .text(title, left, y + 4, { width: usable, align: 'center' });
+    .text(title, left, y + 6, { width: usable, align: 'center' });
 
   doc
     .fontSize(10)
     .fillColor(THEME.muted)
-    .text(subtitle, left, y + 28, { width: usable, align: 'center' });
+    .text(subtitle, left, y + 30, { width: usable, align: 'center' });
 
   // separador
+  const sepY = y + 52;
   doc
-    .moveTo(left, y + 52)
-    .lineTo(left + usable, y + 52)
+    .moveTo(left, sepY)
+    .lineTo(left + usable, sepY)
     .lineWidth(1)
     .strokeColor(THEME.border)
     .stroke();
 
-  return y + 60; // y base para el resto del contenido
+  return sepY + 12;
 }
 
 function footerNumbering(doc) {
@@ -250,12 +308,24 @@ function footerNumbering(doc) {
   }
 }
 
-function kpiCard(doc, x, y, w, h, label, value, color = THEME.primary) {
+function kpiCardWithDelta(doc, x, y, w, h, label, valueStr, deltaInfo, color = THEME.primary) {
+  // tarjeta base
   doc.save().roundedRect(x, y, w, h, 12).fill(THEME.card).restore();
   doc.save().roundedRect(x, y, 6, h, 12).fill(color).restore();
 
-  doc.fillColor(THEME.muted).fontSize(10).text(label, x + 14, y + 10, { width: w - 20 });
-  doc.fillColor(THEME.text).fontSize(18).text(value, x + 14, y + 30, { width: w - 20 });
+  // label
+  doc.fillColor(THEME.muted).fontSize(10).text(label, x + 14, y + 12, { width: w - 20 });
+
+  // value
+  doc.fillColor(THEME.text).fontSize(18).text(valueStr, x + 14, y + 30, { width: w - 20 });
+
+  // delta
+  if (deltaInfo) {
+    const arrow = deltaInfo.dir === 'up' ? '↑' : '↓';
+    const c = deltaInfo.dir === 'up' ? '#16A34A' : '#DC2626'; // verde / rojo
+    const pctStr = `${arrow} ${Math.abs(deltaInfo.pct).toFixed(1)}%`;
+    doc.fillColor(c).fontSize(10).text(pctStr, x + 14, y + 54, { width: w - 20 });
+  }
 }
 
 function table(doc, { x, y, w }, headers, rows, opts = {}) {
@@ -299,18 +369,8 @@ function miniBar(doc, x, y, w, h, value, max, color) {
 }
 
 /* ====== Informe PDF ====== */
-exports.streamExecutivePDF = (res, { period, statusPreset, overview, context }) => {
+exports.streamExecutivePDF = async (res, { period, statusPreset, overview, context }) => {
   const doc = new PDFDocument({ margin: 40, size: 'A4', bufferPages: true });
-
-  // Fuentes Roboto si están disponibles
-  try {
-    if (FONT_REGULAR && FONT_BOLD) {
-      doc.registerFont('Regular', FONT_REGULAR);
-      doc.registerFont('Bold', FONT_BOLD);
-      doc.font('Regular');
-    }
-  } catch { /* fallback Helvetica */ }
-
   doc.pipe(res);
 
   const nowStr = new Date().toLocaleString('es-AR');
@@ -318,7 +378,7 @@ exports.streamExecutivePDF = (res, { period, statusPreset, overview, context }) 
   const subtitle =
     `Comercio: ${context.commerceId}  •  Período: ${period}  •  Estado: ${statusPreset}  •  Generado: ${nowStr}`;
 
-  // Header 1-D (franja + logo centrado + textos centrados)
+  // Header 1-D
   let y = headerCentered(doc, title, subtitle, { logoPath: LOGO_PATH });
 
   const pageW = doc.page.width - doc.page.margins.left - doc.page.margins.right;
@@ -327,17 +387,43 @@ exports.streamExecutivePDF = (res, { period, statusPreset, overview, context }) 
   const currency = (v) => `$ ${Number(v || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
   const integer  = (v) => Number(v || 0).toLocaleString('es-AR');
 
-  // KPI Cards (2x2)
-  const kpiW = Math.floor((pageW - 24) / 2);
-  const kpiH = 64;
+  // ===== KPIs por período actual y anterior =====
+  const curWindow = computeWindow(period);
+  const prevWindow = computePrevWindow(curWindow);
 
-  kpiCard(doc, left, y, kpiW, kpiH, 'Ventas totales',     currency(overview.totalRevenue), THEME.primary);
-  kpiCard(doc, left + kpiW + 24, y, kpiW, kpiH, 'Pedidos realizados', integer(overview.totalOrders), THEME.accent);
+  let currKPIs = { revenue: 0, doneCount: 0, returnedCount: 0, expiredProducts: overview?.expiredProducts ?? 0 };
+  let prevKPIs  = { revenue: 0, doneCount: 0, returnedCount: 0 };
+
+  if (curWindow.startDate && curWindow.endDate) {
+    currKPIs = await getPeriodKPIs({
+      commerceId: context.commerceId,
+      startDate: curWindow.startDate,
+      endDate: curWindow.endDate,
+    });
+  }
+  if (prevWindow.startDate && prevWindow.endDate) {
+    prevKPIs = await getPeriodKPIs({
+      commerceId: context.commerceId,
+      startDate: prevWindow.startDate,
+      endDate: prevWindow.endDate,
+    });
+  }
+
+  const revDelta   = pctChange(currKPIs.revenue,       prevKPIs.revenue);
+  const doneDelta  = pctChange(currKPIs.doneCount,     prevKPIs.doneCount);
+  const retDelta   = pctChange(currKPIs.returnedCount, prevKPIs.returnedCount);
+
+  // KPI Cards (2x2) con delta
+  const kpiW = Math.floor((pageW - 24) / 2);
+  const kpiH = 70;
+
+  kpiCardWithDelta(doc, left, y, kpiW, kpiH, 'Ventas totales', currency(currKPIs.revenue), revDelta, THEME.primary);
+  kpiCardWithDelta(doc, left + kpiW + 24, y, kpiW, kpiH, 'Pedidos realizados', integer(currKPIs.doneCount), doneDelta, THEME.accent);
 
   y += kpiH + 14;
 
-  kpiCard(doc, left, y, kpiW, kpiH, 'Pedidos devueltos',  integer(overview.returnedOrders), '#EF4444');
-  kpiCard(doc, left + kpiW + 24, y, kpiW, kpiH, 'Productos vencidos', integer(overview.expiredProducts), '#F59E0B');
+  kpiCardWithDelta(doc, left, y, kpiW, kpiH, 'Pedidos devueltos', integer(currKPIs.returnedCount), retDelta, '#EF4444');
+  kpiCardWithDelta(doc, left + kpiW + 24, y, kpiW, kpiH, 'Productos vencidos', integer(currKPIs.expiredProducts), null, '#F59E0B');
 
   y += kpiH + 26;
 
@@ -390,9 +476,9 @@ exports.streamExecutivePDF = (res, { period, statusPreset, overview, context }) 
     y += rowH * top.length + 18;
   }
 
-  // Resumen claro (sin A/B)
+  // Resumen claro
   doc.fontSize(13).fillColor(THEME.text).text('Resumen de productos y pedidos', left, y);
-  y += 8;
+  y += 18;
 
   const sold = overview?.pieProducts?.soldUnits || 0;
   const expi = overview?.pieProducts?.expiredUnits || 0;
@@ -400,21 +486,21 @@ exports.streamExecutivePDF = (res, { period, statusPreset, overview, context }) 
   const claim = overview?.pieOrders?.claimedOrders || 0;
 
   const cardW = Math.floor((pageW - 14) / 2);
-  const cardH = 68;
+  const cardH = 72;
 
   // Productos
   doc.save().roundedRect(left, y, cardW, cardH, 12).fill(THEME.card).restore();
-  doc.fontSize(11).fillColor(THEME.muted).text('Productos', left + 12, y + 10);
+  doc.fontSize(11).fillColor(THEME.muted).text('Productos', left + 12, y + 12);
   doc.fontSize(12)
-    .fillColor(THEME.primary).text(`Vendidos: ${integer(sold)}`, left + 12, y + 32, { continued: true })
+    .fillColor(THEME.primary).text(`Vendidos: ${integer(sold)}`, left + 12, y + 36, { continued: true })
     .fillColor('#EF4444').text(`   Vencidos: ${integer(expi)}`);
 
   // Pedidos
   const rightX = left + cardW + 14;
   doc.save().roundedRect(rightX, y, cardW, cardH, 12).fill(THEME.card).restore();
-  doc.fontSize(11).fillColor(THEME.muted).text('Pedidos', rightX + 12, y + 10);
+  doc.fontSize(11).fillColor(THEME.muted).text('Pedidos', rightX + 12, y + 12);
   doc.fontSize(12)
-    .fillColor(THEME.accent).text(`Realizados: ${integer(compl)}`, rightX + 12, y + 32, { continued: true })
+    .fillColor(THEME.accent).text(`Realizados: ${integer(compl)}`, rightX + 12, y + 36, { continued: true })
     .fillColor('#EF4444').text(`   Devueltos: ${integer(claim)}`);
 
   // Finalizar y numerar
