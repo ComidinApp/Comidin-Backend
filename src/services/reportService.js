@@ -7,7 +7,7 @@ let Models;
 try { Models = require('../models'); } catch { Models = require('../../models'); }
 const { order: Order } = Models;
 
-// ======= helpers de período (mismos que en analyticsService) =======
+/* ===== helpers de período ===== */
 function resolveMonths(period) {
   const p = String(period || '').toLowerCase();
   if (p === 'all') return { mode: 'all', months: 0 };
@@ -31,7 +31,34 @@ function between(field, startDate, endDate) {
 const ciStatusIn = (values) =>
   where(fn('LOWER', col('status')), { [Op.in]: values.map((v) => String(v).toLowerCase()) });
 
-// ======= R6: datos de órdenes para Excel =======
+/* ===== Util: detectar columnas del modelo ===== */
+function pickOrderAttributes() {
+  const attrs = Order?.rawAttributes ? Object.keys(Order.rawAttributes) : [];
+
+  const map = {
+    id: 'id',
+    created_at: attrs.includes('created_at') ? 'created_at' : (attrs.includes('createdAt') ? 'createdAt' : null),
+    status: attrs.includes('status') ? 'status' : null,
+    total_amount: attrs.includes('total_amount') ? 'total_amount' : (attrs.includes('totalAmount') ? 'totalAmount' : null),
+
+    // opcionales
+    payment_method: attrs.includes('payment_method') ? 'payment_method' : (attrs.includes('paymentMethod') ? 'paymentMethod' : null),
+    customer_name: attrs.includes('customer_name') ? 'customer_name' : (attrs.includes('customerName') ? 'customerName' : null),
+    customer_email: attrs.includes('customer_email') ? 'customer_email' : (attrs.includes('customerEmail') ? 'customerEmail' : null),
+  };
+
+  const attributes = ['id'];
+  if (map.created_at) attributes.push(map.created_at);
+  if (map.status) attributes.push(map.status);
+  if (map.total_amount) attributes.push(map.total_amount);
+  if (map.payment_method) attributes.push(map.payment_method);
+  if (map.customer_name) attributes.push(map.customer_name);
+  if (map.customer_email) attributes.push(map.customer_email);
+
+  return { map, attributes };
+}
+
+/* ===== R6: datos de órdenes para Excel (robusto al esquema) ===== */
 exports.getOrdersForExport = async ({ commerceId, period, validStatuses = 'ALL' }) => {
   const { startDate, endDate } = computeWindow(period);
 
@@ -46,46 +73,47 @@ exports.getOrdersForExport = async ({ commerceId, period, validStatuses = 'ALL' 
   };
   if (statusCondition) whereOrder[Op.and] = [statusCondition];
 
+  const { map, attributes } = pickOrderAttributes();
+
   const orders = await Order.findAll({
-    attributes: [
-      'id',
-      'created_at',
-      'status',
-      'total_amount',
-      'payment_method',
-      'customer_name',
-      'customer_email',
-    ],
+    attributes,
     where: whereOrder,
-    order: [['created_at', 'ASC']],
+    order: [ map.created_at ? [map.created_at, 'ASC'] : ['id', 'ASC'] ],
     raw: true,
   });
 
   return orders.map((o) => ({
     orderId: o.id,
-    date: o.created_at,
-    status: o.status,
-    total: Number(o.total_amount ?? 0),
-    paymentMethod: o.payment_method ?? '',
-    customerName: o.customer_name ?? '',
-    customerEmail: o.customer_email ?? '',
+    date: map.created_at ? o[map.created_at] : null,
+    status: map.status ? o[map.status] : '',
+    total: map.total_amount ? Number(o[map.total_amount] ?? 0) : 0,
+    paymentMethod: map.payment_method ? (o[map.payment_method] ?? '') : '',
+    customerName: map.customer_name ? (o[map.customer_name] ?? '') : '',
+    customerEmail: map.customer_email ? (o[map.customer_email] ?? '') : '',
   }));
 };
 
-// ======= R6: construir Excel =======
+/* ===== R6: construir Excel ===== */
 exports.buildOrdersXLSX = async (rows, meta = {}) => {
   const wb = new ExcelJS.Workbook();
   const ws = wb.addWorksheet('Órdenes');
 
-  ws.columns = [
+  // columnas presentes en los datos
+  const hasPayment = rows.some(r => r.paymentMethod);
+  const hasCustName = rows.some(r => r.customerName);
+  const hasCustMail = rows.some(r => r.customerEmail);
+
+  const columns = [
     { header: 'N° Orden', key: 'orderId', width: 14 },
     { header: 'Fecha', key: 'date', width: 20 },
     { header: 'Estado', key: 'status', width: 16 },
     { header: 'Total', key: 'total', width: 14 },
-    { header: 'Medio de pago', key: 'paymentMethod', width: 18 },
-    { header: 'Cliente', key: 'customerName', width: 24 },
-    { header: 'Email', key: 'customerEmail', width: 28 },
   ];
+  if (hasPayment) columns.push({ header: 'Medio de pago', key: 'paymentMethod', width: 18 });
+  if (hasCustName) columns.push({ header: 'Cliente', key: 'customerName', width: 24 });
+  if (hasCustMail) columns.push({ header: 'Email', key: 'customerEmail', width: 28 });
+
+  ws.columns = columns;
 
   rows.forEach((r) => {
     ws.addRow({
@@ -94,17 +122,14 @@ exports.buildOrdersXLSX = async (rows, meta = {}) => {
     });
   });
 
-  // Formato: fecha y moneda ARS
   const dateCol = ws.getColumn('date');
-  dateCol.numFmt = 'dd/mm/yyyy hh:mm';
+  if (dateCol) dateCol.numFmt = 'dd/mm/yyyy hh:mm';
 
   const totalCol = ws.getColumn('total');
-  totalCol.numFmt = '"$" #,##0.00';
+  if (totalCol) totalCol.numFmt = '"$" #,##0.00';
 
-  // Header en negrita
   ws.getRow(1).font = { bold: true };
 
-  // Meta hoja
   const metaSheet = wb.addWorksheet('Meta');
   metaSheet.addRow(['Período', String(meta.period || '')]);
   metaSheet.addRow(['Filtro estado', String(meta.status || '')]);
@@ -114,7 +139,7 @@ exports.buildOrdersXLSX = async (rows, meta = {}) => {
   return wb.xlsx.writeBuffer();
 };
 
-// ======= R1: PDF Ejecutivo =======
+/* ===== R1: PDF Ejecutivo ===== */
 exports.streamExecutivePDF = (res, { period, statusPreset, overview, context }) => {
   const doc = new PDFDocument({ margin: 40 });
   doc.pipe(res);
@@ -123,14 +148,12 @@ exports.streamExecutivePDF = (res, { period, statusPreset, overview, context }) 
   const sub = `Comercio: ${context.commerceId}  |  Período: ${period}  |  Estado: ${statusPreset}`;
   const nowStr = new Date().toLocaleString('es-AR');
 
-  // Portada / encabezado
   doc.fontSize(18).text(title, { align: 'left' });
   doc.moveDown(0.2);
   doc.fontSize(10).fillColor('#666').text(sub);
   doc.fontSize(9).text(`Generado: ${nowStr}`);
   doc.moveDown();
 
-  // KPIs
   doc.moveDown(0.5);
   doc.fillColor('#000').fontSize(12).text('Resumen (KPI)', { underline: true });
   doc.moveDown(0.4);
@@ -152,7 +175,6 @@ exports.streamExecutivePDF = (res, { period, statusPreset, overview, context }) 
 
   doc.moveDown();
 
-  // Ventas y pedidos por mes (tabla simple)
   doc.fontSize(12).text('Ventas y pedidos por mes', { underline: true });
   doc.moveDown(0.4);
   doc.fontSize(10).text('Mes            Pedidos         Ventas ($)');
@@ -172,7 +194,6 @@ exports.streamExecutivePDF = (res, { period, statusPreset, overview, context }) 
 
   doc.moveDown();
 
-  // Top 3 productos
   doc.fontSize(12).text('Top 3 productos por unidades', { underline: true });
   doc.moveDown(0.4);
   if ((overview.topProductsBar || []).length) {
@@ -191,7 +212,6 @@ exports.streamExecutivePDF = (res, { period, statusPreset, overview, context }) 
 
   doc.moveDown();
 
-  // Tortas (resumen texto)
   doc.fontSize(12).text('Resumen de productos y pedidos', { underline: true });
   doc.moveDown(0.4);
   const sold = overview?.pieProducts?.soldUnits || 0;
@@ -202,8 +222,7 @@ exports.streamExecutivePDF = (res, { period, statusPreset, overview, context }) 
   doc.fontSize(10).text(`Productos — Vendidos: ${integer(sold)} | Vencidos: ${integer(expi)}`);
   doc.fontSize(10).text(`Pedidos   — Realizados: ${integer(compl)} | Reclamados: ${integer(claim)}`);
 
-  // Cierre
   doc.moveDown(1.2);
-  doc.fontSize(9).fillColor('#666').text('Este informe resume la actividad del período seleccionado.');  
+  doc.fontSize(9).fillColor('#666').text('Este informe resume la actividad del período seleccionado.');
   doc.end();
 };
