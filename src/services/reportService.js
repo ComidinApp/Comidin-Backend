@@ -145,10 +145,10 @@ exports.buildOrdersXLSX = async (rows, meta = {}) => {
 /* ==========================
    PDF estilizado (R1)
    ========================== */
-// Tema visual
+// Tema corporativo (Comidín)
 const THEME = {
-  primary: '#00B8D9',
-  accent:  '#FF8C00',
+  primary: '#00B8D9', // celeste/teal
+  accent:  '#FF8C00', // naranja
   text:    '#222222',
   muted:   '#6B7280',
   border:  '#E5E7EB',
@@ -166,7 +166,6 @@ function resolveFirstExisting(candidates = []) {
   return null;
 }
 
-// Candidatos de rutas (ajustados a tu contenedor: /comidin suele ser el root)
 const LOGO_PATH = resolveFirstExisting([
   '/comidin/assets/logo.png',
   '/app/assets/logo.png',
@@ -188,49 +187,54 @@ const FONT_BOLD = resolveFirstExisting([
   path.resolve(__dirname, '../assets/fonts/Roboto-Bold.ttf'),
 ]);
 
-function header(doc, title, subtitle, options = {}) {
+/* ===== Helpers de dibujo ===== */
+
+// Header “1-D”: franja superior + logo centrado + títulos centrados
+function headerCentered(doc, title, subtitle, options = {}) {
   const { logoPath } = options;
   const { width } = doc.page;
   const left = doc.page.margins.left;
-  const right = width - doc.page.margins.right;
+  const usable = width - left - doc.page.margins.right;
 
-  // barra superior
-  doc.save()
-    .rect(0, 0, width, 6)
-    .fill(THEME.primary)
-    .restore();
+  // franja superior
+  doc.save().rect(0, 0, width, 8).fill(THEME.primary).restore();
 
-  // logo (opcional)
-  let cursorX = left;
+  // logo centrado
+  const logoW = 130; // ancho consistente
+  let y = 18;
   if (logoPath) {
     try {
-      doc.image(logoPath, left, 18, { width: 110, fit: [110, 28] });
-      cursorX = left + 124;
-    } catch { /* si no carga, seguimos */ }
+      const x = left + (usable - logoW) / 2;
+      doc.image(logoPath, x, y, { width: logoW });
+      y += 30;
+    } catch {
+      // si no carga, seguimos sin romper
+    }
   }
 
+  // Título y subtítulo centrados
   doc
-    .fontSize(18)
+    .fontSize(20)
     .fillColor(THEME.text)
-    .text(title, cursorX, 16, { continued: false });
+    .text(title, left, y + 4, { width: usable, align: 'center' });
 
   doc
     .fontSize(10)
     .fillColor(THEME.muted)
-    .text(subtitle, left, 44);
+    .text(subtitle, left, y + 28, { width: usable, align: 'center' });
 
-  // línea divisoria
+  // separador
   doc
-    .moveTo(left, 64)
-    .lineTo(right, 64)
+    .moveTo(left, y + 52)
+    .lineTo(left + usable, y + 52)
     .lineWidth(1)
     .strokeColor(THEME.border)
     .stroke();
 
-  doc.moveDown(1);
+  return y + 60; // y base para el resto del contenido
 }
 
-function footer(doc) {
+function footerNumbering(doc) {
   const range = doc.bufferedPageRange();
   for (let i = range.start; i < range.start + range.count; i++) {
     doc.switchToPage(i);
@@ -247,32 +251,11 @@ function footer(doc) {
 }
 
 function kpiCard(doc, x, y, w, h, label, value, color = THEME.primary) {
-  // tarjeta
-  doc
-    .save()
-    .roundedRect(x, y, w, h, 10)
-    .fillOpacity(1)
-    .fill(THEME.card)
-    .restore();
+  doc.save().roundedRect(x, y, w, h, 12).fill(THEME.card).restore();
+  doc.save().roundedRect(x, y, 6, h, 12).fill(color).restore();
 
-  // borde lateral
-  doc
-    .save()
-    .roundedRect(x, y, 6, h, 10)
-    .fillColor(color)
-    .fill()
-    .restore();
-
-  // textos
-  doc
-    .fillColor(THEME.muted)
-    .fontSize(10)
-    .text(label, x + 14, y + 10, { width: w - 20 });
-
-  doc
-    .fillColor(THEME.text)
-    .fontSize(18)
-    .text(value, x + 14, y + 28, { width: w - 20 });
+  doc.fillColor(THEME.muted).fontSize(10).text(label, x + 14, y + 10, { width: w - 20 });
+  doc.fillColor(THEME.text).fontSize(18).text(value, x + 14, y + 30, { width: w - 20 });
 }
 
 function table(doc, { x, y, w }, headers, rows, opts = {}) {
@@ -280,63 +263,30 @@ function table(doc, { x, y, w }, headers, rows, opts = {}) {
   const zebra = opts.zebra !== false;
   const colWidths = opts.colWidths || headers.map(() => Math.floor(w / headers.length));
 
-  // header
-  doc
-    .save()
-    .rect(x, y, w, rowH)
-    .fill(THEME.primary)
-    .restore();
+  doc.save().rect(x, y, w, rowH).fill(THEME.primary).restore();
 
   let cx = x;
   headers.forEach((h, i) => {
-    doc
-      .fillColor('#fff')
-      .fontSize(10)
-      .text(h, cx + 8, y + 6, { width: colWidths[i], ellipsis: true });
+    doc.fillColor('#fff').fontSize(10).text(h, cx + 8, y + 6, { width: colWidths[i], ellipsis: true });
     cx += colWidths[i];
   });
 
-  // body
   let yy = y + rowH;
   rows.forEach((r, idx) => {
-    if (zebra && idx % 2 === 0) {
-      doc
-        .save()
-        .rect(x, yy, w, rowH)
-        .fill('#FFFFFF')
-        .restore();
-    } else if (zebra) {
-      doc
-        .save()
-        .rect(x, yy, w, rowH)
-        .fill('#FAFAFA')
-        .restore();
+    if (zebra && idx % 2 === 1) {
+      doc.save().rect(x, yy, w, rowH).fill('#FAFAFA').restore();
     }
-
     let cx2 = x;
     r.forEach((cell, i) => {
-      doc
-        .fillColor(THEME.text)
-        .fontSize(10)
-        .text(String(cell ?? ''), cx2 + 8, yy + 6, {
-          width: colWidths[i],
-          ellipsis: true,
-        });
+      doc.fillColor(THEME.text).fontSize(10).text(String(cell ?? ''), cx2 + 8, yy + 6, {
+        width: colWidths[i], ellipsis: true,
+      });
       cx2 += colWidths[i];
     });
-
     yy += rowH;
   });
 
-  // borde externo
-  doc
-    .save()
-    .lineWidth(1)
-    .strokeColor(THEME.border)
-    .rect(x, y, w, rowH + rows.length * rowH)
-    .stroke()
-    .restore();
-
+  doc.save().lineWidth(1).strokeColor(THEME.border).rect(x, y, w, rowH + rows.length * rowH).stroke().restore();
   return yy;
 }
 
@@ -344,49 +294,35 @@ function miniBar(doc, x, y, w, h, value, max, color) {
   const ratio = max > 0 ? Math.min(value / max, 1) : 0;
   const barW = Math.max(2, Math.round(w * ratio));
 
-  // fondo
-  doc
-    .save()
-    .roundedRect(x, y, w, h, 4)
-    .fill('#F1F5F9')
-    .restore();
-
-  // barra
-  doc
-    .save()
-    .roundedRect(x, y, barW, h, 4)
-    .fill(color || THEME.accent)
-    .restore();
+  doc.save().roundedRect(x, y, w, h, 4).fill('#F1F5F9').restore();
+  doc.save().roundedRect(x, y, barW, h, 4).fill(color || THEME.accent).restore();
 }
 
+/* ====== Informe PDF ====== */
 exports.streamExecutivePDF = (res, { period, statusPreset, overview, context }) => {
   const doc = new PDFDocument({ margin: 40, size: 'A4', bufferPages: true });
 
-  // Fuentes Roboto si existen, sino Helvetica
+  // Fuentes Roboto si están disponibles
   try {
     if (FONT_REGULAR && FONT_BOLD) {
       doc.registerFont('Regular', FONT_REGULAR);
       doc.registerFont('Bold', FONT_BOLD);
       doc.font('Regular');
     }
-  } catch {
-    // fallback automático
-  }
+  } catch { /* fallback Helvetica */ }
 
   doc.pipe(res);
 
   const nowStr = new Date().toLocaleString('es-AR');
   const title = 'Informe de Ventas';
-  const subtitle = `Comercio: ${context.commerceId}  •  Período: ${period}  •  Estado: ${statusPreset}  •  Generado: ${nowStr}`;
+  const subtitle =
+    `Comercio: ${context.commerceId}  •  Período: ${period}  •  Estado: ${statusPreset}  •  Generado: ${nowStr}`;
 
-  // Header
-  header(doc, title, subtitle, {
-    logoPath: LOGO_PATH, // si no existe, el try/catch del header lo omite
-  });
+  // Header 1-D (franja + logo centrado + textos centrados)
+  let y = headerCentered(doc, title, subtitle, { logoPath: LOGO_PATH });
 
   const pageW = doc.page.width - doc.page.margins.left - doc.page.margins.right;
   const left = doc.page.margins.left;
-  let y = 80;
 
   const currency = (v) => `$ ${Number(v || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
   const integer  = (v) => Number(v || 0).toLocaleString('es-AR');
@@ -429,7 +365,7 @@ exports.streamExecutivePDF = (res, { period, statusPreset, overview, context }) 
 
   // Top 3 productos
   doc.fontSize(13).fillColor(THEME.text).text('Top 3 productos por unidades', left, y);
-  y += 6;
+  y += 8;
 
   const top = overview.topProductsBar || [];
   if (!top.length) {
@@ -444,41 +380,44 @@ exports.streamExecutivePDF = (res, { period, statusPreset, overview, context }) 
       doc.fontSize(10).fillColor(THEME.text).text(name, left, yyLocal);
 
       const barX = left + 220;
-      const barW = pageW - 260; // deja margen para el número
+      const barW = pageW - 260; // margen para número
       miniBar(doc, barX, yyLocal + 2, barW, 10, Number(t.units || 0), maxUnits, THEME.accent);
 
       doc.fontSize(10).fillColor(THEME.muted).text(integer(t.units || 0), left + pageW - 40, yyLocal, {
-        width: 40,
-        align: 'right',
+        width: 40, align: 'right',
       });
     });
-    y += rowH * top.length + 16;
+    y += rowH * top.length + 18;
   }
 
-  // Resumen Productos/Pedidos
+  // Resumen claro (sin A/B)
   doc.fontSize(13).fillColor(THEME.text).text('Resumen de productos y pedidos', left, y);
-  y += 6;
+  y += 8;
 
   const sold = overview?.pieProducts?.soldUnits || 0;
   const expi = overview?.pieProducts?.expiredUnits || 0;
   const compl = overview?.pieOrders?.completedOrders || 0;
   const claim = overview?.pieOrders?.claimedOrders || 0;
 
-  const boxW = Math.floor((pageW - 14) / 2);
-  const boxH = 50;
-  const drawStatBox = (x, label, v1, v2, color1, color2) => {
-    doc.save().roundedRect(x, y + 10, boxW, boxH, 10).fill(THEME.card).restore();
+  const cardW = Math.floor((pageW - 14) / 2);
+  const cardH = 68;
 
-    doc.fontSize(11).fillColor(THEME.muted).text(label, x + 12, y + 16);
+  // Productos
+  doc.save().roundedRect(left, y, cardW, cardH, 12).fill(THEME.card).restore();
+  doc.fontSize(11).fillColor(THEME.muted).text('Productos', left + 12, y + 10);
+  doc.fontSize(12)
+    .fillColor(THEME.primary).text(`Vendidos: ${integer(sold)}`, left + 12, y + 32, { continued: true })
+    .fillColor('#EF4444').text(`   Vencidos: ${integer(expi)}`);
 
-    doc.fontSize(12).fillColor(color1).text(`A: ${integer(v1)}`, x + 12, y + 34, { continued: true })
-      .fillColor(color2).text(`   B: ${integer(v2)}`);
-  };
+  // Pedidos
+  const rightX = left + cardW + 14;
+  doc.save().roundedRect(rightX, y, cardW, cardH, 12).fill(THEME.card).restore();
+  doc.fontSize(11).fillColor(THEME.muted).text('Pedidos', rightX + 12, y + 10);
+  doc.fontSize(12)
+    .fillColor(THEME.accent).text(`Realizados: ${integer(compl)}`, rightX + 12, y + 32, { continued: true })
+    .fillColor('#EF4444').text(`   Devueltos: ${integer(claim)}`);
 
-  drawStatBox(left, 'Productos', sold, expi, THEME.primary, '#EF4444');
-  drawStatBox(left + boxW + 14, 'Pedidos',  compl, claim, THEME.accent,  '#EF4444');
-
-  // Finaliza y numera páginas
+  // Finalizar y numerar
   doc.end();
-  try { footer(doc); } catch {}
+  try { footerNumbering(doc); } catch {}
 };
