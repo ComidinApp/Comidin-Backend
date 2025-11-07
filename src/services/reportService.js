@@ -7,7 +7,7 @@ const path = require('path');
 
 let Models;
 try { Models = require('../models'); } catch { Models = require('../../models'); }
-const { order: Order, publication: Publication } = Models;
+const { order: Order, publication: Publication, commerce: Commerce } = Models || {};
 
 /* ==========================
    Helpers de período
@@ -23,30 +23,44 @@ function resolveMonths(period) {
 }
 function computeWindow(period) {
   const { mode, months } = resolveMonths(period);
-  if (mode === 'all') return { startDate: null, endDate: new Date(), months: 0 };
+  if (mode === 'all') return { startDate: null, endDate: new Date() };
   const endDate = new Date();
   const startDate = new Date(endDate.getFullYear(), endDate.getMonth() - (months - 1), 1);
-  return { startDate, endDate, months };
-}
-function computePrevWindow(window) {
-  if (!window.startDate) return { startDate: null, endDate: null };
-  const months = resolveMonths(`${window.months ?? 0}m`).months || 1;
-  const prevEnd = new Date(window.startDate.getFullYear(), window.startDate.getMonth(), 0, 23, 59, 59, 999);
-  const prevStart = new Date(prevEnd.getFullYear(), prevEnd.getMonth() - (months - 1), 1);
-  return { startDate: prevStart, endDate: prevEnd };
+  return { startDate, endDate };
 }
 function between(field, startDate, endDate) {
-  if (!startDate || !endDate) return {};
+  if (!startDate) return {};
   return { [field]: { [Op.between]: [startDate, endDate] } };
 }
 const ciStatusIn = (values) =>
   where(fn('LOWER', col('status')), { [Op.in]: values.map((v) => String(v).toLowerCase()) });
 
 /* ==========================
-   Constantes de estados (para KPIs por período)
+   Estados
    ========================== */
 const DONE_STATUSES = ['PAID', 'DELIVERED', 'COMPLETED'];
 const RETURN_STATUSES = ['CLAIMED', 'RETURNED'];
+
+/* ==========================
+   Traducciones (período / estado)
+   ========================== */
+function periodLabel(period) {
+  const p = String(period || '').toLowerCase();
+  if (p === 'all') return 'Histórico completo';
+  if (p === 'last30d' || p === 'last1m') return 'Últimos 30 días';
+  if (p === 'last3m') return 'Últimos 3 meses';
+  if (p === 'last6m') return 'Últimos 6 meses';
+  if (p === 'last12m') return 'Últimos 12 meses';
+  if (p === 'prev_month') return 'Mes anterior';
+  return p;
+}
+function statusLabel(preset) {
+  const s = String(preset || '').toLowerCase();
+  if (s === 'valid') return 'Solo completados';
+  if (s === 'open') return 'Incluye pendientes';
+  if (s === 'all') return 'Todos';
+  return s;
+}
 
 /* ==========================
    Excel (R6) robusto al esquema
@@ -156,61 +170,6 @@ exports.buildOrdersXLSX = async (rows, meta = {}) => {
 };
 
 /* ==========================
-   KPIs por período + comparativas
-   ========================== */
-async function getPeriodKPIs({ commerceId, startDate, endDate }) {
-  // Ventas totales (sum total_amount) con estados completados
-  const revenueRow = await Order.findOne({
-    attributes: [[fn('COALESCE', fn('SUM', col('total_amount')), 0), 'revenue']],
-    where: {
-      commerce_id: commerceId,
-      ...between('created_at', startDate, endDate),
-      [Op.and]: [ciStatusIn(DONE_STATUSES)],
-    },
-    raw: true,
-  });
-  const revenue = Number(revenueRow?.revenue ?? 0);
-
-  // Pedidos realizados (DONE_STATUSES)
-  const doneCount = await Order.count({
-    where: {
-      commerce_id: commerceId,
-      ...between('created_at', startDate, endDate),
-      [Op.and]: [ciStatusIn(DONE_STATUSES)],
-    },
-  });
-
-  // Pedidos devueltos (RETURN_STATUSES)
-  const returnedCount = await Order.count({
-    where: {
-      commerce_id: commerceId,
-      ...between('created_at', startDate, endDate),
-      [Op.and]: [ciStatusIn(RETURN_STATUSES)],
-    },
-  });
-
-  // Productos vencidos: snapshot actual (no tiene sentido comparar por período porque es estado a la fecha)
-  // De todas formas lo devolvemos para mostrarlo.
-  const expiredRows = await Publication.findAll({
-    attributes: [[fn('COALESCE', fn('SUM', col('available_stock')), 0), 'expiredStock']],
-    where: { commerce_id: commerceId, expiration_date: { [Op.lt]: new Date() } },
-    raw: true,
-  });
-  const expiredProducts = Number(expiredRows?.[0]?.expiredStock ?? 0);
-
-  return { revenue, doneCount, returnedCount, expiredProducts };
-}
-
-function pctChange(curr, prev) {
-  const delta = curr - prev;
-  if (!prev || prev === 0) {
-    return { delta, pct: prev === 0 && curr !== 0 ? 100 : 0, dir: delta >= 0 ? 'up' : 'down' };
-  }
-  const pct = (delta / prev) * 100;
-  return { delta, pct, dir: delta >= 0 ? 'up' : 'down' };
-}
-
-/* ==========================
    PDF estilizado (R1)
    ========================== */
 // Tema corporativo (Comidín)
@@ -308,24 +267,12 @@ function footerNumbering(doc) {
   }
 }
 
-function kpiCardWithDelta(doc, x, y, w, h, label, valueStr, deltaInfo, color = THEME.primary) {
-  // tarjeta base
+function kpiCard(doc, x, y, w, h, label, valueStr, color = THEME.primary) {
   doc.save().roundedRect(x, y, w, h, 12).fill(THEME.card).restore();
   doc.save().roundedRect(x, y, 6, h, 12).fill(color).restore();
 
-  // label
   doc.fillColor(THEME.muted).fontSize(10).text(label, x + 14, y + 12, { width: w - 20 });
-
-  // value
-  doc.fillColor(THEME.text).fontSize(18).text(valueStr, x + 14, y + 30, { width: w - 20 });
-
-  // delta
-  if (deltaInfo) {
-    const arrow = deltaInfo.dir === 'up' ? '↑' : '↓';
-    const c = deltaInfo.dir === 'up' ? '#16A34A' : '#DC2626'; // verde / rojo
-    const pctStr = `${arrow} ${Math.abs(deltaInfo.pct).toFixed(1)}%`;
-    doc.fillColor(c).fontSize(10).text(pctStr, x + 14, y + 54, { width: w - 20 });
-  }
+  doc.fillColor(THEME.text).fontSize(18).text(valueStr, x + 14, y + 32, { width: w - 20 });
 }
 
 function table(doc, { x, y, w }, headers, rows, opts = {}) {
@@ -368,15 +315,44 @@ function miniBar(doc, x, y, w, h, value, max, color) {
   doc.save().roundedRect(x, y, barW, h, 4).fill(color || THEME.accent).restore();
 }
 
+/* ==========================
+   Fetch opcional del nombre del comercio
+   ========================== */
+async function getCommerceNameSafe(commerceId) {
+  try {
+    if (!Commerce?.findByPk) return null;
+    const row = await Commerce.findByPk(commerceId, { attributes: ['name'], raw: true });
+    return row?.name || null;
+  } catch {
+    return null;
+  }
+}
+
 /* ====== Informe PDF ====== */
 exports.streamExecutivePDF = async (res, { period, statusPreset, overview, context }) => {
   const doc = new PDFDocument({ margin: 40, size: 'A4', bufferPages: true });
   doc.pipe(res);
 
-  const nowStr = new Date().toLocaleString('es-AR');
+  const now = new Date();
+  const nowStr =
+    `${String(now.getDate()).padStart(2, '0')}/` +
+    `${String(now.getMonth()+1).padStart(2, '0')}/` +
+    `${now.getFullYear()} ` +
+    `${String(now.getHours()).padStart(2, '0')}:` +
+    `${String(now.getMinutes()).padStart(2, '0')}`;
+
+  // Nombre del comercio (opción A: mostrar nombre; si no hay, cae a ID)
+  let commerceText = `Comercio: ${context.commerceId}`;
+  const fetchedName = await getCommerceNameSafe(context.commerceId);
+  if (fetchedName) commerceText = `Comercio: ${fetchedName}`;
+
   const title = 'Informe de Ventas';
-  const subtitle =
-    `Comercio: ${context.commerceId}  •  Período: ${period}  •  Estado: ${statusPreset}  •  Generado: ${nowStr}`;
+  const subtitle = [
+    commerceText,
+    `Período: ${periodLabel(period)}`,
+    `Estado: ${statusLabel(statusPreset)}`,
+    `Generado: ${nowStr}`,
+  ].join('  •  ');
 
   // Header 1-D
   let y = headerCentered(doc, title, subtitle, { logoPath: LOGO_PATH });
@@ -387,43 +363,17 @@ exports.streamExecutivePDF = async (res, { period, statusPreset, overview, conte
   const currency = (v) => `$ ${Number(v || 0).toLocaleString('es-AR', { minimumFractionDigits: 2 })}`;
   const integer  = (v) => Number(v || 0).toLocaleString('es-AR');
 
-  // ===== KPIs por período actual y anterior =====
-  const curWindow = computeWindow(period);
-  const prevWindow = computePrevWindow(curWindow);
-
-  let currKPIs = { revenue: 0, doneCount: 0, returnedCount: 0, expiredProducts: overview?.expiredProducts ?? 0 };
-  let prevKPIs  = { revenue: 0, doneCount: 0, returnedCount: 0 };
-
-  if (curWindow.startDate && curWindow.endDate) {
-    currKPIs = await getPeriodKPIs({
-      commerceId: context.commerceId,
-      startDate: curWindow.startDate,
-      endDate: curWindow.endDate,
-    });
-  }
-  if (prevWindow.startDate && prevWindow.endDate) {
-    prevKPIs = await getPeriodKPIs({
-      commerceId: context.commerceId,
-      startDate: prevWindow.startDate,
-      endDate: prevWindow.endDate,
-    });
-  }
-
-  const revDelta   = pctChange(currKPIs.revenue,       prevKPIs.revenue);
-  const doneDelta  = pctChange(currKPIs.doneCount,     prevKPIs.doneCount);
-  const retDelta   = pctChange(currKPIs.returnedCount, prevKPIs.returnedCount);
-
-  // KPI Cards (2x2) con delta
+  // ===== KPI Cards (simples, sin porcentajes) =====
   const kpiW = Math.floor((pageW - 24) / 2);
-  const kpiH = 70;
+  const kpiH = 64;
 
-  kpiCardWithDelta(doc, left, y, kpiW, kpiH, 'Ventas totales', currency(currKPIs.revenue), revDelta, THEME.primary);
-  kpiCardWithDelta(doc, left + kpiW + 24, y, kpiW, kpiH, 'Pedidos realizados', integer(currKPIs.doneCount), doneDelta, THEME.accent);
+  kpiCard(doc, left, y, kpiW, kpiH, 'Ventas totales',         currency(overview.totalRevenue), THEME.primary);
+  kpiCard(doc, left + kpiW + 24, y, kpiW, kpiH, 'Pedidos realizados', integer(overview.totalOrders), THEME.accent);
 
   y += kpiH + 14;
 
-  kpiCardWithDelta(doc, left, y, kpiW, kpiH, 'Pedidos devueltos', integer(currKPIs.returnedCount), retDelta, '#EF4444');
-  kpiCardWithDelta(doc, left + kpiW + 24, y, kpiW, kpiH, 'Productos vencidos', integer(currKPIs.expiredProducts), null, '#F59E0B');
+  kpiCard(doc, left, y, kpiW, kpiH, 'Pedidos devueltos',      integer(overview.returnedOrders), '#EF4444');
+  kpiCard(doc, left + kpiW + 24, y, kpiW, kpiH, 'Productos vencidos', integer(overview.expiredProducts), '#F59E0B');
 
   y += kpiH + 26;
 
