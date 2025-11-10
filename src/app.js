@@ -7,7 +7,35 @@ const { connectDatabase, sequelize } = require('./database');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
-app.use(express.json());
+// ===== Parsers con límites amplios (antes de las rutas) =====
+const JSON_LIMIT = process.env.JSON_LIMIT || '5mb';
+const FORM_LIMIT = process.env.FORM_LIMIT || '5mb';
+const MAX_BODY_BYTES = Number(process.env.MAX_BODY_BYTES || 5 * 1024 * 1024); // 5 MB
+
+app.use(express.json({
+  limit: JSON_LIMIT,
+  type: ['application/json', 'application/*+json'],
+}));
+
+app.use(express.urlencoded({
+  limit: FORM_LIMIT,
+  extended: true,
+  parameterLimit: 10000,
+}));
+
+// Guard opcional por Content-Length (defensa extra)
+app.use((req, res, next) => {
+  const contentLength = Number(req.headers['content-length'] || 0);
+  if (contentLength && contentLength > MAX_BODY_BYTES) {
+    return res.status(413).json({
+      error: 'PayloadTooLargeError',
+      message: `Request entity too large (${contentLength} bytes). Max allowed: ${MAX_BODY_BYTES} bytes.`,
+    });
+  }
+  return next();
+});
+
+// ===== CORS =====
 app.use(
   cors({
     origin: '*',
@@ -17,7 +45,7 @@ app.use(
   })
 );
 
-
+// ===== DB =====
 connectDatabase();
 
 // ---- Routers ----
@@ -39,7 +67,7 @@ const authRouter = require('./routes/auth');
 const subscriptionRouter = require('./routes/subscription');
 const analyticsRouter = require('./routes/analytics');
 
-
+// Healthcheck
 app.get('/', (_req, res) => res.send('OK'));
 
 // ---- Montaje de rutas ----
@@ -59,7 +87,7 @@ app.use('/role', roleRouter);
 app.use('/user', userRouter);
 app.use('/auth', authRouter);
 app.use('/subscriptions', subscriptionRouter);
-app.use('/api/analytics',analyticsRouter);
+app.use('/api/analytics', analyticsRouter);
 
 // ---- 404 y error handler ----
 app.use((req, res, next) => {
@@ -69,10 +97,11 @@ app.use((req, res, next) => {
 
 app.use((err, _req, res, _next) => {
   console.error('[ERROR]', err);
-  res.status(500).json({ error: 'Internal Server Error', message: err?.message });
+  const status = err.status || 500;
+  res.status(status).json({ error: 'Internal Server Error', message: err?.message });
 });
 
-
+// ===== Init DB sync =====
 const init = async () => {
   try {
     await sequelize.sync();
@@ -83,6 +112,7 @@ const init = async () => {
 };
 init();
 
+// ===== Start =====
 app.listen(PORT, '0.0.0.0', () => {
   console.log(`API listening on http://0.0.0.0:${PORT}`);
 });
