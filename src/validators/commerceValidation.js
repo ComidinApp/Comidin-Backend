@@ -73,9 +73,17 @@ const createCommerceValidation = [
       throw new Error('available_days must be CSV "0..6" or array of numbers 0..6');
     }),
 
-  // Imagen como URL (opcional)
-  check('image_url').optional().isURL().withMessage('Image URL must be a valid URL'),
-
+check('image_url')
+  .optional()
+  .custom((value) => {
+    // Permitir http/https o dataURL base64
+    const isHttp = /^https?:\/\//.test(value);
+    const isBase64 = /^data:image\/(png|jpeg|jpg|webp);base64,/.test(value);
+    if (!isHttp && !isBase64) {
+      throw new Error('Image URL must be a valid URL or Base64 image');
+    }
+    return true;
+  }),
   // chequeo lógico de horarios
   check().custom((_v, { req }) => logicalHours(req)),
 ];
@@ -104,8 +112,17 @@ const updateCommerceValidation = [
 
   check('is_active').optional().isBoolean().toBoolean(),
 
-  check('image_url').optional().isURL().withMessage('Image URL must be a valid URL'),
-
+check('image_url')
+  .optional()
+  .custom((value) => {
+    // Permitir http/https o dataURL base64
+    const isHttp = /^https?:\/\//.test(value);
+    const isBase64 = /^data:image\/(png|jpeg|jpg|webp);base64,/.test(value);
+    if (!isHttp && !isBase64) {
+      throw new Error('Image URL must be a valid URL or Base64 image');
+    }
+    return true;
+  }),
   check('open_at').optional().isString().matches(TIME_REGEX).withMessage('open_at must be HH:mm'),
   check('close_at').optional().isString().matches(TIME_REGEX).withMessage('close_at must be HH:mm'),
 
