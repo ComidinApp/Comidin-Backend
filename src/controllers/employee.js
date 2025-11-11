@@ -1,7 +1,24 @@
 const Employee = require('../models/employee');
 const { createNewEmployee, deleteEmployeeAccount } = require('../services/cognitoService')
 const { sendEmployeeWelcome } = require('../services/emailSender');
+const db = require('../models');            
+const EmployeeModel = db.employee || db.Employee; 
 
+// ...resto de tus handlers
+
+exports.checkEmailExists = async (req, res) => {
+  try {
+    const { email } = req.query;
+    // defensa extra (aunque ya valida el router)
+    if (!email) return res.status(400).json({ error: 'Email es requerido' });
+
+    const found = await EmployeeModel.findOne({ where: { email } });
+    return res.json({ exists: !!found });
+  } catch (error) {
+    console.error('Error checking employee email:', error);
+    return res.status(500).json({ error: 'Error verificando el email' });
+  }
+};
 exports.createEmployee = async (req, res) => {
     try {
         await createNewEmployee(req.body)
