@@ -1,11 +1,12 @@
-const express = require('express'); 
-const { validationResult, query } = require('express-validator'); // ← agregamos query
-const Employee = require('../controllers/employee');
+// src/routes/employee.js
+const express = require('express');
+const { validationResult } = require('express-validator');
+const EmployeeController = require('../controllers/employee');
+const EmployeeVerificationController = require('../controllers/employeeVerification');
 const {
   createEmployeeValidation,
   updateEmployeeValidation,
-  commerceIdValidation,
-  roleIdValidation,
+  employeeIdValidation,
 } = require('../validators/employeeValidation');
 
 const router = express.Router();
@@ -18,24 +19,25 @@ const validate = (req, res, next) => {
   next();
 };
 
-// --- NUEVO: /employee/exists?email=... ---
-router.get(
-  '/exists',
-  [query('email').isEmail().withMessage('Email inválido')], // valida querystring
-  validate,
-  Employee.checkEmailExists // función nueva en el controller
+// Crear empleado
+router.post('/', createEmployeeValidation, validate, EmployeeController.createEmployee);
+
+// Listar empleados
+router.get('/', EmployeeController.findAllEmployees);
+
+// Obtener empleado por ID
+router.get('/:id', employeeIdValidation, validate, EmployeeController.findEmployeeById);
+
+// Actualizar empleado
+router.put('/:id', updateEmployeeValidation, validate, EmployeeController.updateEmployee);
+
+// Eliminar empleado
+router.delete('/:id', employeeIdValidation, validate, EmployeeController.deleteEmployee);
+
+
+router.post(
+  '/send-verification-code',
+  EmployeeVerificationController.sendVerificationCodeToEmployee
 );
-
-router.post('/', createEmployeeValidation, validate, Employee.createEmployee);
-router.get('/', Employee.findAllEmployees);
-
-// ¡IMPORTANTE! rutas específicas antes de "/:id"
-router.get('/commerce/:commerceId', commerceIdValidation, validate, Employee.findEmployeesByCommerceId);
-router.get('/role/:roleId', roleIdValidation, validate, Employee.findEmployeesByRoleId);
-router.get('/email/:email', Employee.findEmployeeByEmail);
-
-router.get('/:id', Employee.findEmployeeById);
-router.put('/:id', updateEmployeeValidation, validate, Employee.updateEmployee);
-router.delete('/:id', Employee.deleteEmployee);
 
 module.exports = router;
