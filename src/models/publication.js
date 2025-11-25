@@ -119,9 +119,6 @@ Publication.findPublicationsByCommerceId = async function(commerceId) {
   }
 };
 
-// models/publication.js
-
-const { Op } = require("sequelize");
 
 Publication.findCommercesWithExpiringPublications = async function ({ postalCode }) {
   try {
