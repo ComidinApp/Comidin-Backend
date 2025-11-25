@@ -94,7 +94,6 @@ Commerce.findAllCommerces = async function() {
   }
 };
 
-
 Commerce.findCommercesByCategoryId = async function(categoryId) {
   try {
     const commerces = await Commerce.findAll({
@@ -104,6 +103,26 @@ Commerce.findCommercesByCategoryId = async function(categoryId) {
     return commerces;
   } catch (error) {
     console.error('Error finding Commerces:', error);
+    throw error;
+  }
+};
+
+// 🔎 NUEVO: buscar comercios por código postal (incluyendo categoría)
+Commerce.findCommercesByPostalCode = async function(postalCode) {
+  try {
+    const commerces = await Commerce.findAll({
+      where: { postal_code: postalCode },
+      include: [
+        {
+          model: CommerceCategory,
+          attributes: ['name'],
+        },
+      ],
+    });
+
+    return commerces;
+  } catch (error) {
+    console.error('Error finding Commerces by postal code:', error);
     throw error;
   }
 };

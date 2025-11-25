@@ -1,5 +1,6 @@
 const Commerce = require('../models/commerce');
 const Employee = require('../models/employee');
+const Publication = require('../models/publication'); // 👈 nuevo
 const { sendCommerceWelcome, sendRejectedNoticeCommerce, sendAdmittedNoticeCommerce } = require('../services/emailSender');
 const { uploadCommerceImage } = require('../services/s3Service');
 const { processImage } = require('../helpers/imageHelper');
@@ -136,6 +137,44 @@ exports.findCommercesByCategoryId = async (req, res) => {
         res.status(200).json(commerces);
     } catch (error) {
         console.error('Error fetching Commerces by Category ID:', error);
+        res.status(409).json({ error: 'Conflict', meesage: error });
+    }
+};
+
+// 🔎 NUEVO: búsqueda con filtros (código postal / publicaciones próximas a vencer)
+exports.searchCommerces = async (req, res) => {
+    try {
+        const { postal_code, expiring_publications } = req.query;
+
+        const hasPostalCode = !!postal_code;
+        const hasExpiring = expiring_publications === 'true';
+
+        if (!hasPostalCode && !hasExpiring) {
+            return res.status(400).json({
+                error: 'Bad Request',
+                message: 'At least one filter must be provided: postal_code or expiring_publications=true',
+            });
+        }
+
+        let commerces;
+
+        if (hasExpiring) {
+            // Filtro: publicaciones activas que vencen hoy (opcionalmente en un CP)
+            commerces = await Publication.findCommercesWithExpiringPublications({
+                postalCode: hasPostalCode ? postal_code : null,
+            });
+        } else if (hasPostalCode) {
+            // Solo por código postal (sin tener en cuenta publicaciones)
+            commerces = await Commerce.findCommercesByPostalCode(postal_code);
+        }
+
+        if (!commerces || commerces.length === 0) {
+            return res.status(404).json({ message: 'No commerces found for given filters.' });
+        }
+
+        res.status(200).json(commerces);
+    } catch (error) {
+        console.error('Error searching Commerces with filters:', error);
         res.status(409).json({ error: 'Conflict', meesage: error });
     }
 };

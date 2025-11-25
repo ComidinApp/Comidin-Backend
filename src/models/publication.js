@@ -3,6 +3,9 @@ const { sequelize } = require('../database'); // Import database connection
 const Product = require('./product');
 const ProductCategory = require('./productCategory');
 const Commerce = require('./commerce');
+const CommerceCategory = require('./commerceCategory'); // 👈 nuevo
+
+const { Op } = Sequelize; // 👈 para BETWEEN, etc.
 
 const Publication = sequelize.define('publication', {
   id: {
@@ -36,7 +39,7 @@ const Publication = sequelize.define('publication', {
     allowNull: false,
   },
   discount_percentaje: {
-    type: Sequelize.DECIMAL(10, ),
+    type: Sequelize.DECIMAL(10, ), // <- lo dejé como lo tenías
     allowNull: false,
   },
   discounted_price: {
@@ -112,6 +115,72 @@ Publication.findPublicationsByCommerceId = async function(commerceId) {
     return publications;
   } catch (error) {
     console.error('Error finding Publications:', error);
+    throw error;
+  }
+};
+
+// 🔎 NUEVO: comercios con publicaciones activas que vencen HOY (hasta 23:59:59)
+Publication.findCommercesWithExpiringPublications = async function({ postalCode }) {
+  try {
+    const now = new Date();
+    const endOfToday = new Date();
+    endOfToday.setHours(23, 59, 59, 999);
+
+    const wherePublication = {
+      is_active: 'active',
+      expiration_date: {
+        [Op.between]: [now, endOfToday],
+      },
+    };
+
+    const whereCommerce = {};
+
+    if (postalCode) {
+      whereCommerce.postal_code = postalCode;
+    }
+
+    const publications = await Publication.findAll({
+      where: wherePublication,
+      include: [
+        {
+          model: Commerce,
+          attributes: [
+            'id',
+            'name',
+            'street_name',
+            'number',
+            'postal_code',
+            'commerce_category_id',
+            'status',
+            'image_url',
+            'open_at',
+            'close_at',
+            'available_days',
+            'is_active',
+          ],
+          where: whereCommerce,
+          include: [
+            {
+              model: CommerceCategory,
+              attributes: ['name'],
+            },
+          ],
+        },
+      ],
+    });
+
+    // Devolver comercios únicos (sin repetir por cada publicación)
+    const uniqueCommercesMap = new Map();
+
+    publications.forEach((pub) => {
+      if (pub.commerce && !uniqueCommercesMap.has(pub.commerce.id)) {
+        uniqueCommercesMap.set(pub.commerce.id, pub.commerce);
+      }
+    });
+
+    return Array.from(uniqueCommercesMap.values());
+  } catch (error) {
+    console.error('Error finding Commerces with expiring Publications:', error);
     throw error;
   }
 };
