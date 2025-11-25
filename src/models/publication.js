@@ -119,22 +119,34 @@ Publication.findPublicationsByCommerceId = async function(commerceId) {
   }
 };
 
-// 🔎 NUEVO: comercios con publicaciones activas que vencen HOY (hasta 23:59:59)
-Publication.findCommercesWithExpiringPublications = async function({ postalCode }) {
+// models/publication.js
+
+const { Op } = require("sequelize");
+
+Publication.findCommercesWithExpiringPublications = async function ({ postalCode }) {
   try {
-    const now = new Date();
-    const endOfToday = new Date();
+
+    // ---- DEFINIR EL DÍA DE HOY EN ARGENTINA ----
+    const timeZone = 'America/Argentina/Buenos_Aires';
+
+    const today = new Date().toLocaleString('en-US', { timeZone });
+    const base = new Date(today);
+
+    const startOfToday = new Date(base);
+    startOfToday.setHours(0, 0, 0, 0);
+
+    const endOfToday = new Date(base);
     endOfToday.setHours(23, 59, 59, 999);
 
+    // ---- ARMAR EL WHERE ----
     const wherePublication = {
       is_active: 'active',
       expiration_date: {
-        [Op.between]: [now, endOfToday],
+        [Op.between]: [startOfToday, endOfToday],
       },
     };
 
     const whereCommerce = {};
-
     if (postalCode) {
       whereCommerce.postal_code = postalCode;
     }
@@ -144,45 +156,26 @@ Publication.findCommercesWithExpiringPublications = async function({ postalCode 
       include: [
         {
           model: Commerce,
-          attributes: [
-            'id',
-            'name',
-            'street_name',
-            'number',
-            'postal_code',
-            'commerce_category_id',
-            'status',
-            'image_url',
-            'open_at',
-            'close_at',
-            'available_days',
-            'is_active',
-          ],
           where: whereCommerce,
-          include: [
-            {
-              model: CommerceCategory,
-              attributes: ['name'],
-            },
-          ],
+          include: [{ model: CommerceCategory, attributes: ['name'] }],
         },
       ],
     });
 
-    // Devolver comercios únicos (sin repetir por cada publicación)
-    const uniqueCommercesMap = new Map();
-
-    publications.forEach((pub) => {
-      if (pub.commerce && !uniqueCommercesMap.has(pub.commerce.id)) {
-        uniqueCommercesMap.set(pub.commerce.id, pub.commerce);
+    const map = new Map();
+    publications.forEach(pub => {
+      if (pub.commerce && !map.has(pub.commerce.id)) {
+        map.set(pub.commerce.id, pub.commerce);
       }
     });
 
-    return Array.from(uniqueCommercesMap.values());
+    return Array.from(map.values());
+
   } catch (error) {
     console.error('Error finding Commerces with expiring Publications:', error);
     throw error;
   }
 };
+
 
 module.exports = Publication;
