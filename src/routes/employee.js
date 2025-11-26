@@ -25,14 +25,21 @@ const validate = (req, res, next) => {
 // Middleware no-op por si alguna validación viene undefined
 const noop = (req, _res, next) => next();
 
+// Aceptamos tanto funciones como arrays de middlewares (lo típico de express-validator)
 const safeCreateEmployeeValidation =
-  typeof createEmployeeValidation === 'function' ? createEmployeeValidation : noop;
+  Array.isArray(createEmployeeValidation) || typeof createEmployeeValidation === 'function'
+    ? createEmployeeValidation
+    : noop;
 
 const safeUpdateEmployeeValidation =
-  typeof updateEmployeeValidation === 'function' ? updateEmployeeValidation : noop;
+  Array.isArray(updateEmployeeValidation) || typeof updateEmployeeValidation === 'function'
+    ? updateEmployeeValidation
+    : noop;
 
 const safeEmployeeIdValidation =
-  typeof employeeIdValidation === 'function' ? employeeIdValidation : noop;
+  Array.isArray(employeeIdValidation) || typeof employeeIdValidation === 'function'
+    ? employeeIdValidation
+    : noop;
 
 // ----------------------------------------------------------------------
 // Crear empleado
@@ -50,7 +57,10 @@ router.get('/', (req, res) => EmployeeController.findAllEmployees(req, res));
 // Ej: GET /employee/exists?email=algo@correo.com
 router.get('/exists', (req, res) => EmployeeController.checkEmailExists(req, res));
 
-// IMPORTANTE: esta ruta va DESPUÉS de /exists para no pisarla
+// Obtener empleado por email (ruta vieja que usan pantallas actuales)
+// Ej: GET /employee/email/jpdona@hotmail.com
+router.get('/email/:email', (req, res) => EmployeeController.findEmployeeByEmail(req, res));
+
 // Obtener empleado por ID
 router.get(
   '/:id',

@@ -75,7 +75,7 @@ const analyticsRouter = require('./routes/analytics');
 app.get('/', (_req, res) => res.send('OK'));
 
 // ---- Montaje de rutas ----
-// Rutas sin prefijo /api (compatibilidad)
+// Rutas sin prefijo /api (compatibilidad con lo viejo)
 app.use('/address', addressRouter);
 app.use('/commerce', commerceRouter);
 app.use('/commerceCategory', commerceCategoryRouter);
@@ -94,7 +94,7 @@ app.use('/auth', authRouter);
 app.use('/subscriptions', subscriptionRouter);
 app.use('/analytics', analyticsRouter);
 
-// Rutas con prefijo /api (lo que está usando el frontend)
+// Rutas con prefijo /api (lo que usa el front nuevo)
 app.use('/api/address', addressRouter);
 app.use('/api/commerce', commerceRouter);
 app.use('/api/commerceCategory', commerceCategoryRouter);

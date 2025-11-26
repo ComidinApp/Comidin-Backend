@@ -81,7 +81,7 @@ exports.findEmployeeById = async (req, res) => {
 };
 
 /**
- * Obtiene un empleado por email (si lo usás en algún lado).
+ * Obtiene un empleado por email (usado por /employee/email/:email).
  */
 exports.findEmployeeByEmail = async (req, res) => {
   try {
