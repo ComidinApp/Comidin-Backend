@@ -12,16 +12,20 @@ const JSON_LIMIT = process.env.JSON_LIMIT || '5mb';
 const FORM_LIMIT = process.env.FORM_LIMIT || '5mb';
 const MAX_BODY_BYTES = Number(process.env.MAX_BODY_BYTES || 5 * 1024 * 1024); // 5 MB
 
-app.use(express.json({
-  limit: JSON_LIMIT,
-  type: ['application/json', 'application/*+json'],
-}));
+app.use(
+  express.json({
+    limit: JSON_LIMIT,
+    type: ['application/json', 'application/*+json'],
+  })
+);
 
-app.use(express.urlencoded({
-  limit: FORM_LIMIT,
-  extended: true,
-  parameterLimit: 10000,
-}));
+app.use(
+  express.urlencoded({
+    limit: FORM_LIMIT,
+    extended: true,
+    parameterLimit: 10000,
+  })
+);
 
 // Guard opcional por Content-Length (defensa extra)
 app.use((req, res, next) => {
@@ -71,6 +75,7 @@ const analyticsRouter = require('./routes/analytics');
 app.get('/', (_req, res) => res.send('OK'));
 
 // ---- Montaje de rutas ----
+// Rutas sin prefijo /api (compatibilidad)
 app.use('/address', addressRouter);
 app.use('/commerce', commerceRouter);
 app.use('/commerceCategory', commerceCategoryRouter);
@@ -87,6 +92,25 @@ app.use('/role', roleRouter);
 app.use('/user', userRouter);
 app.use('/auth', authRouter);
 app.use('/subscriptions', subscriptionRouter);
+app.use('/analytics', analyticsRouter);
+
+// Rutas con prefijo /api (lo que está usando el frontend)
+app.use('/api/address', addressRouter);
+app.use('/api/commerce', commerceRouter);
+app.use('/api/commerceCategory', commerceCategoryRouter);
+app.use('/api/customerComplain', customerComplainRouter);
+app.use('/api/employee', employeeRouter);
+app.use('/api/order', orderRouter);
+app.use('/api/orderDetail', orderDetailRouter);
+app.use('/api/plan', planRouter);
+app.use('/api/product', productRouter);
+app.use('/api/productCategory', productCategoryRouter);
+app.use('/api/publication', publicationRouter);
+app.use('/api/rating', ratingRouter);
+app.use('/api/role', roleRouter);
+app.use('/api/user', userRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/subscriptions', subscriptionRouter);
 app.use('/api/analytics', analyticsRouter);
 
 // ---- 404 y error handler ----
