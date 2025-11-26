@@ -22,11 +22,23 @@ const validate = (req, res, next) => {
   next();
 };
 
+// Middleware no-op por si alguna validación viene undefined
+const noop = (req, _res, next) => next();
+
+const safeCreateEmployeeValidation =
+  typeof createEmployeeValidation === 'function' ? createEmployeeValidation : noop;
+
+const safeUpdateEmployeeValidation =
+  typeof updateEmployeeValidation === 'function' ? updateEmployeeValidation : noop;
+
+const safeEmployeeIdValidation =
+  typeof employeeIdValidation === 'function' ? employeeIdValidation : noop;
+
 // ----------------------------------------------------------------------
 // Crear empleado
 router.post(
   '/',
-  createEmployeeValidation,
+  safeCreateEmployeeValidation,
   validate,
   (req, res) => EmployeeController.createEmployee(req, res)
 );
@@ -42,7 +54,7 @@ router.get('/exists', (req, res) => EmployeeController.checkEmailExists(req, res
 // Obtener empleado por ID
 router.get(
   '/:id',
-  employeeIdValidation,
+  safeEmployeeIdValidation,
   validate,
   (req, res) => EmployeeController.findEmployeeById(req, res)
 );
@@ -50,7 +62,7 @@ router.get(
 // Actualizar empleado
 router.put(
   '/:id',
-  updateEmployeeValidation,
+  safeUpdateEmployeeValidation,
   validate,
   (req, res) => EmployeeController.updateEmployee(req, res)
 );
@@ -58,7 +70,7 @@ router.put(
 // Eliminar empleado
 router.delete(
   '/:id',
-  employeeIdValidation,
+  safeEmployeeIdValidation,
   validate,
   (req, res) => EmployeeController.deleteEmployee(req, res)
 );
@@ -66,7 +78,8 @@ router.delete(
 // Enviar código de verificación (si usás este flujo)
 router.post(
   '/send-verification-code',
-  (req, res, next) => EmployeeVerificationController.sendVerificationCodeToEmployee(req, res, next)
+  (req, res, next) =>
+    EmployeeVerificationController.sendVerificationCodeToEmployee(req, res, next)
 );
 
 module.exports = router;
