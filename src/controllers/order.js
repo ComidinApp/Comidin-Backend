@@ -1,3 +1,4 @@
+// src/controllers/order.js
 const Order = require('../models/order');
 const OrderDetail = require('../models/orderDetail');
 const Employee = require('../models/employee');
@@ -130,17 +131,22 @@ exports.createCustomerComplainForOrder = async (req, res) => {
         const { id } = req.params;       // order_id
         const { message } = req.body || {};
 
-        // Traigo el pedido con user + commerce + etc.
+        // 1) Traigo el pedido con user + commerce + detalles
         const order = await Order.findOrderById(id);
 
         if (!order) {
             return res.status(404).json({ error: 'Order not found with id: ' + id });
         }
 
-        // Creo el registro en customer_complain
-        const complainDescription = message && message.trim().length > 0
-            ? message.trim()
-            : 'Sin descripción proporcionada';
+        // 2) Actualizo estado de la orden a CLAIMED (o el que definas)
+        order.status = 'CLAIMED'; // si usás otro literal, cambialo acá
+        await order.save();
+
+        // 3) Creo el registro en customer_complain
+        const complainDescription =
+            message && message.trim().length > 0
+                ? message.trim()
+                : 'Sin descripción proporcionada';
 
         const customerComplain = await CustomerComplain.create({
             user_id: order.user_id,
@@ -149,10 +155,10 @@ exports.createCustomerComplainForOrder = async (req, res) => {
             complain_description: complainDescription,
         });
 
-        // Busco el empleado administrador (Propietario) del comercio
+        // 4) Busco el empleado administrador (Propietario) del comercio
         const adminEmployee = await Employee.findAdminEmployeeByCommerceId(order.commerce_id);
 
-        // Envío mails (no corto la respuesta si falla el mail, solo logueo)
+        // 5) Envío mails (no corto la respuesta si falla el mail, solo logueo)
         try {
             await emailSender.sendCustomerComplainCommerce({
                 order,
