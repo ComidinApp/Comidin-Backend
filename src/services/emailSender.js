@@ -114,3 +114,75 @@ exports.sendRejectedNoticeCommerce = async (adminEmployee) => {
     }
   }
 };
+
+// =====================================
+// 🆕 NUEVAS FUNCIONES PARA RECLAMOS
+// =====================================
+
+/**
+ * Mail al COMERCIO (Propietario) cuando se genera un reclamo de un pedido
+ */
+exports.sendCustomerComplainCommerce = async ({ order, user, commerce, adminEmployee, complain }) => {
+  try {
+    if (!adminEmployee || !adminEmployee.email) {
+      console.warn('[SENDGRID] No adminEmployee email for customer complain (commerce)');
+      return;
+    }
+
+    const msg = {
+      to: adminEmployee.email,
+      from: 'no-reply@comidin.com.ar',
+      templateId: process.env.SENDGRID_ORDER_COMPLAIN_COMMERCE, // definir en .env
+      dynamic_template_data: {
+        orderNumber: order.id,
+        complainId: complain.id,
+        commerceName: commerce?.name || adminEmployee?.commerce?.name,
+        customerName: `${user?.first_name || ''} ${user?.last_name || ''}`.trim(),
+        customerEmail: user?.email,
+        customerPhone: user?.phone_number,
+        complainDescription: complain.complain_description,
+        createdAt: complain.created_at || order.created_at,
+      },
+    };
+
+    await sgMail.send(msg);
+  } catch (error) {
+    console.error('Error al enviar mail de reclamo al comercio:', error);
+    if (error.response) {
+      console.error('SendGrid response body:', error.response.body);
+    }
+  }
+};
+
+/**
+ * Mail al CLIENTE cuando se registra su reclamo
+ */
+exports.sendCustomerComplainCustomer = async ({ order, user, commerce, complain }) => {
+  try {
+    if (!user || !user.email) {
+      console.warn('[SENDGRID] No user email for customer complain (customer)');
+      return;
+    }
+
+    const msg = {
+      to: user.email,
+      from: 'no-reply@comidin.com.ar',
+      templateId: process.env.SENDGRID_ORDER_COMPLAIN_CUSTOMER, // definir en .env
+      dynamic_template_data: {
+        orderNumber: order.id,
+        complainId: complain.id,
+        commerceName: commerce?.name,
+        customerName: `${user.first_name} ${user.last_name}`,
+        complainDescription: complain.complain_description,
+        createdAt: complain.created_at || order.created_at,
+      },
+    };
+
+    await sgMail.send(msg);
+  } catch (error) {
+    console.error('Error al enviar mail de reclamo al cliente:', error);
+    if (error.response) {
+      console.error('SendGrid response body:', error.response.body);
+    }
+  }
+};

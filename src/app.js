@@ -70,6 +70,8 @@ const userRouter = require('./routes/user');
 const authRouter = require('./routes/auth');
 const subscriptionRouter = require('./routes/subscription');
 const analyticsRouter = require('./routes/analytics');
+const orderRoutes = require('./routes/order');
+
 
 // Healthcheck
 app.get('/', (_req, res) => res.send('OK'));
@@ -81,7 +83,8 @@ app.use('/commerce', commerceRouter);
 app.use('/commerceCategory', commerceCategoryRouter);
 app.use('/customerComplain', customerComplainRouter);
 app.use('/employee', employeeRouter);
-app.use('/order', orderRouter);
+app.use('/api/order', orderRoutes);
+app.use('/order', orderRoutes);
 app.use('/orderDetail', orderDetailRouter);
 app.use('/plan', planRouter);
 app.use('/product', productRouter);
