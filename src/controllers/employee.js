@@ -16,7 +16,6 @@ exports.checkEmailExists = async (req, res) => {
   try {
     const { email } = req.query;
 
-    // defensa extra (aunque también lo valida el router / front)
     if (!email) {
       return res.status(400).json({ error: 'Email es requerido' });
     }
@@ -39,9 +38,7 @@ exports.checkEmailExists = async (req, res) => {
 exports.createEmployee = async (req, res) => {
   try {
     await createNewEmployee(req.body);
-
     const employee = await Employee.create(req.body);
-
     await sendEmployeeWelcome(employee);
 
     res.status(201).json(employee);
@@ -53,7 +50,6 @@ exports.createEmployee = async (req, res) => {
 
 /**
  * Lista todos los empleados.
- * Usa el método estático definido en el modelo Employee.
  */
 exports.findAllEmployees = async (req, res) => {
   try {
@@ -67,7 +63,6 @@ exports.findAllEmployees = async (req, res) => {
 
 /**
  * Obtiene un empleado por ID.
- * Usa el método estático Employee.findEmployeeById(id).
  */
 exports.findEmployeeById = async (req, res) => {
   try {
@@ -86,7 +81,7 @@ exports.findEmployeeById = async (req, res) => {
 };
 
 /**
- * Obtiene un empleado por email (si lo estás usando en algún lugar).
+ * Obtiene un empleado por email (si lo usás en algún lado).
  */
 exports.findEmployeeByEmail = async (req, res) => {
   try {

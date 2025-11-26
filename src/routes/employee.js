@@ -24,29 +24,49 @@ const validate = (req, res, next) => {
 
 // ----------------------------------------------------------------------
 // Crear empleado
-router.post('/', createEmployeeValidation, validate, EmployeeController.createEmployee);
+router.post(
+  '/',
+  createEmployeeValidation,
+  validate,
+  (req, res) => EmployeeController.createEmployee(req, res)
+);
 
 // Listar empleados
-router.get('/', EmployeeController.findAllEmployees);
+router.get('/', (req, res) => EmployeeController.findAllEmployees(req, res));
 
 // Verificar si existe un empleado por email (para el registro de comercio)
 // Ej: GET /employee/exists?email=algo@correo.com
-router.get('/exists', EmployeeController.checkEmailExists);
+router.get('/exists', (req, res) => EmployeeController.checkEmailExists(req, res));
 
 // IMPORTANTE: esta ruta va DESPUÉS de /exists para no pisarla
 // Obtener empleado por ID
-router.get('/:id', employeeIdValidation, validate, EmployeeController.findEmployeeById);
+router.get(
+  '/:id',
+  employeeIdValidation,
+  validate,
+  (req, res) => EmployeeController.findEmployeeById(req, res)
+);
 
 // Actualizar empleado
-router.put('/:id', updateEmployeeValidation, validate, EmployeeController.updateEmployee);
+router.put(
+  '/:id',
+  updateEmployeeValidation,
+  validate,
+  (req, res) => EmployeeController.updateEmployee(req, res)
+);
 
 // Eliminar empleado
-router.delete('/:id', employeeIdValidation, validate, EmployeeController.deleteEmployee);
+router.delete(
+  '/:id',
+  employeeIdValidation,
+  validate,
+  (req, res) => EmployeeController.deleteEmployee(req, res)
+);
 
 // Enviar código de verificación (si usás este flujo)
 router.post(
   '/send-verification-code',
-  EmployeeVerificationController.sendVerificationCodeToEmployee
+  (req, res, next) => EmployeeVerificationController.sendVerificationCodeToEmployee(req, res, next)
 );
 
 module.exports = router;
