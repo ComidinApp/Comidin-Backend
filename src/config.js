@@ -6,7 +6,7 @@ const common = {
   password: process.env.MYSQLDB_PASSWORD,
   database: process.env.MYSQLDB_DATABASE,
   host: process.env.MYSQLDB_HOST || 'mysqldb',
-  dialect: 'mysql',
+  dialect: 'mysql', // ← clave para sequelize-cli
 };
 
 module.exports = {

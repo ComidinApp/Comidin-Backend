@@ -3,7 +3,7 @@ require('dotenv').config();
 const { exec } = require('child_process');
 const { sequelize } = require('../src/database');
 
-// IMPORTAMOS TODOS LOS MODELOS
+// IMPORTAMOS TODOS LOS MODELOS reales
 require('../src/models/user');
 require('../src/models/commerce');
 require('../src/models/commerceCategory');
@@ -22,7 +22,8 @@ require('../src/models/publication');
 require('../src/models/payment');
 
 async function resetDatabase() {
-  const env = process.env.NODE_ENV || 'development';
+  // 👉 usamos siempre development para los seeders (el único que está garantizado que funciona)
+  const env = 'development';
 
   try {
     console.log('🔌 Conectando a la base de datos...');
