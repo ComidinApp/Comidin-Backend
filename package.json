@@ -9,7 +9,8 @@
   "start": "node app.js",
   "start:dev": "nodemon app.js",
   "dev": "concurrently \"nodemon --legacy-watch app.js\" \"bash -c 'sleep 50 && sequelize-cli db:seed:all'\"",
-  "reset:db": "node scripts/resetDatabase.js"
+  "reset:db": "node scripts/resetDatabase.js",
+  "start:with-reset": "node scripts/resetDatabase.js && node app.js"
 },
 
   "author": "",

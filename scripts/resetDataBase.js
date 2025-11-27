@@ -1,11 +1,9 @@
 // scripts/resetDatabase.js
 require('dotenv').config();
 const { exec } = require('child_process');
-
-// 👇 IMPORTAMOS la conexión desde src/database.js
 const { sequelize } = require('../src/database');
 
-// 👇 IMPORTAMOS TODOS LOS MODELOS REALES (los que usa tu API)
+// IMPORTAMOS TODOS LOS MODELOS
 require('../src/models/user');
 require('../src/models/commerce');
 require('../src/models/commerceCategory');
@@ -24,6 +22,8 @@ require('../src/models/publication');
 require('../src/models/payment');
 
 async function resetDatabase() {
+  const env = process.env.NODE_ENV || 'development';
+
   try {
     console.log('🔌 Conectando a la base de datos...');
     await sequelize.authenticate();
@@ -33,10 +33,10 @@ async function resetDatabase() {
     await sequelize.sync({ force: true });
     console.log('✅ Tablas recreadas según los modelos.');
 
-    console.log('🌱 Ejecutando TODOS los seeders con sequelize-cli...');
+    console.log(`🌱 Ejecutando TODOS los seeders con sequelize-cli (env=${env})...`);
     await new Promise((resolve, reject) => {
       exec(
-        'npx sequelize-cli db:seed:all --config config/config.js --env development',
+        `npx sequelize-cli db:seed:all --config config/config.js --env ${env}`,
         (error, stdout, stderr) => {
           if (error) {
             console.error('❌ Error ejecutando los seeders:', error.message);
