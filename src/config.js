@@ -1,3 +1,4 @@
+// config/config.js
 require('dotenv').config();
 
 module.exports = {
@@ -5,7 +6,7 @@ module.exports = {
     username: process.env.MYSQLDB_USER,
     password: process.env.MYSQLDB_PASSWORD,
     database: process.env.MYSQLDB_DATABASE,
-    host: '127.0.0.1', // importante: localhost para correr desde tu máquina
-    dialect: 'mysql'
-  }
+    host: process.env.MYSQLDB_HOST || 'mysqldb',
+    dialect: 'mysql',
+  },
 };
