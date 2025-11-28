@@ -1,3 +1,4 @@
+// models/publication.js
 const Sequelize = require('sequelize');
 const { sequelize } = require('../database'); // Import database connection
 const Product = require('./product');
@@ -7,86 +8,90 @@ const CommerceCategory = require('./commerceCategory'); // 👈 nuevo
 
 const { Op } = Sequelize; // 👈 para BETWEEN, etc.
 
-const Publication = sequelize.define('publication', {
-  id: {
-    type: Sequelize.INTEGER,
-    primaryKey: true,
-    autoIncrement: true
+const Publication = sequelize.define(
+  'publication',
+  {
+    id: {
+      type: Sequelize.INTEGER,
+      primaryKey: true,
+      autoIncrement: true,
+    },
+    is_active: {
+      type: Sequelize.STRING,
+      allowNull: false,
+      defaultValue: 'active',
+    },
+    commerce_id: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'commerce',
+        key: 'id',
+      },
+    },
+    product_id: {
+      type: Sequelize.INTEGER,
+      allowNull: false,
+      references: {
+        model: 'product',
+        key: 'id',
+      },
+    },
+    price: {
+      type: Sequelize.DECIMAL(10, 2),
+      allowNull: false,
+    },
+    discount_percentaje: {
+      type: Sequelize.DECIMAL(10, 2), // ✅ corregido
+      allowNull: false,
+    },
+    discounted_price: {
+      type: Sequelize.DECIMAL(10, 2),
+      allowNull: false,
+    },
+    available_stock: {
+      type: Sequelize.DECIMAL(10, 0),
+      allowNull: false,
+    },
+    expiration_date: {
+      type: Sequelize.DATE,
+      allowNull: false,
+    },
+    created_at: {
+      type: Sequelize.DATE,
+      allowNull: false,
+      defaultValue: Sequelize.NOW,
+    },
   },
-  is_active: {
-    type: Sequelize.STRING,
-    allowNull: false,
-    defaultValue: 'active'
-  },
-  commerce_id: {
-    type: Sequelize.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'commerce',
-      key: 'id'
-    }
-  },
-  product_id: {
-    type: Sequelize.INTEGER,
-    allowNull: false,
-    references: {
-      model: 'product',
-      key: 'id'
-    }
-  },
-  price: {
-    type: Sequelize.DECIMAL(10, 2),
-    allowNull: false,
-  },
-  discount_percentaje: {
-    type: Sequelize.DECIMAL(10, ), // <- lo dejé como lo tenías
-    allowNull: false,
-  },
-  discounted_price: {
-    type: Sequelize.DECIMAL(10, 2),
-    allowNull: false,
-  },
-  available_stock: {
-    type: Sequelize.DECIMAL(10, 0),
-    allowNull: false,
-  },
-  expiration_date: {
-    type: Sequelize.DATE,
-    allowNull: false,
-  },
-  created_at: {
-    type: Sequelize.DATE,
-    allowNull: false,
-    defaultValue: Sequelize.NOW
+  {
+    createdAt: false,
+    updatedAt: false,
+    freezeTableName: true,
   }
-}, {
-  createdAt: false,
-  updatedAt: false,
-  freezeTableName: true
-});
+);
 
 Publication.belongsTo(Product, { foreignKey: 'product_id' });
 Publication.belongsTo(Commerce, { foreignKey: 'commerce_id' });
 
-Publication.findAllPublications = async function() {
+Publication.findAllPublications = async function () {
   try {
     const employees = await Publication.findAll({
       include: [
         {
           model: Product,
-          attributes: ['name','description','image_url', 'product_category_id'],
+          attributes: ['name', 'description', 'image_url', 'product_category_id'],
           include: [
             {
               model: ProductCategory,
-              attributes: ['name']
-            }
-          ]
+              attributes: ['name'],
+            },
+          ],
         },
         {
           model: Commerce,
-          attributes: ['name']
-        }
-      ]
+          attributes: ['name'],
+        },
+      ],
     });
 
     return employees;
@@ -96,20 +101,20 @@ Publication.findAllPublications = async function() {
   }
 };
 
-Publication.findPublicationsByCommerceId = async function(commerceId) {
+Publication.findPublicationsByCommerceId = async function (commerceId) {
   try {
     const publications = await Publication.findAll({
       where: { commerce_id: commerceId },
       include: [
         {
           model: Product,
-          attributes: ['name','description','image_url']
+          attributes: ['name', 'description', 'image_url'],
         },
         {
           model: Commerce,
-          attributes: ['name']
-        }
-      ]
+          attributes: ['name'],
+        },
+      ],
     });
 
     return publications;
@@ -119,10 +124,8 @@ Publication.findPublicationsByCommerceId = async function(commerceId) {
   }
 };
 
-
 Publication.findCommercesWithExpiringPublications = async function ({ postalCode }) {
   try {
-
     // ---- DEFINIR EL DÍA DE HOY EN ARGENTINA ----
     const timeZone = 'America/Argentina/Buenos_Aires';
 
@@ -160,19 +163,17 @@ Publication.findCommercesWithExpiringPublications = async function ({ postalCode
     });
 
     const map = new Map();
-    publications.forEach(pub => {
+    publications.forEach((pub) => {
       if (pub.commerce && !map.has(pub.commerce.id)) {
         map.set(pub.commerce.id, pub.commerce);
       }
     });
 
     return Array.from(map.values());
-
   } catch (error) {
     console.error('Error finding Commerces with expiring Publications:', error);
     throw error;
   }
 };
-
 
 module.exports = Publication;
