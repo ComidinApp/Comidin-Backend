@@ -11,9 +11,9 @@ exports.createPublication = async (req, res) => {
 
     return res.status(201).json(publication);
   } catch (error) {
-    console.error('Error creating Publication:', error);
+    console.error('Error al crear la publicación:', error);
     return res.status(409).json({
-      error: 'Conflict',
+      error: 'Conflicto',
       message: error.message || 'Error al crear la publicación',
     });
   }
@@ -24,9 +24,9 @@ exports.findAllPublications = async (_req, res) => {
     const publications = await Publication.findAllPublications();
     return res.status(200).json(publications);
   } catch (error) {
-    console.error('Error fetching Publications:', error);
+    console.error('Error al obtener las publicaciones:', error);
     return res.status(409).json({
-      error: 'Conflict',
+      error: 'Conflicto',
       message: error.message || 'Error al obtener las publicaciones',
     });
   }
@@ -38,14 +38,17 @@ exports.findPublicationById = async (req, res) => {
     const publication = await Publication.findByPk(id);
 
     if (!publication) {
-      return res.status(404).json({ error: `Publication not found with id: ${id}` });
+      return res.status(404).json({
+        error: 'No encontrada',
+        message: `No se encontró una publicación con el id: ${id}`,
+      });
     }
 
     return res.status(200).json(publication);
   } catch (error) {
-    console.error('Error fetching Publication by ID:', error);
+    console.error('Error al obtener la publicación por ID:', error);
     return res.status(409).json({
-      error: 'Conflict',
+      error: 'Conflicto',
       message: error.message || 'Error al obtener la publicación',
     });
   }
@@ -59,7 +62,10 @@ exports.updatePublication = async (req, res) => {
     const publication = await Publication.findByPk(id);
 
     if (!publication) {
-      return res.status(404).json({ error: `Publication not found with id: ${id}` });
+      return res.status(404).json({
+        error: 'No encontrada',
+        message: `No se encontró una publicación con el id: ${id}`,
+      });
     }
 
     await publication.update(body);
@@ -67,9 +73,9 @@ exports.updatePublication = async (req, res) => {
 
     return res.status(200).json(publication);
   } catch (error) {
-    console.error('Error updating Publication:', error);
+    console.error('Error al actualizar la publicación:', error);
     return res.status(409).json({
-      error: 'Conflict',
+      error: 'Conflicto',
       message: error.message || 'Error al actualizar la publicación',
     });
   }
@@ -81,17 +87,20 @@ exports.deletePublication = async (req, res) => {
 
     const publication = await Publication.findByPk(id);
     if (!publication) {
-      return res.status(404).json({ error: `Publication not found with id: ${id}` });
+      return res.status(404).json({
+        error: 'No encontrada',
+        message: `No se encontró una publicación con el id: ${id}`,
+      });
     }
 
     await publication.destroy();
     console.log('[Publication] Eliminada publicación id:', id);
 
-    return res.status(200).json({ message: 'Publication successfully deleted' });
+    return res.status(200).json({ message: 'Publicación eliminada correctamente' });
   } catch (error) {
-    console.error('Error deleting Publication:', error);
+    console.error('Error al eliminar la publicación:', error);
     return res.status(409).json({
-      error: 'Conflict',
+      error: 'Conflicto',
       message: error.message || 'Error al eliminar la publicación',
     });
   }
@@ -103,14 +112,17 @@ exports.findPublicationsByCommerceId = async (req, res) => {
     const publications = await Publication.findPublicationsByCommerceId(commerceId);
 
     if (!publications || publications.length === 0) {
-      return res.status(404).json({ message: 'No publications found for this commerce.' });
+      return res.status(404).json({
+        error: 'No encontradas',
+        message: 'No se encontraron publicaciones para este comercio.',
+      });
     }
 
     return res.status(200).json(publications);
   } catch (error) {
-    console.error('Error fetching Publications by Commerce ID:', error);
+    console.error('Error al obtener las publicaciones por ID de comercio:', error);
     return res.status(409).json({
-      error: 'Conflict',
+      error: 'Conflicto',
       message: error.message || 'Error al obtener las publicaciones por comercio',
     });
   }

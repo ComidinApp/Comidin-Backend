@@ -33,7 +33,7 @@ app.use((req, res, next) => {
   if (contentLength && contentLength > MAX_BODY_BYTES) {
     return res.status(413).json({
       error: 'PayloadTooLargeError',
-      message: `Request entity too large (${contentLength} bytes). Max allowed: ${MAX_BODY_BYTES} bytes.`,
+      message: `El cuerpo de la solicitud es demasiado grande (${contentLength} bytes). Tamaño máximo permitido: ${MAX_BODY_BYTES} bytes.`,
     });
   }
   return next();
@@ -71,7 +71,6 @@ const authRouter = require('./routes/auth');
 const subscriptionRouter = require('./routes/subscription');
 const analyticsRouter = require('./routes/analytics');
 const orderRoutes = require('./routes/order');
-
 
 // Healthcheck
 app.get('/', (_req, res) => res.send('OK'));
@@ -119,13 +118,20 @@ app.use('/api/analytics', analyticsRouter);
 // ---- 404 y error handler ----
 app.use((req, res, next) => {
   if (res.headersSent) return next();
-  res.status(404).json({ error: 'Not Found', path: req.originalUrl });
+  res.status(404).json({
+    error: 'No encontrado',
+    path: req.originalUrl,
+    message: 'La ruta solicitada no existe.',
+  });
 });
 
 app.use((err, _req, res, _next) => {
   console.error('[ERROR]', err);
   const status = err.status || 500;
-  res.status(status).json({ error: 'Internal Server Error', message: err?.message });
+  res.status(status).json({
+    error: 'Error interno del servidor',
+    message: err?.message || 'Ocurrió un error inesperado en el servidor.',
+  });
 });
 
 // ===== Init DB sync =====

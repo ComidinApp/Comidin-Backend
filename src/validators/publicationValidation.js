@@ -5,20 +5,20 @@ const { check } = require('express-validator');
 const createPublicationValidation = [
   check('commerce_id')
     .isInt({ min: 1 })
-    .withMessage('Commerce ID must be a positive integer'),
+    .withMessage('El ID de comercio debe ser un número entero positivo'),
 
   check('product_id')
     .isInt({ min: 1 })
-    .withMessage('Product ID must be a positive integer'),
+    .withMessage('El ID de producto debe ser un número entero positivo'),
 
   check('price')
     .isDecimal({ decimal_digits: '0,2' })
-    .withMessage('Price must be a decimal with up to 2 decimal places'),
+    .withMessage('El precio debe ser un número decimal con hasta 2 decimales'),
 
   // ⬇️ Cambiado de isDate() a isISO8601() + toDate()
   check('expiration_date')
     .isISO8601()
-    .withMessage('Expiration date must be a valid date')
+    .withMessage('La fecha de vencimiento debe ser una fecha válida')
     .toDate(),
 ];
 
@@ -27,23 +27,23 @@ const updatePublicationValidation = [
   check('commerce_id')
     .optional()
     .isInt({ min: 1 })
-    .withMessage('Commerce ID must be a positive integer'),
+    .withMessage('El ID de comercio debe ser un número entero positivo'),
 
   check('product_id')
     .optional()
     .isInt({ min: 1 })
-    .withMessage('Product ID must be a positive integer'),
+    .withMessage('El ID de producto debe ser un número entero positivo'),
 
   check('price')
     .optional()
     .isDecimal({ decimal_digits: '0,2' })
-    .withMessage('Price must be a decimal with up to 2 decimal places'),
+    .withMessage('El precio debe ser un número decimal con hasta 2 decimales'),
 
   // ⬇️ Igual cambio aquí
   check('expiration_date')
     .optional()
     .isISO8601()
-    .withMessage('Expiration date must be a valid date')
+    .withMessage('La fecha de vencimiento debe ser una fecha válida')
     .toDate(),
 ];
 
@@ -51,7 +51,7 @@ const updatePublicationValidation = [
 const commerceIdValidation = [
   check('commerceId')
     .isInt({ min: 1 })
-    .withMessage('Commerce ID must be a positive integer'),
+    .withMessage('El ID de comercio debe ser un número entero positivo'),
 ];
 
 module.exports = {
