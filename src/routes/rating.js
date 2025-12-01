@@ -19,20 +19,28 @@ const validate = (req, res, next) => {
   next();
 };
 
+// Bulk: varios productos de la misma orden
+router.post('/bulk', Rating.createBulkRatings);
+
+// Crear rating individual
 router.post('/', createRatingValidation, validate, Rating.createRating);
 
+// Listar todos
 router.get('/', Rating.findAllRatings);
 
+// Específicos (antes de /:id)
 router.get('/user/:userId', userIdValidation, validate, Rating.findRatingByUserId);
-
-router.get('/commerce/:commerceId', commerceIdValidation, validate, Rating.findRatingComplainByCommerceId);
-
+router.get(
+  '/commerce/:commerceId',
+  commerceIdValidation,
+  validate,
+  Rating.findRatingComplainByCommerceId
+);
 router.get('/order/:orderId', orderIdValidation, validate, Rating.findRatingByOrderId);
 
+// Por id
 router.get('/:id', Rating.findRatingById);
-
 router.put('/:id', updateRatingValidation, validate, Rating.updateRating);
-
 router.delete('/:id', Rating.deleteRating);
 
 module.exports = router;

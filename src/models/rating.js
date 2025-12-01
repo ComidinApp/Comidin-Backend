@@ -57,16 +57,18 @@ const Rating = sequelize.define(
   }
 );
 
-// === Métodos estáticos ===
 
+// Todas las calificaciones de un usuario
 Rating.findRatingsByUserId = async function (userId) {
   return Rating.findAll({ where: { user_id: userId } });
 };
 
+// Todas las calificaciones de un comercio
 Rating.findRatingsByCommerceId = async function (commerceId) {
   return Rating.findAll({ where: { commerce_id: commerceId } });
 };
 
+// Calificación por orden
 Rating.findRatingByOrderId = async function (orderId) {
   return Rating.findOne({ where: { order_id: orderId } });
 };
