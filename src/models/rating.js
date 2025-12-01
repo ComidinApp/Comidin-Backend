@@ -1,92 +1,74 @@
 const Sequelize = require('sequelize');
 const { sequelize } = require('../database'); // Import database connection
 
-
-const Rating = sequelize.define('rating', {
+const Rating = sequelize.define(
+  'rating',
+  {
     id: {
       type: Sequelize.INTEGER,
       primaryKey: true,
-      autoIncrement: true
+      autoIncrement: true,
     },
     user_id: {
       type: Sequelize.INTEGER,
       allowNull: false,
       references: {
         model: 'user',
-        key: 'id'
-      }
+        key: 'id',
+      },
     },
     commerce_id: {
       type: Sequelize.INTEGER,
       allowNull: false,
       references: {
         model: 'commerce',
-        key: 'id'
-      }
+        key: 'id',
+      },
     },
     order_id: {
       type: Sequelize.INTEGER,
       allowNull: false,
       references: {
         model: 'order',
-        key: 'id'
-      }
+        key: 'id',
+      },
     },
     product_id: {
       type: Sequelize.INTEGER,
       allowNull: false,
       references: {
         model: 'product',
-        key: 'id'
-      }
+        key: 'id',
+      },
     },
     rate_order: {
       type: Sequelize.INTEGER,
-      allowNull: false
-    }
-}, {
+      allowNull: false,
+    },
+    comment: {
+      type: Sequelize.STRING(255),
+      allowNull: true,
+    },
+  },
+  {
     createdAt: false,
     updatedAt: false,
-    freezeTableName: true
-});
-
-Rating.findRatingByUserId = async function(userId) {
-  try {
-    const ratings = await Rating.findAll({
-      where: { user_id: userId }
-    });
-
-    return ratings;
-  } catch (error) {
-    console.error('Error finding Ratings:', error);
-    throw error;
+    freezeTableName: true,
   }
+);
+
+// === Métodos estáticos ===
+
+Rating.findRatingsByUserId = async function (userId) {
+  return Rating.findAll({ where: { user_id: userId } });
 };
 
-Rating.findRatingByCommerceId = async function(commerceId) {
-  try {
-    const ratings = await Rating.findAll({
-      where: { commerce_id: commerceId }
-    });
-
-    return ratings;
-  } catch (error) {
-    console.error('Error finding Ratings:', error);
-    throw error;
-  }
+Rating.findRatingsByCommerceId = async function (commerceId) {
+  return Rating.findAll({ where: { commerce_id: commerceId } });
 };
 
-Rating.findRatingByOrderId = async function(orderId) {
-  try {
-    const rating = await Rating.findOne({
-      where: { order_id: orderId }
-    });
-
-    return rating;
-  } catch (error) {
-    console.error('Error finding Rating:', error);
-    throw error;
-  }
+Rating.findRatingByOrderId = async function (orderId) {
+  return Rating.findOne({ where: { order_id: orderId } });
 };
 
 module.exports = Rating;
