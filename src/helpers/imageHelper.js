@@ -1,7 +1,8 @@
 // src/helpers/imageHelper.js
-const sharp = require('sharp');
 
+// Extensiones permitidas
 const ALLOWED_MIME_TYPES = ['image/jpeg', 'image/png', 'image/gif', 'image/webp'];
+
 // 🔴 Nuevo límite: 3 MB
 const FILE_SIZE_LIMIT = 3 * 1024 * 1024; // 3 MB
 
@@ -17,6 +18,7 @@ function processImage(imageData, imageName = 'image') {
     throw new Error('No se recibió ninguna imagen');
   }
 
+  // Validación del formato base64
   const matches = imageData.match(/^data:(image\/[a-zA-Z0-9+.-]+);base64,(.+)$/);
 
   if (!matches) {
@@ -30,13 +32,15 @@ function processImage(imageData, imageName = 'image') {
     throw new Error('Tipo de imagen no permitido. Usa JPG, PNG, GIF o WEBP.');
   }
 
+  // Convertir base64 a buffer
   const buffer = Buffer.from(base64Data, 'base64');
 
+  // Validar tamaño máximo
   if (buffer.length > FILE_SIZE_LIMIT) {
     throw new Error('Imagen demasiado grande, máximo 3MB.');
   }
 
-  // Podés procesar con sharp si querés redimensionar/comprimir
+  // Generar nombre de archivo
   const extension = contentType.split('/')[1] || 'png';
   const safeBaseName = imageName.replace(/[^a-zA-Z0-9_-]/g, '').slice(0, 40) || 'image';
   const filename = `${safeBaseName}_${Date.now()}.${extension}`;
