@@ -41,8 +41,16 @@ async function mpFetch(path, init = {}) {
   }
   return json;
 }
+
 const mpGet  = (path) => mpFetch(path, { method: 'GET' });
 const mpPost = (path, body) => mpFetch(path, { method: 'POST', body: JSON.stringify(body) });
+
+// 👇 NUEVO: función para decidir cuándo una suscripción de MP está realmente activa
+function isActiveMpStatus(status) {
+  const s = String(status || '').toLowerCase();
+  // Ajustable si MP usa otros estados, pero típicamente 'authorized' o 'active'
+  return s === 'authorized' || s === 'active';
+}
 
 // ---- Crear preapproval o fallback a init_point del plan
 exports.createSubscription = async (req, res) => {
@@ -130,14 +138,25 @@ exports.confirmSubscription = async (req, res) => {
       return res.status(400).json({ error: 'commerce_id es requerido' });
     }
 
+    // 🧩 Caso 1: viene explícito el preapproval_id
     if (preapproval_id) {
       const mp = await mpGet(`/preapproval/${preapproval_id}`);
-      if (String(mp.status || '').toLowerCase() === 'cancelled') {
-        return res.status(409).json({ error: 'La suscripción está cancelada', mp_status: mp.status, mp_id: mp.id });
+      const mpStatus = String(mp.status || '').toLowerCase();
+
+      if (!isActiveMpStatus(mpStatus)) {
+        // ❌ NO persistimos nada si todavía está pendiente o en otro estado
+        return res.status(409).json({
+          error: 'La suscripción aún no está activa en Mercado Pago',
+          mp_status: mp.status,
+          mp_id: mp.id,
+        });
       }
+
+      // ✅ Solo acá persistimos en tu BD
       return await persistLocalAndReply({ mp, plan_id, commerce_id, res });
     }
 
+    // 🧩 Caso 2: búsqueda por commerce + plan
     const preapprovalPlanId = PLAN_ID_MAP[Number(plan_id)] || null;
     const baseParams = { external_reference: String(commerce_id), limit: '5' };
     if (preapprovalPlanId) baseParams.preapproval_plan_id = preapprovalPlanId;
@@ -150,24 +169,33 @@ exports.confirmSubscription = async (req, res) => {
 
     const pickLatestAuthorized = (results) => {
       if (!Array.isArray(results)) return null;
+
       const filtered = results
-        .filter(r => String(r.status || '').toLowerCase() !== 'cancelled')
-        .filter(r => !preapprovalPlanId || r.preapproval_plan_id === preapprovalPlanId);
+        // 👇 solo suscripciones con estado activo en MP
+        .filter((r) => isActiveMpStatus(r.status))
+        .filter((r) => !preapprovalPlanId || r.preapproval_plan_id === preapprovalPlanId);
+
       filtered.sort((a, b) => {
         const ta = new Date(a.date_created || a.created_at || 0).getTime();
         const tb = new Date(b.date_created || b.created_at || 0).getTime();
         return tb - ta;
       });
+
       return filtered[0];
     };
 
-    let found = null, lastErr = null;
+    let found = null;
+    let lastErr = null;
+
     for (const build of searchVariants) {
       const qs = build(baseParams).toString();
       try {
         const list = await mpGet(`/preapproval/search?${qs}`);
         const chosen = pickLatestAuthorized(list?.results);
-        if (chosen) { found = chosen; break; }
+        if (chosen) {
+          found = chosen;
+          break;
+        }
       } catch (e) {
         lastErr = e;
         const msg = (e?.details?.message || e?.message || '').toLowerCase();
@@ -177,13 +205,23 @@ exports.confirmSubscription = async (req, res) => {
 
     if (!found) {
       if (lastErr) {
-        return res.status(lastErr?.status || 400).json({ error: 'Error buscando preapproval en MP', details: lastErr.details });
+        return res
+          .status(lastErr?.status || 400)
+          .json({ error: 'Error buscando preapproval en MP', details: lastErr.details });
       }
-      return res.status(409).json({ error: 'No encontré preapproval para este comercio en MP' });
+      return res.status(409).json({
+        error: 'No hay una suscripción activa para este comercio en Mercado Pago',
+      });
     }
 
-    if (String(found.status || '').toLowerCase() === 'cancelled') {
-      return res.status(409).json({ error: 'La suscripción está cancelada', mp_status: found.status, mp_id: found.id });
+    // (por seguridad, aunque ya filtramos antes)
+    const foundStatus = String(found.status || '').toLowerCase();
+    if (!isActiveMpStatus(foundStatus)) {
+      return res.status(409).json({
+        error: 'La suscripción aún no está activa en Mercado Pago',
+        mp_status: found.status,
+        mp_id: found.id,
+      });
     }
 
     return await persistLocalAndReply({ mp: found, plan_id, commerce_id, res });
