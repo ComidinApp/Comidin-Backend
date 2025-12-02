@@ -1,6 +1,7 @@
 const Commerce = require('../models/commerce');
 const Employee = require('../models/employee');
-const Publication = require('../models/publication'); // 👈 nuevo
+const Publication = require('../models/publication');
+const Rating = require('../models/rating'); // 👈 NUEVO
 const { sendCommerceWelcome, sendRejectedNoticeCommerce, sendAdmittedNoticeCommerce } = require('../services/emailSender');
 const { uploadCommerceImage } = require('../services/s3Service');
 const { processImage } = require('../helpers/imageHelper');
@@ -36,10 +37,33 @@ exports.findCommerceById = async (req, res) => {
     try {
         const { id } = req.params;
         const commerce = await Commerce.findByPk(id);
+
         if (!commerce) {
             return res.status(404).json({ error: 'Commerce not found with id: ' + id });
         }
-        res.status(200).json(commerce);
+
+        // --- 🔢 Cálculo de rating para este comercio ---
+        let ratingSummary = null;
+        const ratings = await Rating.findRatingsByCommerceId(id); // usa el método estático que ya definimos
+
+        if (ratings && ratings.length > 0) {
+            const totalRatings = ratings.length;
+            const sum = ratings.reduce((acc, r) => acc + Number(r.rate_order || 0), 0);
+            const average = sum / totalRatings;
+
+            ratingSummary = {
+                averageRating: Number(average.toFixed(2)),
+                totalRatings,
+            };
+        }
+
+        // Enviamos el comercio + el rating (si existe)
+        const commerceJson = commerce.toJSON();
+        res.status(200).json({
+            ...commerceJson,
+            rating: ratingSummary, // puede ser null si no tiene ratings
+        });
+
     } catch (error) {
         console.error('Error fetching Commerce by ID:', error);
         res.status(409).json({ error: 'Conflict', meesage: error });
@@ -103,7 +127,7 @@ exports.activateCommerce = async (req, res) => {
         if (!commerce) {
             return res.status(404).json({ error: 'Commerce not found with id: ' + id });
         }
-        commerce.is_active == true ? commerce.is_active = false : commerce.is_active = true;
+        commerce.is_active == true ? (commerce.is_active = false) : (commerce.is_active = true);
         await commerce.save();
         res.status(200).json(commerce);
     } catch (error) {
@@ -141,7 +165,7 @@ exports.findCommercesByCategoryId = async (req, res) => {
     }
 };
 
-// 🔎 NUEVO: búsqueda con filtros (código postal / publicaciones próximas a vencer)
+// 🔎 Búsqueda con filtros (código postal / publicaciones próximas a vencer)
 exports.searchCommerces = async (req, res) => {
     try {
         const { postal_code, expiring_publications } = req.query;
