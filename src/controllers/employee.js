@@ -3,6 +3,8 @@
 const Employee = require('../models/employee');
 const { createNewEmployee, deleteEmployeeAccount } = require('../services/cognitoService');
 const { sendEmployeeWelcome } = require('../services/emailSender');
+const { uploadCommerceImage } = require('../services/s3Service'); // reutilizamos el mismo uploader
+const { processImage } = require('../helpers/imageHelper');
 const db = require('../models');
 
 const EmployeeModel = db.employee || db.Employee;
@@ -30,15 +32,51 @@ exports.checkEmailExists = async (req, res) => {
 };
 
 /**
+ * Normaliza y procesa avatar:
+ * - Si viene base64 → lo convierte a buffer y sube a S3.
+ * - Si viene URL → la deja como está.
+ * - Si no viene nada → respeta lo que haya en body (puede ser default del front).
+ */
+async function normalizeEmployeeAvatar(body) {
+  if (!body) return;
+
+  const { avatar_url, avatar_name } = body;
+
+  if (
+    avatar_url &&
+    typeof avatar_url === 'string' &&
+    avatar_url.startsWith('data:image/')
+  ) {
+    // base64 → procesar y subir
+    const { buffer, contentType, filename } = processImage(
+      avatar_url,
+      avatar_name || 'employee-avatar.png'
+    );
+
+    const imageUrl = await uploadCommerceImage(buffer, contentType, filename);
+    body.avatar_url = imageUrl;
+  } else if (avatar_url == null) {
+    // si viene null/undefined, no tocamos avatar_url → que lo resuelva el default o el valor existente
+    delete body.avatar_url;
+  }
+}
+
+/**
  * Crea un nuevo empleado:
+ * - Procesa avatar (base64 → S3) si corresponde
  * - Crea el usuario en Cognito
  * - Crea el registro en la base
  * - Envía mail de bienvenida
  */
 exports.createEmployee = async (req, res) => {
   try {
-    await createNewEmployee(req.body);
-    const employee = await Employee.create(req.body);
+    const body = req.body || {};
+
+    // Procesar avatar si vino base64 (opcional)
+    await normalizeEmployeeAvatar(body);
+
+    await createNewEmployee(body);
+    const employee = await Employee.create(body);
     await sendEmployeeWelcome(employee);
 
     res.status(201).json(employee);
@@ -101,6 +139,9 @@ exports.findEmployeeByEmail = async (req, res) => {
 
 /**
  * Actualiza un empleado por ID.
+ * - Si avatar_url viene base64 → sube nueva imagen a S3 y actualiza.
+ * - Si viene URL → la deja tal cual.
+ * - Si viene null/undefined → no pisa el avatar existente.
  */
 exports.updateEmployee = async (req, res) => {
   try {
@@ -111,6 +152,8 @@ exports.updateEmployee = async (req, res) => {
     if (!employee) {
       return res.status(404).json({ error: 'Employee not found with id: ' + id });
     }
+
+    await normalizeEmployeeAvatar(body);
 
     await employee.update(body);
     res.status(200).json(employee);
