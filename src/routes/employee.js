@@ -42,7 +42,7 @@ router.get('/', (req, res) => EmployeeController.findAllEmployees(req, res));
 
 // Verificar si existe un empleado por email
 // GET /employee/exists?email=algo@correo.com
-router.get('/exists', (req, res) => EmployeeController.checkEmailExists(req, res));
+router.get('/exists', (req, res) => EmployeeController.checkEmployeeExists(req, res));
 
 // Obtener empleado por email
 // GET /employee/email/:email

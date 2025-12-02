@@ -1,228 +1,47 @@
-// src/controllers/employee.js
-
+// controllers/employee.js
+const { Op } = require('sequelize');
 const Employee = require('../models/employee');
-const { createNewEmployee, deleteEmployeeAccount } = require('../services/cognitoService');
-const { sendEmployeeWelcome } = require('../services/emailSender');
-const { uploadCommerceImage } = require('../services/s3Service'); // reutilizamos el mismo uploader
-const { processImage } = require('../helpers/imageHelper');
-const db = require('../models');
 
-const EmployeeModel = db.employee || db.Employee;
-
-/**
- * Verifica si existe un empleado con un email dado.
- * Ruta: GET /employee/exists?email=...
- * Respuesta: { exists: true|false }
- */
-exports.checkEmailExists = async (req, res) => {
+exports.checkEmployeeExists = async (req, res) => {
   try {
-    const { email } = req.query;
+    const { email, phone_number, national_id, excludeId } = req.query;
 
-    if (!email) {
-      return res.status(400).json({ error: 'Email es requerido' });
+    if (!email && !phone_number && !national_id) {
+      return res.status(400).json({
+        error: 'Debe enviar al menos un email, phone_number o national_id para validar.',
+      });
     }
 
-    const found = await EmployeeModel.findOne({ where: { email } });
+    const whereBase = {};
+    if (excludeId) {
+      whereBase.id = { [Op.ne]: Number(excludeId) };
+    }
 
-    return res.json({ exists: !!found });
-  } catch (error) {
-    console.error('Error checking employee email:', error);
-    return res.status(500).json({ error: 'Error verificando el email' });
-  }
-};
+    const orConditions = [];
+    if (email) orConditions.push({ email });
+    if (phone_number) orConditions.push({ phone_number });
+    if (national_id) orConditions.push({ national_id });
 
-/**
- * Normaliza y procesa avatar:
- * - Si viene base64 → lo convierte a buffer y sube a S3.
- * - Si viene URL → la deja como está.
- * - Si no viene nada → respeta lo que haya en body (puede ser default del front).
- */
-async function normalizeEmployeeAvatar(body) {
-  if (!body) return;
+    const employees = await Employee.findAll({
+      where: {
+        ...whereBase,
+        [Op.or]: orConditions,
+      },
+    });
 
-  const { avatar_url, avatar_name } = body;
-
-  if (
-    avatar_url &&
-    typeof avatar_url === 'string' &&
-    avatar_url.startsWith('data:image/')
-  ) {
-    // base64 → procesar y subir
-    const { buffer, contentType, filename } = processImage(
-      avatar_url,
-      avatar_name || 'employee-avatar.png'
+    const emailExists = !!(email && employees.some((e) => e.email === email));
+    const phoneExists = !!(phone_number && employees.some((e) => e.phone_number === phone_number));
+    const nationalIdExists = !!(
+      national_id && employees.some((e) => e.national_id === national_id)
     );
 
-    const imageUrl = await uploadCommerceImage(buffer, contentType, filename);
-    body.avatar_url = imageUrl;
-  } else if (avatar_url == null) {
-    // si viene null/undefined, no tocamos avatar_url → que lo resuelva el default o el valor existente
-    delete body.avatar_url;
-  }
-}
-
-/**
- * Crea un nuevo empleado:
- * - Procesa avatar (base64 → S3) si corresponde
- * - Crea el usuario en Cognito
- * - Crea el registro en la base
- * - Envía mail de bienvenida
- */
-exports.createEmployee = async (req, res) => {
-  try {
-    const body = req.body || {};
-
-    // Procesar avatar si vino base64 (opcional)
-    await normalizeEmployeeAvatar(body);
-
-    await createNewEmployee(body);
-    const employee = await Employee.create(body);
-    await sendEmployeeWelcome(employee);
-
-    res.status(201).json(employee);
+    return res.json({
+      emailExists,
+      phoneExists,
+      nationalIdExists,
+    });
   } catch (error) {
-    console.error('Error creating Employee:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
-  }
-};
-
-/**
- * Lista todos los empleados.
- */
-exports.findAllEmployees = async (req, res) => {
-  try {
-    const employees = await Employee.findAllEmployees();
-    res.status(200).json(employees);
-  } catch (error) {
-    console.error('Error fetching Employees:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
-  }
-};
-
-/**
- * Obtiene un empleado por ID.
- */
-exports.findEmployeeById = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const employee = await Employee.findEmployeeById(id);
-
-    if (!employee) {
-      return res.status(404).json({ error: 'Employee not found with id: ' + id });
-    }
-
-    res.status(200).json(employee);
-  } catch (error) {
-    console.error('Error fetching Employee by ID:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
-  }
-};
-
-/**
- * Obtiene un empleado por email (usado por /employee/email/:email).
- */
-exports.findEmployeeByEmail = async (req, res) => {
-  try {
-    const { email } = req.params;
-    const employee = await Employee.findEmployeeByEmail(email);
-
-    if (!employee) {
-      return res.status(404).json({ error: 'Employee not found with email: ' + email });
-    }
-
-    res.status(200).json(employee);
-  } catch (error) {
-    console.error('Error fetching Employee by email:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
-  }
-};
-
-/**
- * Actualiza un empleado por ID.
- * - Si avatar_url viene base64 → sube nueva imagen a S3 y actualiza.
- * - Si viene URL → la deja tal cual.
- * - Si viene null/undefined → no pisa el avatar existente.
- */
-exports.updateEmployee = async (req, res) => {
-  try {
-    const { body } = req;
-    const { id } = req.params;
-
-    const employee = await Employee.findByPk(id);
-    if (!employee) {
-      return res.status(404).json({ error: 'Employee not found with id: ' + id });
-    }
-
-    await normalizeEmployeeAvatar(body);
-
-    await employee.update(body);
-    res.status(200).json(employee);
-  } catch (error) {
-    console.error('Error updating Employee:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
-  }
-};
-
-/**
- * Elimina un empleado:
- * - Borra registro en DB
- * - Elimina usuario de Cognito
- */
-exports.deleteEmployee = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    const employee = await Employee.findByPk(id);
-    if (!employee) {
-      return res.status(404).json({ error: 'Employee not found with id: ' + id });
-    }
-
-    const employee_email = employee.email;
-
-    await employee.destroy();
-    await deleteEmployeeAccount(employee_email);
-
-    res.status(200).json({ message: 'Employee successfully deleted' });
-  } catch (error) {
-    console.error('Error deleting Employee:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
-  }
-};
-
-/**
- * Lista empleados por ID de comercio.
- */
-exports.findEmployeesByCommerceId = async (req, res) => {
-  try {
-    const { commerceId } = req.params;
-    const employees = await Employee.findEmployeesByCommerceId(commerceId);
-
-    if (!employees) {
-      return res.status(404).json({ message: 'No employees found for this commerce.' });
-    }
-
-    res.status(200).json(employees);
-  } catch (error) {
-    console.error('Error fetching Employees by Commerce ID:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
-  }
-};
-
-/**
- * Lista empleados por ID de rol.
- */
-exports.findEmployeesByRoleId = async (req, res) => {
-  try {
-    const { roleId } = req.params;
-    const employees = await Employee.findEmployeesByRoleId(roleId);
-
-    if (!employees) {
-      return res.status(404).json({ message: 'No employees found for this role.' });
-    }
-
-    res.status(200).json(employees);
-  } catch (error) {
-    console.error('Error fetching Employees by Role ID:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
+    console.error('Error checking employee unique fields:', error);
+    return res.status(500).json({ error: 'Internal server error' });
   }
 };
