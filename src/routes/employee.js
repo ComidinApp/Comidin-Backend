@@ -1,7 +1,7 @@
 // src/routes/employee.js
 
 const express = require('express');
-const { validationResult } = require('express-validator');
+const { validationResult, param } = require('express-validator');
 
 const EmployeeController = require('../controllers/employee');
 const EmployeeVerificationController = require('../controllers/employeeVerification');
@@ -9,83 +9,110 @@ const EmployeeVerificationController = require('../controllers/employeeVerificat
 const {
   createEmployeeValidation,
   updateEmployeeValidation,
-  employeeIdValidation,
+  commerceIdValidation,
+  roleIdValidation,
 } = require('../validators/employeeValidation');
 
 const router = express.Router();
 
+// Middleware genérico de validación
 const validate = (req, res, next) => {
   const errors = validationResult(req);
-  if (!errors.isEmpty()) {
-    return res.status(400).json({ errors: errors.array() });
-  }
-  next();
+  if (!errors || errors.isEmpty()) return next();
+  return res.status(400).json({ errors: errors.array() });
 };
 
-// Middleware no-op por si alguna validación viene undefined
-const noop = (req, _res, next) => next();
+/* ===========================================================
+ * EMPLOYEES
+ * ===========================================================
+ */
 
-// Aceptamos tanto funciones como arrays de middlewares (lo típico de express-validator)
-const safeCreateEmployeeValidation =
-  Array.isArray(createEmployeeValidation) || typeof createEmployeeValidation === 'function'
-    ? createEmployeeValidation
-    : noop;
-
-const safeUpdateEmployeeValidation =
-  Array.isArray(updateEmployeeValidation) || typeof updateEmployeeValidation === 'function'
-    ? updateEmployeeValidation
-    : noop;
-
-const safeEmployeeIdValidation =
-  Array.isArray(employeeIdValidation) || typeof employeeIdValidation === 'function'
-    ? employeeIdValidation
-    : noop;
-
-// ----------------------------------------------------------------------
 // Crear empleado
+// POST /employee
 router.post(
   '/',
-  safeCreateEmployeeValidation,
+  Array.isArray(createEmployeeValidation) ? createEmployeeValidation : [],
   validate,
   (req, res) => EmployeeController.createEmployee(req, res)
 );
 
-// Listar empleados
+// Listar todos los empleados
+// GET /employee
 router.get('/', (req, res) => EmployeeController.findAllEmployees(req, res));
 
-// Verificar si existe un empleado por email (para el registro de comercio)
-// Ej: GET /employee/exists?email=algo@correo.com
+// Verificar si existe un empleado por email
+// GET /employee/exists?email=algo@correo.com
 router.get('/exists', (req, res) => EmployeeController.checkEmailExists(req, res));
 
-// Obtener empleado por email (ruta vieja que usan pantallas actuales)
-// Ej: GET /employee/email/jpdona@hotmail.com
+// Obtener empleado por email
+// GET /employee/email/:email
 router.get('/email/:email', (req, res) => EmployeeController.findEmployeeByEmail(req, res));
 
+// Obtener empleados por ID de comercio
+// GET /employee/commerce/:commerceId
+router.get(
+  '/commerce/:commerceId',
+  Array.isArray(commerceIdValidation) ? commerceIdValidation : [],
+  validate,
+  (req, res) => EmployeeController.findEmployeesByCommerceId(req, res)
+);
+
+// Obtener empleados por ID de rol (opcional, pero ya tenés el controlador listo)
+// GET /employee/role/:roleId
+router.get(
+  '/role/:roleId',
+  Array.isArray(roleIdValidation) ? roleIdValidation : [],
+  validate,
+  (req, res) => EmployeeController.findEmployeesByRoleId(req, res)
+);
+
 // Obtener empleado por ID
+// GET /employee/:id
 router.get(
   '/:id',
-  safeEmployeeIdValidation,
+  [
+    param('id')
+      .isInt({ min: 1 })
+      .withMessage('Employee ID must be a positive integer'),
+  ],
   validate,
   (req, res) => EmployeeController.findEmployeeById(req, res)
 );
 
-// Actualizar empleado
+// Actualizar empleado por ID
+// PUT /employee/:id
 router.put(
   '/:id',
-  safeUpdateEmployeeValidation,
+  [
+    param('id')
+      .isInt({ min: 1 })
+      .withMessage('Employee ID must be a positive integer'),
+    ...(Array.isArray(updateEmployeeValidation) ? updateEmployeeValidation : []),
+  ],
   validate,
   (req, res) => EmployeeController.updateEmployee(req, res)
 );
 
-// Eliminar empleado
+// Eliminar empleado por ID
+// DELETE /employee/:id
 router.delete(
   '/:id',
-  safeEmployeeIdValidation,
+  [
+    param('id')
+      .isInt({ min: 1 })
+      .withMessage('Employee ID must be a positive integer'),
+  ],
   validate,
   (req, res) => EmployeeController.deleteEmployee(req, res)
 );
 
-// Enviar código de verificación (si usás este flujo)
+/* ===========================================================
+ * VERIFICACIÓN (CÓDIGO POR MAIL)
+ * ===========================================================
+ */
+
+// Enviar código de verificación a un empleado
+// POST /employee/send-verification-code
 router.post(
   '/send-verification-code',
   (req, res, next) =>
