@@ -2,14 +2,36 @@
 const { Op } = require('sequelize');
 const Employee = require('../models/employee');
 
+// 👇 IMPORTAMOS EL SERVICIO DE COGNITO (ajustá la ruta si tu archivo tiene otro nombre)
+const { createNewEmployee } = require('../services/cognitoService');
+
 // ===========================================================================
-// CREAR EMPLEADO
+// CREAR EMPLEADO  (BD + COGNITO)
 // ===========================================================================
 exports.createEmployee = async (req, res) => {
   try {
     const data = req.body;
 
+    // 1) Crear empleado en BD
     const newEmployee = await Employee.create(data);
+
+    // 2) Crear usuario en Cognito
+    //    Usamos email, first_name y password del body
+    try {
+      await createNewEmployee({
+        email: newEmployee.email,
+        first_name: newEmployee.first_name,
+        password: data.password, // viene en el body del request
+      });
+    } catch (cognitoError) {
+      console.error('Error creando empleado en Cognito:', cognitoError);
+      // Opcional: acá podrías borrar el empleado de la BD si querés consistencia estricta:
+      // await newEmployee.destroy();
+      // return res.status(500).json({
+      //   error: 'Error al crear el usuario en Cognito',
+      //   message: cognitoError.message || 'No se pudo crear el usuario en Cognito',
+      // });
+    }
 
     return res.status(201).json({
       message: 'Empleado creado con éxito',
@@ -64,7 +86,7 @@ exports.findEmployeeById = async (req, res) => {
 };
 
 // ===========================================================================
-// BUSCAR EMPLEADO POR EMAIL (NUEVO Y ARREGLADO)
+// BUSCAR EMPLEADO POR EMAIL
 // ===========================================================================
 exports.findEmployeeByEmail = async (req, res) => {
   try {
