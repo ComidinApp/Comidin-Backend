@@ -3,7 +3,6 @@ require('dotenv').config();
 const { exec } = require('child_process');
 const { sequelize } = require('../src/database');
 
-// IMPORTAMOS TODOS LOS MODELOS reales
 require('../src/models/user');
 require('../src/models/commerce');
 require('../src/models/commerceCategory');
@@ -20,10 +19,9 @@ require('../src/models/role');
 require('../src/models/plan');
 require('../src/models/publication');
 require('../src/models/payment');
-require('../src/models/planBenefits'); // 👈 NUEVO MODELO (plural)
+require('../src/models/planBenefits');
 
 async function resetDatabase() {
-  // 👉 usamos siempre development para los seeders
   const env = 'development';
 
   try {
@@ -33,12 +31,10 @@ async function resetDatabase() {
 
     console.log('🧨 Ejecutando sequelize.sync({ force: true }) (DROP + CREATE de todas las tablas)...');
 
-    // 🚨 IMPORTANTE: desactivar FKs en MySQL para poder dropear tablas con relaciones
     await sequelize.query('SET FOREIGN_KEY_CHECKS = 0;');
     try {
       await sequelize.sync({ force: true });
     } finally {
-      // 🔒 Nos aseguramos de reactivar siempre los FKs
       await sequelize.query('SET FOREIGN_KEY_CHECKS = 1;');
     }
 
