@@ -1,4 +1,3 @@
-// scripts/resetDatabase.js
 require('dotenv').config();
 const { exec } = require('child_process');
 const { sequelize } = require('../src/database');
@@ -29,15 +28,39 @@ async function resetDatabase() {
     await sequelize.authenticate();
     console.log('✅ Conexión OK');
 
-    console.log('🧨 Ejecutando sequelize.sync({ force: true }) (DROP + CREATE de todas las tablas)...');
+    console.log('🧨 Eliminando tablas en orden...');
+    await sequelize.transaction(async (t) => {
+      await sequelize.query('SET FOREIGN_KEY_CHECKS = 0;', { transaction: t });
 
-    await sequelize.query('SET FOREIGN_KEY_CHECKS = 0;');
-    try {
-      await sequelize.sync({ force: true });
-    } finally {
-      await sequelize.query('SET FOREIGN_KEY_CHECKS = 1;');
-    }
+      const tables = [
+        'payment',
+        'customer_complain',
+        'rating',
+        'order_detail',
+        'order',
+        'publication',
+        'product',
+        'product_category',
+        'address',
+        'employee',
+        'subscription',
+        'plan_benefits',
+        'plan',
+        'role',
+        'commerce_category',
+        'commerce',
+        'user',
+      ];
 
+      for (const table of tables) {
+        await sequelize.query(`DROP TABLE IF EXISTS \`${table}\`;`, { transaction: t });
+      }
+
+      await sequelize.query('SET FOREIGN_KEY_CHECKS = 1;', { transaction: t });
+    });
+
+    console.log('✅ Tablas eliminadas. Recreando tablas según los modelos...');
+    await sequelize.sync();
     console.log('✅ Tablas recreadas según los modelos.');
 
     console.log(`🌱 Ejecutando TODOS los seeders con sequelize-cli (env=${env})...`);
