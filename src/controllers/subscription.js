@@ -383,3 +383,30 @@ exports.findSubscriptionsByPlanId = async (req, res) => {
     res.status(409).json({ error: 'Conflict', message: error?.message || String(error) });
   }
 };
+
+const { getBenefitsByCommerceId } = require('../services/subscriptionBenefits');
+
+exports.getBenefitsByCommerceId = async (req, res) => {
+  try {
+    const { commerceId } = req.params;
+    if (!commerceId) return res.status(400).json({ error: 'commerceId es requerido' });
+
+    const benefits = await getBenefitsByCommerceId(commerceId);
+
+    // devolvemos JSON plano (sin metadata pesada de Sequelize)
+    return res.status(200).json({
+      plan_id: benefits.plan_id,
+      max_publications: benefits.max_publications, // null = ilimitadas
+      can_add_stock: benefits.can_add_stock,
+      commerce_listing_visibility: benefits.commerce_listing_visibility,
+      access_reports: benefits.access_reports,
+      manage_employees_roles: benefits.manage_employees_roles,
+      better_search_position: benefits.better_search_position,
+      exclusive_promotions: benefits.exclusive_promotions,
+    });
+  } catch (e) {
+    console.error('Error getBenefitsByCommerceId:', e);
+    return res.status(500).json({ error: 'Error obteniendo beneficios' });
+  }
+};
+

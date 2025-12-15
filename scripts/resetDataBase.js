@@ -20,6 +20,7 @@ require('../src/models/role');
 require('../src/models/plan');
 require('../src/models/publication');
 require('../src/models/payment');
+require('../src/models/planBenefits');
 
 async function resetDatabase() {
   // 👉 usamos siempre development para los seeders (el único que está garantizado que funciona)

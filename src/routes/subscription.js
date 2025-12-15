@@ -41,6 +41,9 @@ function must(fn, name) {
     'findSubscriptionById',
     'updateSubscription',
     'deleteSubscription',
+
+    // ✅ NUEVO (beneficios)
+    'getBenefitsByCommerceId',
   ];
   for (const k of requiredControllers) {
     if (typeof Ctrl[k] !== 'function') {
@@ -100,7 +103,15 @@ router.get(
   must(Ctrl.findSubscriptionsByPlanId, 'Ctrl.findSubscriptionsByPlanId')
 );
 
-// Por comercio
+// ✅ NUEVO: Beneficios efectivos por comercio (según suscripción → plan → plan_benefits)
+router.get(
+  '/commerce/:commerceId/benefits',
+  ...(Array.isArray(V.commerceIdValidation) ? V.commerceIdValidation : []),
+  must(validate, 'validate'),
+  must(Ctrl.getBenefitsByCommerceId, 'Ctrl.getBenefitsByCommerceId')
+);
+
+// Por comercio (lista de suscripciones)
 router.get(
   '/commerce/:commerceId',
   ...(Array.isArray(V.commerceIdValidation) ? V.commerceIdValidation : []),
