@@ -384,7 +384,7 @@ exports.findSubscriptionsByPlanId = async (req, res) => {
   }
 };
 
-const { getBenefitsByCommerceId } = require('../services/subscriptionBenefits');
+const { getBenefitsByCommerceId } = require('../services/subscriptionBenefitsService');
 
 exports.getBenefitsByCommerceId = async (req, res) => {
   try {
