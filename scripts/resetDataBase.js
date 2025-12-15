@@ -20,10 +20,10 @@ require('../src/models/role');
 require('../src/models/plan');
 require('../src/models/publication');
 require('../src/models/payment');
-require('../src/models/planBenefits');
+require('../src/models/planBenefits'); // 👈 NUEVO MODELO (plural)
 
 async function resetDatabase() {
-  // 👉 usamos siempre development para los seeders (el único que está garantizado que funciona)
+  // 👉 usamos siempre development para los seeders
   const env = 'development';
 
   try {
@@ -32,7 +32,16 @@ async function resetDatabase() {
     console.log('✅ Conexión OK');
 
     console.log('🧨 Ejecutando sequelize.sync({ force: true }) (DROP + CREATE de todas las tablas)...');
-    await sequelize.sync({ force: true });
+
+    // 🚨 IMPORTANTE: desactivar FKs en MySQL para poder dropear tablas con relaciones
+    await sequelize.query('SET FOREIGN_KEY_CHECKS = 0;');
+    try {
+      await sequelize.sync({ force: true });
+    } finally {
+      // 🔒 Nos aseguramos de reactivar siempre los FKs
+      await sequelize.query('SET FOREIGN_KEY_CHECKS = 1;');
+    }
+
     console.log('✅ Tablas recreadas según los modelos.');
 
     console.log(`🌱 Ejecutando TODOS los seeders con sequelize-cli (env=${env})...`);
