@@ -7,7 +7,6 @@ const OrderDetail = require('./orderDetail');
 const Publication = require('./publication');
 const Product = require('./product');
 const Rating = require('./rating');
-
 const Order = sequelize.define('order', {
   id: {
     type: Sequelize.INTEGER,
@@ -116,15 +115,11 @@ Order.findOrdersByUserId = async function(userId) {
 
 Order.findAllOrders = async function() {
   try {
-    const order = await Order.findByPk(id, {
+    const orders = await Order.findAll({
       include: [
         {
-          model: Address,
-          attributes: ['street_name','number','postal_code']
-        },
-        {
           model: User,
-          attributes: ['first_name','last_name','email','phone_number']
+          attributes: ['first_name','last_name','email']
         },
         {
           model: Commerce,
@@ -147,16 +142,10 @@ Order.findAllOrders = async function() {
           ]
         }
       ],
+      order: [['id', 'DESC']]
     });
 
-    if (!order) {
-      return null;
-    }
-
-    const rating = await Rating.findRatingByOrderId(order.id);
-    order.setDataValue('has_raiting', !!rating);
-
-    return order;
+    return orders;
   } catch (error) {
     console.error('Error finding Orders:', error);
     throw error;
@@ -205,7 +194,7 @@ Order.findOrdersByCommerceId = async function(commerceId) {
 
 Order.findOrderById = async function(id) {
   try {
-    const order = await Order.findByPk(id,{
+    const order = await Order.findByPk(id, {
       include: [
         {
           model: Address,
@@ -237,6 +226,13 @@ Order.findOrderById = async function(id) {
         }
       ],
     });
+
+    if (!order) {
+      return null;
+    }
+
+    const rating = await Rating.findRatingByOrderId(order.id);
+    order.setDataValue('has_raiting', !!rating);
 
     return order;
   } catch (error) {
