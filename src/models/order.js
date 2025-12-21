@@ -140,7 +140,6 @@ Order.findAllOrders = async function() {
               include: [
                 {
                   model: Product,
-                  // acá ya agregaste el id del producto
                   attributes: ['id', 'name', 'image_url']
                 }
               ]
