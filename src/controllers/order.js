@@ -1,24 +1,47 @@
 // src/controllers/order.js
+const { sequelize } = require('../database');
 const Order = require('../models/order');
 const OrderDetail = require('../models/orderDetail');
 const Employee = require('../models/employee');
 const CustomerComplain = require('../models/customerComplain');
 const emailSender = require('../services/emailSender');
+const Publication = require('../models/publication');
 
 exports.createOrder = async (req, res) => {
-    try {
-        const { details, ...orderData } = req.body;
-        const order = await Order.create(orderData);
-        const orderDetails = details.map((detail) => ({
-            ...detail,
-            order_id: order.id,
-        }));
-        await OrderDetail.bulkCreate(orderDetails);
-        res.status(201).json(order);
-    } catch (error) {
-        console.error('Error creating Order:', error);
-        res.status(409).json({ error: 'Conflict', meesage: error });
-    }
+  try {
+    const result = await sequelize.transaction(async (t) => {
+      const { details, ...orderData } = req.body;
+
+      const order = await Order.create(orderData, { transaction: t });
+
+      const orderDetails = details.map((detail) => ({
+        ...detail,
+        order_id: order.id,
+      }));
+
+      await OrderDetail.bulkCreate(orderDetails, { transaction: t });
+
+      for (const detail of orderDetails) {
+        const quantity = Number(detail.quantity);
+        const publicationId = detail.publication_id;
+
+        if (!publicationId || !quantity || Number.isNaN(quantity)) continue;
+
+        await Publication.decrement('available_stock', {
+          by: quantity,
+          where: { id: publicationId },
+          transaction: t,
+        });
+      }
+
+      return order;
+    });
+
+    res.status(201).json(result);
+  } catch (error) {
+    console.error('Error creating Order:', error);
+    res.status(409).json({ error: 'Conflict', meesage: error });
+  }
 };
 
 exports.findAllOrders = async (req, res) => {
