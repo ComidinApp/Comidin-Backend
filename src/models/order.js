@@ -6,6 +6,7 @@ const Commerce = require('./commerce');
 const OrderDetail = require('./orderDetail');
 const Publication = require('./publication');
 const Product = require('./product');
+const Rating = require('./rating');
 
 const Order = sequelize.define('order', {
   id: {
@@ -115,11 +116,15 @@ Order.findOrdersByUserId = async function(userId) {
 
 Order.findAllOrders = async function() {
   try {
-    const orders = await Order.findAll({
+    const order = await Order.findByPk(id, {
       include: [
         {
+          model: Address,
+          attributes: ['street_name','number','postal_code']
+        },
+        {
           model: User,
-          attributes: ['first_name','last_name','email']
+          attributes: ['first_name','last_name','email','phone_number']
         },
         {
           model: Commerce,
@@ -135,17 +140,24 @@ Order.findAllOrders = async function() {
               include: [
                 {
                   model: Product,
-                  attributes: ['name', 'image_url']
+                  // acá ya agregaste el id del producto
+                  attributes: ['id', 'name', 'image_url']
                 }
               ]
             }
           ]
         }
       ],
-      order: [['id', 'DESC']]
     });
 
-    return orders;
+    if (!order) {
+      return null;
+    }
+
+    const rating = await Rating.findRatingByOrderId(order.id);
+    order.setDataValue('has_raiting', !!rating);
+
+    return order;
   } catch (error) {
     console.error('Error finding Orders:', error);
     throw error;
@@ -218,7 +230,7 @@ Order.findOrderById = async function(id) {
               include: [
                 {
                   model: Product,
-                  attributes: ['name', 'image_url']
+                  attributes: ['id', 'name', 'image_url']
                 }
               ]
             }
