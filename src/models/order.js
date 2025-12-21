@@ -96,7 +96,7 @@ Order.findOrdersByUserId = async function(userId) {
               include: [
                 {
                   model: Product,
-                  attributes: ['name', 'image_url']
+                  attributes: ['id', 'name', 'image_url']
                 }
               ]
             }
@@ -105,6 +105,11 @@ Order.findOrdersByUserId = async function(userId) {
       ],
       order: [['id', 'DESC']]
     });
+
+    for (const order of orders) {
+      const rating = await Rating.findRatingByOrderId(order.id);
+      order.setDataValue('has_raiting', !!rating);
+    }
 
     return orders;
   } catch (error) {
