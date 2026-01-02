@@ -210,7 +210,7 @@ exports.findRatingComplainByCommerceId = async (req, res) => {
       const product = productsById[r.product_id];
 
       return {
-        id: r.id,
+        raiting_id: r.id,
         user_name: user ? user.name : null, 
         product_image_url: product ? product.image_url : null, 
         product_name: product ? product.name : null, 
