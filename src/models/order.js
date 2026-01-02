@@ -7,6 +7,9 @@ const OrderDetail = require('./orderDetail');
 const Publication = require('./publication');
 const Product = require('./product');
 const Rating = require('./rating');
+const OrderHistory = require('./orderHistory');
+
+
 const Order = sequelize.define('order', {
   id: {
     type: Sequelize.INTEGER,
@@ -72,6 +75,7 @@ Order.belongsTo(User, { foreignKey: 'user_id' });
 Order.belongsTo(Address, { foreignKey: 'address_id' });
 Order.belongsTo(Commerce, { foreignKey: 'commerce_id' });
 Order.hasMany(OrderDetail, { foreignKey: 'order_id' });
+Order.hasMany(OrderHistory, { foreignKey: 'order_id', as: 'order_history' });
 
 Order.findOrdersByUserId = async function(userId) {
   try {
@@ -226,6 +230,13 @@ Order.findOrderById = async function(id) {
                   attributes: ['id', 'name', 'image_url']
                 }
               ]
+            },
+            {
+              model: OrderHistory,
+              as: 'order_history',
+              attributes: ['id', 'status', 'created_at'],
+              separate: true,
+              order: [['created_at', 'ASC']],
             }
           ]
         }

@@ -19,6 +19,7 @@ require('../src/models/plan');
 require('../src/models/publication');
 require('../src/models/payment');
 require('../src/models/planBenefits');
+require('../src/models/orderHistory');
 
 async function resetDatabase() {
   const env = 'development';
@@ -50,6 +51,7 @@ async function resetDatabase() {
         'commerce_category',
         'commerce',
         'user',
+        'order_history'
       ];
 
       for (const table of tables) {
