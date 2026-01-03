@@ -1,3 +1,4 @@
+// src/services/analyticsService.js
 const { Op, fn, col, literal, where } = require('sequelize');
 
 let Models;
@@ -14,7 +15,11 @@ const {
 // Estados de negocio
 // =======================
 const DONE_STATUSES = ['PAID', 'DELIVERED', 'COMPLETED'];
+
+// "devuelto o reclamado" => siempre cuenta como "reclamado"
 const CLAIM_GROUP_STATUSES = ['CLAIMED', 'RETURNED'];
+
+// (opcional) devueltos reales
 const RETURN_STATUSES = ['RETURNED'];
 
 // Case-insensitive IN para status
@@ -24,16 +29,11 @@ const ciStatusIn = (values) =>
   });
 
 // =======================
-// Helpers de fecha (SIN TIMEZONE)
+// Helpers de fecha (SIN timezone)
 // =======================
-function pad2(n) {
-  return String(n).padStart(2, '0');
-}
-
+function pad2(n) { return String(n).padStart(2, '0'); }
 function toMysqlDateTime(d) {
-  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(
-    d.getHours()
-  )}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
 }
 
 function resolvePeriod(period) {
@@ -60,24 +60,24 @@ function computeWindow(period) {
 
   if (cfg.mode === 'this_month') {
     const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
-    return { start: toMysqlDateTime(start), end: toMysqlDateTime(now), monthsForSeries: 1 };
+    return { start: toMysqlDateTime(start), end: toMysqlDateTime(now), monthsForSeries: 1, mode: 'this_month' };
   }
 
   if (cfg.mode === 'prev_month') {
     const start = new Date(now.getFullYear(), now.getMonth() - 1, 1, 0, 0, 0);
     const end = new Date(now.getFullYear(), now.getMonth(), 0, 23, 59, 59);
-    return { start: toMysqlDateTime(start), end: toMysqlDateTime(end), monthsForSeries: 1 };
+    return { start: toMysqlDateTime(start), end: toMysqlDateTime(end), monthsForSeries: 1, mode: 'prev_month' };
   }
 
   if (cfg.mode === 'days') {
     const start = new Date(now);
     start.setDate(start.getDate() - (cfg.days - 1));
     start.setHours(0, 0, 0, 0);
-    return { start: toMysqlDateTime(start), end: toMysqlDateTime(now), monthsForSeries: 1 };
+    return { start: toMysqlDateTime(start), end: toMysqlDateTime(now), monthsForSeries: 1, mode: 'days' };
   }
 
   const start = new Date(now.getFullYear(), now.getMonth() - (cfg.months - 1), 1, 0, 0, 0);
-  return { start: toMysqlDateTime(start), end: toMysqlDateTime(now), monthsForSeries: cfg.months };
+  return { start: toMysqlDateTime(start), end: toMysqlDateTime(now), monthsForSeries: cfg.months, mode: 'months' };
 }
 
 function monthKeyFromYYYYMM01(v) {
@@ -95,6 +95,7 @@ exports.getOverview = async ({
   const { start, end, monthsForSeries, mode } = computeWindow(period);
   const useWindow = !!start;
 
+  // preset de status (para métricas que lo respetan)
   let statusCondition;
   if (validStatuses !== 'ALL' && Array.isArray(validStatuses) && validStatuses.length > 0) {
     statusCondition = ciStatusIn(validStatuses);
@@ -117,6 +118,7 @@ exports.getOverview = async ({
     where: { ...baseFilterWithStatus, ...dateFilter },
     raw: true,
   });
+  const totalRevenue = Number(totalRevenueRow?.revenue ?? 0);
 
   const totalOrders = await Order.count({
     where: {
@@ -142,6 +144,7 @@ exports.getOverview = async ({
     },
   });
 
+  // Productos vencidos (stock vencido)
   const expiredRows = await Publication.findAll({
     attributes: [[fn('COALESCE', fn('SUM', col('available_stock')), 0), 'expiredStock']],
     where: {
@@ -152,8 +155,66 @@ exports.getOverview = async ({
     },
     raw: true,
   });
-
   const expiredProducts = Number(expiredRows?.[0]?.expiredStock ?? 0);
+
+  // =======================
+  // IDs de órdenes del período (para top3 y vendidos)
+  // Respeta preset + ventana
+  // =======================
+  const orderIdsRows = await Order.findAll({
+    attributes: ['id'],
+    where: { ...baseFilterWithStatus, ...dateFilter },
+    raw: true,
+  });
+  const orderIds = orderIdsRows.map((r) => r.id);
+
+  // =======================
+  // Top 3 productos por unidades
+  // =======================
+  let topProductsBar = [];
+  if (orderIds.length) {
+    const top3Raw = await OrderDetail.findAll({
+      attributes: [
+        [col('publication->product.name'), 'productName'],
+        [fn('SUM', col('quantity')), 'units'],
+      ],
+      where: {
+        order_id: { [Op.in]: orderIds },
+        // OJO: NO filtramos por created_at de order_detail porque puede no ser relevante;
+        // ya filtramos por orderIds que vienen de Order dentro de la ventana.
+      },
+      include: [
+        {
+          model: Publication,
+          as: 'publication',
+          attributes: [],
+          required: true,
+          include: [{ model: Product, as: 'product', attributes: [], required: false }],
+        },
+      ],
+      group: [col('publication->product.name')],
+      order: [[fn('SUM', col('quantity')), 'DESC']],
+      limit: 3,
+      raw: true,
+    });
+
+    topProductsBar = top3Raw.map((r) => ({
+      productName: r.productName ?? 'Desconocido',
+      units: Number(r.units ?? 0),
+    }));
+  }
+
+  // =======================
+  // Pie productos: vendidos vs vencidos
+  // =======================
+  const soldUnitsRow = orderIds.length
+    ? await OrderDetail.findOne({
+        attributes: [[fn('COALESCE', fn('SUM', col('quantity')), 0), 'sold']],
+        where: { order_id: { [Op.in]: orderIds } },
+        raw: true,
+      })
+    : { sold: 0 };
+  const soldUnits = Number(soldUnitsRow?.sold ?? 0);
 
   // =======================
   // Histórico mensual
@@ -173,17 +234,17 @@ exports.getOverview = async ({
   });
 
   const monthMap = {};
-  monthlyRows.forEach((r) => {
-    const key = monthKeyFromYYYYMM01(r.month);
+  monthlyRows.forEach((row) => {
+    const key = monthKeyFromYYYYMM01(row.month);
     monthMap[key] = {
       month: key,
-      ordersCount: Number(r.ordersCount),
-      totalAmount: Number(r.totalAmount),
+      ordersCount: Number(row.ordersCount ?? 0),
+      totalAmount: Number(row.totalAmount ?? 0),
     };
   });
 
   const now = new Date();
-  const totalMonths = mode === 'all' ? 12 : monthsForSeries;
+  const totalMonths = mode === 'all' ? 12 : (monthsForSeries || 12);
 
   const salesByMonth = [];
   for (let i = totalMonths - 1; i >= 0; i--) {
@@ -192,12 +253,19 @@ exports.getOverview = async ({
     salesByMonth.push(monthMap[key] ?? { month: key, ordersCount: 0, totalAmount: 0 });
   }
 
+  // =======================
+  // Respuesta
+  // =======================
   return {
-    totalRevenue: Number(totalRevenueRow?.revenue ?? 0),
+    totalRevenue,
     totalOrders,
     claimedOrders,
     returnedOrders,
     expiredProducts,
+
+    topProductsBar,
+    pieProducts: { soldUnits, expiredUnits: expiredProducts },
+
     pieOrders: { completedOrders: totalOrders, claimedOrders },
     salesByMonth,
   };
