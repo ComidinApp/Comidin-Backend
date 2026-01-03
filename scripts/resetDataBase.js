@@ -2,6 +2,7 @@ require('dotenv').config();
 const { exec } = require('child_process');
 const { sequelize } = require('../src/database');
 
+// Importar modelos 
 require('../src/models/user');
 require('../src/models/commerce');
 require('../src/models/commerceCategory');
@@ -25,53 +26,55 @@ async function resetDatabase() {
   const env = 'development';
 
   try {
-    console.log('🔌 Conectando a la base de datos...');
+    console.log(' Conectando a la base de datos...');
     await sequelize.authenticate();
-    console.log('✅ Conexión OK');
+    console.log(' Conexión OK');
 
-    console.log('🧨 Eliminando tablas en orden...');
-    await sequelize.transaction(async (t) => {
-      await sequelize.query('SET FOREIGN_KEY_CHECKS = 0;', { transaction: t });
+    console.log(' Desactivando FOREIGN_KEY_CHECKS...');
+    await sequelize.query('SET FOREIGN_KEY_CHECKS = 0;');
 
-      const tables = [
-        'payment',
-        'customer_complain',
-        'rating',
-        'order_detail',
-        'order',
-        'publication',
-        'product',
-        'product_category',
-        'address',
-        'employee',
-        'subscription',
-        'plan_benefits',
-        'plan',
-        'role',
-        'commerce_category',
-        'commerce',
-        'user',
-        'order_history'
-      ];
+    console.log(' Eliminando tablas...');
+    const tables = [
+      'payment',
+      'customer_complain',
+      'order_history',
+      'rating',
+      'order_detail',
+      '`order`',          
+      'publication',
+      'product',
+      'product_category',
+      'address',
+      'employee',
+      'subscription',
+      'plan_benefits',
+      'plan',
+      'role',
+      'commerce_category',
+      'commerce',
+      '`user`',             
+    ];
 
-      for (const table of tables) {
-        await sequelize.query(`DROP TABLE IF EXISTS \`${table}\`;`, { transaction: t });
-      }
+    for (const table of tables) {
+      const tableName = table.startsWith('`') ? table : `\`${table}\``;
+      await sequelize.query(`DROP TABLE IF EXISTS ${tableName};`);
+    }
 
-      await sequelize.query('SET FOREIGN_KEY_CHECKS = 1;', { transaction: t });
-    });
+    console.log(' Reactivando FOREIGN_KEY_CHECKS...');
+    await sequelize.query('SET FOREIGN_KEY_CHECKS = 1;');
 
-    console.log('✅ Tablas eliminadas. Recreando tablas según los modelos...');
-    await sequelize.sync();
-    console.log('✅ Tablas recreadas según los modelos.');
+    console.log(' Tablas eliminadas. Recreando tablas según los modelos...');
+    //  fuerza recreación limpia
+    await sequelize.sync({ force: true });
+    console.log('Tablas recreadas según los modelos.');
 
-    console.log(`🌱 Ejecutando TODOS los seeders con sequelize-cli (env=${env})...`);
+    console.log(` Ejecutando TODOS los seeders con sequelize-cli (env=${env})...`);
     await new Promise((resolve, reject) => {
       exec(
         `npx sequelize-cli db:seed:all --config config/config.js --env ${env}`,
         (error, stdout, stderr) => {
           if (error) {
-            console.error('❌ Error ejecutando los seeders:', error.message);
+            console.error(' Error ejecutando los seeders:', error.message);
             console.error(stderr);
             return reject(error);
           }
@@ -81,10 +84,14 @@ async function resetDatabase() {
       );
     });
 
-    console.log('🎉 Base de datos reseteada y seeders ejecutados con éxito');
+    console.log(' Base de datos reseteada y seeders ejecutados con éxito');
     process.exit(0);
   } catch (err) {
-    console.error('❌ Error durante el reset de la base:', err);
+    console.error(' Error durante el reset de la base:', err);
+    try {
+      // Por si quedó apagado
+      await sequelize.query('SET FOREIGN_KEY_CHECKS = 1;');
+    } catch {}
     process.exit(1);
   }
 }
