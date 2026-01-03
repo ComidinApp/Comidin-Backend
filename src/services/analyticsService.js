@@ -376,6 +376,7 @@ exports.getOverview = async ({
     // KPIs (período seleccionado)
     totalRevenue,
     totalOrders,
+    claimedOrders, 
     //lo dejamos por compat; pero tu agrupación principal está en claimedOrders
     returnedOrders,
     expiredProducts,
