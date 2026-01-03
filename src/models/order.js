@@ -230,15 +230,15 @@ Order.findOrderById = async function(id) {
                   attributes: ['id', 'name', 'image_url']
                 }
               ]
-            },
-            {
-              model: OrderHistory,
-              as: 'order_history',
-              attributes: ['id', 'status', 'created_at'],
-              separate: true,
-              order: [['created_at', 'ASC']],
             }
           ]
+        },
+        {
+          model: OrderHistory,
+          as: 'order_history',
+          attributes: ['id', 'status', 'created_at'],
+          separate: true,
+          order: [['created_at', 'ASC']],
         }
       ],
     });
