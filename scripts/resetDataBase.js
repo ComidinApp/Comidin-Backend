@@ -2,7 +2,7 @@ require('dotenv').config();
 const { exec } = require('child_process');
 const { sequelize } = require('../src/database');
 
-// Importar modelos 
+// Importar modelos (IMPORTANTE para que sequelize conozca las FK)
 require('../src/models/user');
 require('../src/models/commerce');
 require('../src/models/commerceCategory');
@@ -40,7 +40,7 @@ async function resetDatabase() {
       'order_history',
       'rating',
       'order_detail',
-      '`order`',          
+      '`order`',
       'publication',
       'product',
       'product_category',
@@ -52,29 +52,26 @@ async function resetDatabase() {
       'role',
       'commerce_category',
       'commerce',
-      '`user`',             
+      '`user`',
     ];
 
     for (const table of tables) {
-      const tableName = table.startsWith('`') ? table : `\`${table}\``;
-      await sequelize.query(`DROP TABLE IF EXISTS ${tableName};`);
+      await sequelize.query(`DROP TABLE IF EXISTS ${table};`);
     }
 
     console.log(' Reactivando FOREIGN_KEY_CHECKS...');
     await sequelize.query('SET FOREIGN_KEY_CHECKS = 1;');
 
-    console.log(' Tablas eliminadas. Recreando tablas según los modelos...');
-    //  fuerza recreación limpia
-    await sequelize.sync({ force: true });
-    console.log('Tablas recreadas según los modelos.');
+    console.log(' Recreando tablas según modelos...');
+    await sequelize.sync();
+    console.log(' Tablas recreadas');
 
-    console.log(` Ejecutando TODOS los seeders con sequelize-cli (env=${env})...`);
+    console.log(` Ejecutando seeders (env=${env})...`);
     await new Promise((resolve, reject) => {
       exec(
         `npx sequelize-cli db:seed:all --config config/config.js --env ${env}`,
         (error, stdout, stderr) => {
           if (error) {
-            console.error(' Error ejecutando los seeders:', error.message);
             console.error(stderr);
             return reject(error);
           }
@@ -84,12 +81,12 @@ async function resetDatabase() {
       );
     });
 
-    console.log(' Base de datos reseteada y seeders ejecutados con éxito');
+    console.log('--Base de datos reseteada con éxito');
     process.exit(0);
+
   } catch (err) {
-    console.error(' Error durante el reset de la base:', err);
+    console.error('--Error durante el reset:', err);
     try {
-      // Por si quedó apagado
       await sequelize.query('SET FOREIGN_KEY_CHECKS = 1;');
     } catch {}
     process.exit(1);
