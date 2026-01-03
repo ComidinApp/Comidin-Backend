@@ -204,7 +204,6 @@ exports.createCustomerComplainForOrder = async (req, res) => {
       order.status = 'CLAIMED';
       await order.save({ transaction: t });
 
-      // 🆕 Guardar historial del cambio a CLAIMED
       await OrderHistory.create(
         { order_id: order.id, status: 'CLAIMED' },
         { transaction: t }
