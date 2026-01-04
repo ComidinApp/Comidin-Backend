@@ -189,6 +189,18 @@ exports.sendCustomerComplainCustomer = async ({
       ? `${contactEmployee?.first_name || ''} ${contactEmployee?.last_name || ''}`.trim()
       : (commerce?.name ? `Equipo de ${commerce.name}` : 'Equipo del comercio');
 
+    const contactEmail = (contactEmployee?.email || commerce?.email || '').trim();
+    const contactPhone = (contactEmployee?.phone_number || '').trim();
+
+    const complainId = complain?.id;
+    if (!complainId) {
+      throw new Error('Missing complain.id (needed for satisfaction buttons)');
+    }
+
+    const apiBaseUrl = (process.env.API_BASE_URL || 'https://api.comidin.com.ar').replace(/\/$/, '');
+    const satisfactionYesUrl = `${apiBaseUrl}/customerComplain/${complainId}/satisfaction?answer=Y`;
+    const satisfactionNoUrl = `${apiBaseUrl}/customerComplain/${complainId}/satisfaction?answer=N`;
+
     const msg = {
       to,
       from: 'no-reply@comidin.com.ar',
@@ -203,10 +215,11 @@ exports.sendCustomerComplainCustomer = async ({
         }),
         commerceName: commerce?.name || 'el comercio',
         contactName,
-        contactEmail:
-          (contactEmployee?.email || commerce?.email || '').trim(),
-        contactPhone:
-          (contactEmployee?.phone_number || '').trim(),
+        contactEmail,
+        contactPhone,
+        complainId,
+        satisfactionYesUrl,
+        satisfactionNoUrl,
       },
     };
 
