@@ -111,6 +111,9 @@ exports.findCustomerComplainByOrderId = async (req, res) => {
   }
 };
 
+const fs = require('fs');
+const path = require('path');
+
 exports.setCustomerComplainSatisfaction = async (req, res) => {
   try {
     const { id } = req.params;
@@ -118,24 +121,12 @@ exports.setCustomerComplainSatisfaction = async (req, res) => {
 
     const normalized = String(answer || '').trim().toUpperCase();
     if (normalized !== 'Y' && normalized !== 'N') {
-      return res.status(400).json({
-        error: 'BadRequest',
-        message: 'answer must be Y or N',
-      });
+      return res.status(400).send('Respuesta inválida');
     }
 
     const complain = await CustomerComplain.findByPk(id);
     if (!complain) {
-      return res.status(404).json({ error: 'CustomerComplain not found with id: ' + id });
-    }
-
-    if (complain.was_satisfactory !== null && complain.was_satisfactory !== undefined) {
-      return res.status(409).json({
-        error: 'Conflict',
-        message: 'Satisfaction already answered',
-        complain_id: complain.id,
-        was_satisfactory: complain.was_satisfactory,
-      });
+      return res.status(404).send('Reclamo no encontrado');
     }
 
     await complain.update({
@@ -143,16 +134,16 @@ exports.setCustomerComplainSatisfaction = async (req, res) => {
       satisfaction_answered_at: new Date(),
     });
 
-    return res.status(200).json({
-      message: 'Satisfaction saved',
-      complain_id: complain.id,
-      was_satisfactory: complain.was_satisfactory,
-    });
+    const html = fs.readFileSync(
+      path.join(__dirname, '../templates/satisfaction.html'),
+      'utf8'
+    );
+
+    res.setHeader('Content-Type', 'text/html');
+    return res.status(200).send(html);
+
   } catch (error) {
     console.error('Error saving satisfaction:', error);
-    return res.status(500).json({
-      error: 'InternalServerError',
-      message: error?.message || 'Unexpected error',
-    });
+    return res.status(500).send('Error interno');
   }
 };
