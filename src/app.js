@@ -51,6 +51,7 @@ app.use(
 
 // ===== DB =====
 connectDatabase();
+require('./models');
 
 // ---- Routers ----
 const addressRouter = require('./routes/address');
