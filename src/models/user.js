@@ -51,6 +51,10 @@ const User = sequelize.define('user', {
     password: {
         type: Sequelize.STRING,
         allowNull: false
+    },
+    oauth_provider: {
+        type: Sequelize.STRING,
+        allowNull: false
     }
 }, {
     createdAt: false,
@@ -62,7 +66,7 @@ User.findUserByEmail = async function(email) {
     try {
       const user = await User.findOne({
         where: { email: email },
-        attributes: ['id', 'first_name','last_name', 'email', 'phone_number', 'national_id','is_active','birthday']
+        attributes: ['id', 'first_name','last_name', 'email', 'phone_number', 'national_id','is_active','birthday','oauth_provider']
       });
   
       return user;

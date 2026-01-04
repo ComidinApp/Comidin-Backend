@@ -13,7 +13,8 @@ module.exports = {
           is_active: true,
           password:'Fran@test1',
           birthday:'2000-05-04',
-          created_at: new Date()
+          created_at: new Date(),
+          oauth_provider: 'cognito'
         },
         {
           first_name: 'Juan',
@@ -24,7 +25,8 @@ module.exports = {
           is_active: true,
           password:'Juan@test1',
           birthday:'2000-05-04',
-          created_at: new Date()
+          created_at: new Date(),
+          oauth_provider: 'cognito'
         },
         {
           first_name: 'Flor',
@@ -35,7 +37,8 @@ module.exports = {
           is_active: true,
           password:'Flor@test1',
           birthday:'2000-05-04',
-          created_at: new Date()
+          created_at: new Date(),
+          oauth_provider: 'cognito'
         },
         {
           first_name: 'Tato',
@@ -46,7 +49,8 @@ module.exports = {
           is_active: true,
           password:'Tato@test1',
           birthday:'2000-05-04',
-          created_at: new Date()
+          created_at: new Date(),
+          oauth_provider: 'cognito'
         }
       ], {});
 
