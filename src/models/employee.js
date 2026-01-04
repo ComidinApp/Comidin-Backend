@@ -130,18 +130,21 @@ Employee.findEmployeeByEmail = async function (email) {
 
 Employee.findEmployeesByCommerceIdAndRoleIds = async function (commerceId, roleIds) {
   try {
-    return await Employee.findAll({
+    const employees = await Employee.findAll({
       where: {
         commerce_id: commerceId,
         role_id: { [Op.in]: roleIds },
-        // status: 'active'
+        // status: 'active', // si aplica, ajustalo
       },
-      include: getIncludes(),
+      attributes: ['id', 'first_name', 'last_name', 'email', 'role_id', 'commerce_id', 'status'],
     });
+
+    return employees;
   } catch (error) {
     console.error('Error finding Employees by commerce and roleIds:', error);
     throw error;
   }
 };
+
 
 module.exports = Employee;
