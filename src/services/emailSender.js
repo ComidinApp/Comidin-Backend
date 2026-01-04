@@ -1,11 +1,7 @@
-// src/services/emailSender.js
 const sgMail = require('@sendgrid/mail');
 
 sgMail.setApiKey(process.env.SENDGRID_API_KEY);
 
-// ===============================
-// CÓDIGO DE VERIFICACIÓN
-// ===============================
 exports.sendVerificationCode = async (employee, verificationCode) => {
   try {
     const fullname = `${employee.first_name} ${employee.last_name}`;
@@ -29,9 +25,6 @@ exports.sendVerificationCode = async (employee, verificationCode) => {
   }
 };
 
-// ===============================
-// RECEPCIÓN SOLICITUD COMERCIO
-// ===============================
 exports.sendCommerceWelcome = async (commerce) => {
   try {
     const msg = {
@@ -52,9 +45,6 @@ exports.sendCommerceWelcome = async (commerce) => {
   }
 };
 
-// ===============================
-// BIENVENIDA EMPLEADO
-// ===============================
 exports.sendEmployeeWelcome = async (employee) => {
   try {
     const fullname = `${employee.first_name} ${employee.last_name}`;
@@ -77,9 +67,6 @@ exports.sendEmployeeWelcome = async (employee) => {
   }
 };
 
-// ===============================
-// COMERCIO APROBADO
-// ===============================
 exports.sendAdmittedNoticeCommerce = async (adminEmployee) => {
   try {
     const msg = {
@@ -100,9 +87,6 @@ exports.sendAdmittedNoticeCommerce = async (adminEmployee) => {
   }
 };
 
-// ===============================
-// COMERCIO RECHAZADO
-// ===============================
 exports.sendRejectedNoticeCommerce = async (adminEmployee) => {
   try {
     const msg = {
@@ -124,14 +108,17 @@ exports.sendRejectedNoticeCommerce = async (adminEmployee) => {
   }
 };
 
-// ======================================================
-// ✅ NUEVO: RECLAMO CLIENTE -> MAIL A EMPLEADOS COMERCIO
-// Opción A: 1 mail por empleado (roles 1,5,6)
-// ======================================================
 exports.sendCustomerComplainCommerceToEmployees = async ({ order, user, commerce, employees, complain }) => {
   try {
-    const templateId = process.env.SENDGRID_CUSTOMER_COMPLAIN_COMMERCE;
-    if (!templateId) throw new Error('Missing env var: SENDGRID_CUSTOMER_COMPLAIN_COMMERCE');
+    const templateId =
+      process.env.SENDGRID_ORDER_COMPLAIN_COMMERCE ||
+      process.env.SENDGRID_CUSTOMER_COMPLAIN_COMMERCE;
+
+    if (!templateId) {
+      throw new Error(
+        'Missing env var: SENDGRID_ORDER_COMPLAIN_COMMERCE or SENDGRID_CUSTOMER_COMPLAIN_COMMERCE'
+      );
+    }
 
     const recipients = (employees || [])
       .map(e => (e?.email || '').trim())
@@ -140,10 +127,6 @@ exports.sendCustomerComplainCommerceToEmployees = async ({ order, user, commerce
     const uniqueRecipients = [...new Set(recipients)];
 
     if (uniqueRecipients.length === 0) {
-      console.warn('[MAIL] No employee recipients for complain', {
-        commerceId: commerce?.id,
-        orderId: order?.id,
-      });
       return;
     }
 
@@ -165,7 +148,9 @@ exports.sendCustomerComplainCommerceToEmployees = async ({ order, user, commerce
     }
   } catch (error) {
     console.error('Error al enviar reclamo a empleados del comercio:', error);
-    if (error.response) console.error(error.response.body);
+    if (error.response) {
+      console.error(error.response.body);
+    }
     throw error;
   }
 };
