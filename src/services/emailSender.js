@@ -39,7 +39,7 @@ exports.sendCommerceWelcome = async (commerce) => {
       from: 'no-reply@comidin.com.ar',
       templateId: process.env.SENDGRID_COMMERCE_WELCOME,
       dynamic_template_data: {
-        commerceName: commerce.name, // ✅ NORMALIZADO
+        commerceName: commerce.name,
       },
     };
 
@@ -121,5 +121,51 @@ exports.sendRejectedNoticeCommerce = async (adminEmployee) => {
     if (error.response) {
       console.error(error.response.body);
     }
+  }
+};
+
+// ======================================================
+// ✅ NUEVO: RECLAMO CLIENTE -> MAIL A EMPLEADOS COMERCIO
+// Opción A: 1 mail por empleado (roles 1,5,6)
+// ======================================================
+exports.sendCustomerComplainCommerceToEmployees = async ({ order, user, commerce, employees, complain }) => {
+  try {
+    const templateId = process.env.SENDGRID_CUSTOMER_COMPLAIN_COMMERCE;
+    if (!templateId) throw new Error('Missing env var: SENDGRID_CUSTOMER_COMPLAIN_COMMERCE');
+
+    const recipients = (employees || [])
+      .map(e => (e?.email || '').trim())
+      .filter(email => email && email.includes('@'));
+
+    const uniqueRecipients = [...new Set(recipients)];
+
+    if (uniqueRecipients.length === 0) {
+      console.warn('[MAIL] No employee recipients for complain', {
+        commerceId: commerce?.id,
+        orderId: order?.id,
+      });
+      return;
+    }
+
+    for (const to of uniqueRecipients) {
+      const msg = {
+        to,
+        from: 'no-reply@comidin.com.ar',
+        templateId,
+        dynamic_template_data: {
+          commerceName: commerce?.name || 'tu comercio',
+          orderId: order?.id,
+          complainDescription: complain?.complain_description || 'Sin descripción',
+          customerName: `${user?.first_name || ''} ${user?.last_name || ''}`.trim(),
+          customerEmail: user?.email || '',
+        },
+      };
+
+      await sgMail.send(msg);
+    }
+  } catch (error) {
+    console.error('Error al enviar reclamo a empleados del comercio:', error);
+    if (error.response) console.error(error.response.body);
+    throw error;
   }
 };

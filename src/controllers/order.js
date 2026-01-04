@@ -54,43 +54,43 @@ exports.createOrder = async (req, res) => {
 };
 
 exports.findAllOrders = async (req, res) => {
-    try {
-        const orders = await Order.findAllOrders();
-        res.status(200).json(orders);
-    } catch (error) {
-        console.error('Error fetching Orders:', error);
-        res.status(409).json({ error: 'Conflict', meesage: error });
-    }
+  try {
+    const orders = await Order.findAllOrders();
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error('Error fetching Orders:', error);
+    res.status(409).json({ error: 'Conflict', meesage: error });
+  }
 };
 
 exports.findOrderById = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const order = await Order.findOrderById(id);
-        if (!order) {
-            return res.status(404).json({ error: 'Order not found with id: ' + id });
-        }
-        res.status(200).json(order);
-    } catch (error) {
-        console.error('Error fetching Order by ID:', error);
-        res.status(409).json({ error: 'Conflict', meesage: error });
+  try {
+    const { id } = req.params;
+    const order = await Order.findOrderById(id);
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found with id: ' + id });
     }
+    res.status(200).json(order);
+  } catch (error) {
+    console.error('Error fetching Order by ID:', error);
+    res.status(409).json({ error: 'Conflict', meesage: error });
+  }
 };
 
 exports.updateOrder = async (req, res) => {
-    try {
-        const { body } = req;
-        const { id } = req.params;
-        const order = await Order.findByPk(id);
-        if (!order) {
-            return res.status(404).json({ error: 'Order not found with id: ' + id });
-        }
-        await order.update(body);
-        res.status(200).json(order);
-    } catch (error) {
-        console.error('Error updating Order:', error);
-        res.status(409).json({ error: 'Conflict', meesage: error });
+  try {
+    const { body } = req;
+    const { id } = req.params;
+    const order = await Order.findByPk(id);
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found with id: ' + id });
     }
+    await order.update(body);
+    res.status(200).json(order);
+  } catch (error) {
+    console.error('Error updating Order:', error);
+    res.status(409).json({ error: 'Conflict', meesage: error });
+  }
 };
 
 exports.changeOrderStatus = async (req, res) => {
@@ -129,59 +129,58 @@ exports.changeOrderStatus = async (req, res) => {
 };
 
 exports.deleteOrder = async (req, res) => {
-    try {
-        const { id } = req.params;
-        const order = await Order.findByPk(id);
-        if (!order) {
-            return res.status(404).json({ error: 'Order not found with id: ' + id });
-        }
-        await order.destroy();
-        res.status(200).json(order);
-    } catch (error) {
-        console.error('Error deleting Order:', error);
-        res.status(409).json({ error: 'Conflict', meesage: error });
+  try {
+    const { id } = req.params;
+    const order = await Order.findByPk(id);
+    if (!order) {
+      return res.status(404).json({ error: 'Order not found with id: ' + id });
     }
+    await order.destroy();
+    res.status(200).json(order);
+  } catch (error) {
+    console.error('Error deleting Order:', error);
+    res.status(409).json({ error: 'Conflict', meesage: error });
+  }
 };
 
 exports.findOrdersByUserId = async (req, res) => {
-    try {
-        const { userId } = req.params;
-        const orders = await Order.findOrdersByUserId(userId);
-        if (!orders) {
-            return res.status(404).json({ message: 'No orders found for this user.' });
-        }
-        res.status(200).json(orders);
-    } catch (error) {
-        console.error('Error fetching Orders by User ID:', error);
-        res.status(409).json({ error: 'Conflict', meesage: error });
+  try {
+    const { userId } = req.params;
+    const orders = await Order.findOrdersByUserId(userId);
+    if (!orders) {
+      return res.status(404).json({ message: 'No orders found for this user.' });
     }
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error('Error fetching Orders by User ID:', error);
+    res.status(409).json({ error: 'Conflict', meesage: error });
+  }
 };
 
 exports.findOrdersByCommerceId = async (req, res) => {
-    try {
-        const { commerceId } = req.params;
-        const orders = await Order.findOrdersByCommerceId(commerceId);
-        if (!orders) {
-            return res.status(404).json({ message: 'No orders found for this commerce.' });
-        }
-        res.status(200).json(orders);
-    } catch (error) {
-        console.error('Error fetching Orders by Commerce ID:', error);
-        res.status(409).json({ error: 'Conflict', meesage: error });
+  try {
+    const { commerceId } = req.params;
+    const orders = await Order.findOrdersByCommerceId(commerceId);
+    if (!orders) {
+      return res.status(404).json({ message: 'No orders found for this commerce.' });
     }
+    res.status(200).json(orders);
+  } catch (error) {
+    console.error('Error fetching Orders by Commerce ID:', error);
+    res.status(409).json({ error: 'Conflict', meesage: error });
+  }
 };
 
 /**
- * 🆕 Crear reclamo de cliente a partir de un order_id
+ * Crear reclamo de cliente a partir de un order_id
  * Endpoint: POST /order/:id/complain
  * Body: { message?: string }
  */
 exports.createCustomerComplainForOrder = async (req, res) => {
   try {
-    const { id } = req.params;       // order_id
+    const { id } = req.params;
     const { message } = req.body || {};
 
-    // 1) Traigo el pedido con user + commerce + detalles (para mails / respuesta)
     const orderFull = await Order.findOrderById(id);
     if (!orderFull) {
       return res.status(404).json({ error: 'Order not found with id: ' + id });
@@ -192,7 +191,6 @@ exports.createCustomerComplainForOrder = async (req, res) => {
         ? message.trim()
         : 'Sin descripción proporcionada';
 
-    // 2) Escrituras atómicas: update order + history + create complain
     const customerComplain = await sequelize.transaction(async (t) => {
       const order = await Order.findByPk(id, { transaction: t });
       if (!order) {
@@ -220,18 +218,23 @@ exports.createCustomerComplainForOrder = async (req, res) => {
       );
     });
 
-    // 3) Admin + mails (no crítico)
-    const adminEmployee = await Employee.findAdminEmployeeByCommerceId(orderFull.commerce_id);
+    // ✅ NUEVO: Traer empleados del comercio con roles 1,5,6
+    const employeesToNotify = await Employee.findEmployeesByCommerceIdAndRoleIds(
+      orderFull.commerce_id,
+      [1, 5, 6]
+    );
 
     try {
-      await emailSender.sendCustomerComplainCommerce({
+      // ✅ NUEVO: Enviar a todos los empleados (opción A: 1 mail por empleado)
+      await emailSender.sendCustomerComplainCommerceToEmployees({
         order: orderFull,
         user: orderFull.user,
         commerce: orderFull.commerce,
-        adminEmployee,
+        employees: employeesToNotify,
         complain: customerComplain,
       });
 
+      // Este se mantiene igual (asumiendo que existe)
       await emailSender.sendCustomerComplainCustomer({
         order: orderFull,
         user: orderFull.user,
