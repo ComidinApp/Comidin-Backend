@@ -154,3 +154,39 @@ exports.sendCustomerComplainCommerceToEmployees = async ({ order, user, commerce
     throw error;
   }
 };
+
+exports.sendCustomerComplainCustomer = async ({ order, user, commerce, complain }) => {
+  try {
+    const templateId =
+      process.env.SENDGRID_ORDER_COMPLAIN_CUSTOMER ||
+      process.env.SENDGRID_CUSTOMER_COMPLAIN_CUSTOMER;
+
+    if (!templateId) {
+      throw new Error(
+        'Missing env var: SENDGRID_ORDER_COMPLAIN_CUSTOMER or SENDGRID_CUSTOMER_COMPLAIN_CUSTOMER'
+      );
+    }
+
+    const to = (user?.email || '').trim();
+    if (!to || !to.includes('@')) return;
+
+    const msg = {
+      to,
+      from: 'no-reply@comidin.com.ar',
+      templateId,
+      dynamic_template_data: {
+        customerName: `${user?.first_name || ''} ${user?.last_name || ''}`.trim(),
+        commerceName: commerce?.name || 'el comercio',
+        orderId: order?.id,
+        complainDescription: complain?.complain_description || 'Sin descripción',
+      },
+    };
+
+    await sgMail.send(msg);
+  } catch (error) {
+    console.error('Error al enviar reclamo al cliente:', error);
+    if (error.response) console.error(error.response.body);
+    throw error;
+  }
+};
+
