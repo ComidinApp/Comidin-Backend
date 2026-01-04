@@ -103,29 +103,52 @@ Employee.findEmployeesByRoleId = async function (roleId) {
     throw error;
   }
 };
+Employee.belongsTo(Role, { foreignKey: 'role_id', as: 'role' });
+Employee.belongsTo(Commerce, { foreignKey: 'commerce_id', as: 'commerce' });
+Employee.hasMany(Subscription, { foreignKey: 'commerce_id', sourceKey: 'commerce_id', as: 'subscriptions' });
 
 Employee.findEmployeeByEmail = async function (email) {
   try {
-    const { role: Role, commerce: Commerce, subscription: Subscription, plan: Plan } = sequelize.models;
-
-    return await Employee.findOne({
+    const employee = await Employee.findOne({
       where: { email },
       include: [
-        Role ? { model: Role, attributes: ['name', 'id'] } : null,
-        Commerce ? { model: Commerce, attributes: ['name', 'status', 'id'] } : null,
-        Subscription ? {
-          model: Subscription,
+        {
+          association: 'role',
+          attributes: ['name', 'id'],
+        },
+        {
+          association: 'commerce',
+          attributes: ['name', 'status', 'id'],
+        },
+        {
+          association: 'subscriptions',
           attributes: ['id', 'plan_id'],
-          include: Plan ? { model: Plan, attributes: ['name'] } : null
-        } : null
-      ].filter(Boolean),
-      attributes: ['id', 'role_id', 'first_name', 'last_name', 'email', 'avatar_url', 'status', 'verification_code']
+          include: {
+            model: sequelize.models.plan,
+            attributes: ['name'],
+          },
+        },
+      ],
+      attributes: [
+        'id',
+        'role_id',
+        'first_name',
+        'last_name',
+        'email',
+        'avatar_url',
+        'status',
+        'verification_code',
+      ],
     });
+
+    return employee;
   } catch (error) {
     console.error('Error finding Employees:', error);
     throw error;
   }
 };
+
+
 
 
 Employee.findEmployeesByCommerceIdAndRoleIds = async function (commerceId, roleIds) {
