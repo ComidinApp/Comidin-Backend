@@ -239,24 +239,29 @@ exports.createCustomerComplainForOrder = async (req, res) => {
         [1, 5, 6]
       );
 
-    try {
-      await emailSender.sendCustomerComplainCommerceToEmployees({
-        order: orderFull,
-        user: orderFull.user,
-        commerce: orderFull.commerce,
-        employees: employeesToNotify,
-        complain: customerComplain,
-      });
+try {
+  await emailSender.sendCustomerComplainCommerceToEmployees({
+    order: orderFull,
+    user: orderFull.user,
+    commerce: orderFull.commerce,
+    employees: employeesToNotify,
+    complain: customerComplain,
+  });
 
-      await emailSender.sendCustomerComplainCustomer({
-        order: orderFull,
-        user: orderFull.user,
-        commerce: orderFull.commerce,
-        complain: customerComplain,
-      });
-    } catch (mailError) {
-      console.error('Error sending customer complain emails:', mailError);
-    }
+  const contactEmployee =
+    (employeesToNotify && employeesToNotify.length > 0) ? employeesToNotify[0] : null;
+
+  await emailSender.sendCustomerComplainCustomer({
+    order: orderFull,
+    user: orderFull.user,
+    commerce: orderFull.commerce,
+    complain: customerComplain,
+    contactEmployee,
+  });
+} catch (mailError) {
+  console.error('Error sending customer complain emails:', mailError);
+}
+
 
     res.status(201).json({
       message: 'Customer complain created successfully',

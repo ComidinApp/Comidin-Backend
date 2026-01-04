@@ -126,22 +126,22 @@ exports.sendCustomerComplainCommerceToEmployees = async ({ order, user, commerce
 
     const uniqueRecipients = [...new Set(recipients)];
 
-    if (uniqueRecipients.length === 0) {
-      return;
-    }
+    if (uniqueRecipients.length === 0) return;
+
+    const dynamic_template_data = {
+      commerceName: commerce?.name || 'tu comercio',
+      orderId: order?.id,
+      customerName: `${user?.first_name || ''} ${user?.last_name || ''}`.trim(),
+      customerEmail: user?.email || '',
+      complainDescription: complain?.complain_description || 'Sin descripción',
+    };
 
     for (const to of uniqueRecipients) {
       const msg = {
         to,
         from: 'no-reply@comidin.com.ar',
         templateId,
-        dynamic_template_data: {
-          commerceName: commerce?.name || 'tu comercio',
-          orderId: order?.id,
-          complainDescription: complain?.complain_description || 'Sin descripción',
-          customerName: `${user?.first_name || ''} ${user?.last_name || ''}`.trim(),
-          customerEmail: user?.email || '',
-        },
+        dynamic_template_data,
       };
 
       await sgMail.send(msg);
@@ -155,7 +155,13 @@ exports.sendCustomerComplainCommerceToEmployees = async ({ order, user, commerce
   }
 };
 
-exports.sendCustomerComplainCustomer = async ({ order, user, commerce, complain }) => {
+exports.sendCustomerComplainCustomer = async ({
+  order,
+  user,
+  commerce,
+  complain,
+  contactEmployee,
+}) => {
   try {
     const templateId =
       process.env.SENDGRID_ORDER_COMPLAIN_CUSTOMER ||
@@ -170,15 +176,37 @@ exports.sendCustomerComplainCustomer = async ({ order, user, commerce, complain 
     const to = (user?.email || '').trim();
     if (!to || !to.includes('@')) return;
 
+    const orderItems =
+      (order?.order_details || [])
+        .map((d) => {
+          const name = d?.publication?.product?.name || 'Producto';
+          const qty = d?.quantity ?? 1;
+          return `${name} x${qty}`;
+        })
+        .join(', ') || 'Sin detalle de productos';
+
+    const contactName = contactEmployee
+      ? `${contactEmployee?.first_name || ''} ${contactEmployee?.last_name || ''}`.trim()
+      : (commerce?.name ? `Equipo de ${commerce.name}` : 'Equipo del comercio');
+
     const msg = {
       to,
       from: 'no-reply@comidin.com.ar',
       templateId,
       dynamic_template_data: {
-        customerName: `${user?.first_name || ''} ${user?.last_name || ''}`.trim(),
-        commerceName: commerce?.name || 'el comercio',
+        userName: `${user?.first_name || ''} ${user?.last_name || ''}`.trim(),
         orderId: order?.id,
-        complainDescription: complain?.complain_description || 'Sin descripción',
+        orderItems,
+        reclaimDescription: complain?.complain_description || 'Sin descripción',
+        reclaimStartDate: new Date().toLocaleString('es-AR', {
+          timeZone: 'America/Argentina/Buenos_Aires',
+        }),
+        commerceName: commerce?.name || 'el comercio',
+        contactName,
+        contactEmail:
+          (contactEmployee?.email || commerce?.email || '').trim(),
+        contactPhone:
+          (contactEmployee?.phone_number || '').trim(),
       },
     };
 
