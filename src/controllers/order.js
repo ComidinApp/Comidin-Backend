@@ -2,12 +2,17 @@
 const { sequelize } = require('../database');
 const Order = require('../models/order');
 const OrderDetail = require('../models/orderDetail');
-const Employee = require('../models/employee');
+const getEmployeeModel = () => require('../models/employee'); // ✅ lazy require
 const CustomerComplain = require('../models/customerComplain');
 const emailSender = require('../services/emailSender');
 const Publication = require('../models/publication');
 const OrderHistory = require('../models/orderHistory');
 
+/**
+ * =========================
+ * CREATE ORDER
+ * =========================
+ */
 exports.createOrder = async (req, res) => {
   try {
     const result = await sequelize.transaction(async (t) => {
@@ -16,10 +21,7 @@ exports.createOrder = async (req, res) => {
       const order = await Order.create(orderData, { transaction: t });
 
       await OrderHistory.create(
-        {
-          order_id: order.id,
-          status: 'PENDING',
-        },
+        { order_id: order.id, status: 'PENDING' },
         { transaction: t }
       );
 
@@ -49,17 +51,22 @@ exports.createOrder = async (req, res) => {
     res.status(201).json(result);
   } catch (error) {
     console.error('Error creating Order:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
+    res.status(409).json({ error: 'Conflict', message: error });
   }
 };
 
+/**
+ * =========================
+ * FIND ORDERS
+ * =========================
+ */
 exports.findAllOrders = async (req, res) => {
   try {
     const orders = await Order.findAllOrders();
     res.status(200).json(orders);
   } catch (error) {
     console.error('Error fetching Orders:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
+    res.status(409).json({ error: 'Conflict', message: error });
   }
 };
 
@@ -67,32 +74,62 @@ exports.findOrderById = async (req, res) => {
   try {
     const { id } = req.params;
     const order = await Order.findOrderById(id);
+
     if (!order) {
-      return res.status(404).json({ error: 'Order not found with id: ' + id });
+      return res.status(404).json({ error: `Order not found with id: ${id}` });
     }
+
     res.status(200).json(order);
   } catch (error) {
     console.error('Error fetching Order by ID:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
+    res.status(409).json({ error: 'Conflict', message: error });
   }
 };
 
+/**
+ * =========================
+ * UPDATE / DELETE
+ * =========================
+ */
 exports.updateOrder = async (req, res) => {
   try {
-    const { body } = req;
     const { id } = req.params;
     const order = await Order.findByPk(id);
+
     if (!order) {
-      return res.status(404).json({ error: 'Order not found with id: ' + id });
+      return res.status(404).json({ error: `Order not found with id: ${id}` });
     }
-    await order.update(body);
+
+    await order.update(req.body);
     res.status(200).json(order);
   } catch (error) {
     console.error('Error updating Order:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
+    res.status(409).json({ error: 'Conflict', message: error });
   }
 };
 
+exports.deleteOrder = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const order = await Order.findByPk(id);
+
+    if (!order) {
+      return res.status(404).json({ error: `Order not found with id: ${id}` });
+    }
+
+    await order.destroy();
+    res.status(200).json(order);
+  } catch (error) {
+    console.error('Error deleting Order:', error);
+    res.status(409).json({ error: 'Conflict', message: error });
+  }
+};
+
+/**
+ * =========================
+ * CHANGE STATUS
+ * =========================
+ */
 exports.changeOrderStatus = async (req, res) => {
   try {
     const { status } = req.body;
@@ -110,71 +147,52 @@ exports.changeOrderStatus = async (req, res) => {
       await order.save({ transaction: t });
 
       await OrderHistory.create(
-        {
-          order_id: order.id,
-          status,
-        },
+        { order_id: order.id, status },
         { transaction: t }
       );
-
-      res.status(200).json(order);
     });
+
+    res.status(200).json({ message: 'Order status updated successfully' });
   } catch (error) {
-    if (error && error.statusCode === 404) {
-      return res.status(404).json({ error: 'Order not found with id: ' + req.params.id });
+    if (error.statusCode === 404) {
+      return res.status(404).json({ error: `Order not found with id: ${req.params.id}` });
     }
-    console.error('Error updating Order:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
+
+    console.error('Error updating Order status:', error);
+    res.status(409).json({ error: 'Conflict', message: error });
   }
 };
 
-exports.deleteOrder = async (req, res) => {
-  try {
-    const { id } = req.params;
-    const order = await Order.findByPk(id);
-    if (!order) {
-      return res.status(404).json({ error: 'Order not found with id: ' + id });
-    }
-    await order.destroy();
-    res.status(200).json(order);
-  } catch (error) {
-    console.error('Error deleting Order:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
-  }
-};
-
+/**
+ * =========================
+ * FIND BY USER / COMMERCE
+ * =========================
+ */
 exports.findOrdersByUserId = async (req, res) => {
   try {
-    const { userId } = req.params;
-    const orders = await Order.findOrdersByUserId(userId);
-    if (!orders) {
-      return res.status(404).json({ message: 'No orders found for this user.' });
-    }
+    const orders = await Order.findOrdersByUserId(req.params.userId);
     res.status(200).json(orders);
   } catch (error) {
     console.error('Error fetching Orders by User ID:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
+    res.status(409).json({ error: 'Conflict', message: error });
   }
 };
 
 exports.findOrdersByCommerceId = async (req, res) => {
   try {
-    const { commerceId } = req.params;
-    const orders = await Order.findOrdersByCommerceId(commerceId);
-    if (!orders) {
-      return res.status(404).json({ message: 'No orders found for this commerce.' });
-    }
+    const orders = await Order.findOrdersByCommerceId(req.params.commerceId);
     res.status(200).json(orders);
   } catch (error) {
     console.error('Error fetching Orders by Commerce ID:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
+    res.status(409).json({ error: 'Conflict', message: error });
   }
 };
 
 /**
- * Crear reclamo de cliente a partir de un order_id
+ * =========================
+ * CREATE CUSTOMER COMPLAIN
  * Endpoint: POST /order/:id/complain
- * Body: { message?: string }
+ * =========================
  */
 exports.createCustomerComplainForOrder = async (req, res) => {
   try {
@@ -183,21 +201,14 @@ exports.createCustomerComplainForOrder = async (req, res) => {
 
     const orderFull = await Order.findOrderById(id);
     if (!orderFull) {
-      return res.status(404).json({ error: 'Order not found with id: ' + id });
+      return res.status(404).json({ error: `Order not found with id: ${id}` });
     }
 
     const complainDescription =
-      message && message.trim().length > 0
-        ? message.trim()
-        : 'Sin descripción proporcionada';
+      message && message.trim() ? message.trim() : 'Sin descripción proporcionada';
 
     const customerComplain = await sequelize.transaction(async (t) => {
       const order = await Order.findByPk(id, { transaction: t });
-      if (!order) {
-        const err = new Error('Order not found');
-        err.statusCode = 404;
-        throw err;
-      }
 
       order.status = 'CLAIMED';
       await order.save({ transaction: t });
@@ -218,14 +229,17 @@ exports.createCustomerComplainForOrder = async (req, res) => {
       );
     });
 
-    // ✅ NUEVO: Traer empleados del comercio con roles 1,5,6
-    const employeesToNotify = await Employee.findEmployeesByCommerceIdAndRoleIds(
-      orderFull.commerce_id,
-      [1, 5, 6]
-    );
+    // ✅ lazy-load Employee model
+    const Employee = getEmployeeModel();
+
+    // ✅ roles 1,5,6
+    const employeesToNotify =
+      await Employee.findEmployeesByCommerceIdAndRoleIds(
+        orderFull.commerce_id,
+        [1, 5, 6]
+      );
 
     try {
-      // ✅ NUEVO: Enviar a todos los empleados (opción A: 1 mail por empleado)
       await emailSender.sendCustomerComplainCommerceToEmployees({
         order: orderFull,
         user: orderFull.user,
@@ -234,7 +248,6 @@ exports.createCustomerComplainForOrder = async (req, res) => {
         complain: customerComplain,
       });
 
-      // Este se mantiene igual (asumiendo que existe)
       await emailSender.sendCustomerComplainCustomer({
         order: orderFull,
         user: orderFull.user,
@@ -245,15 +258,12 @@ exports.createCustomerComplainForOrder = async (req, res) => {
       console.error('Error sending customer complain emails:', mailError);
     }
 
-    return res.status(201).json({
+    res.status(201).json({
       message: 'Customer complain created successfully',
       complain: customerComplain,
     });
   } catch (error) {
-    if (error && error.statusCode === 404) {
-      return res.status(404).json({ error: 'Order not found with id: ' + req.params.id });
-    }
     console.error('Error creating CustomerComplain from Order:', error);
-    return res.status(409).json({ error: 'Conflict', meesage: error });
+    res.status(409).json({ error: 'Conflict', message: error });
   }
 };
