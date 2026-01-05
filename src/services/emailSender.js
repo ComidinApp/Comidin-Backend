@@ -231,3 +231,86 @@ exports.sendCustomerComplainCustomer = async ({
   }
 };
 
+exports.sendOrderStatusUpdateCustomer = async ({ orderId, newStatus }) => {
+  try {
+    const templateId =
+      process.env.SENDGRID_ORDER_STATUS || process.env.SENGRID_ORDER_STATUS;
+
+    if (!templateId) {
+      throw new Error('Missing env var: SENDGRID_ORDER_STATUS (or SENGRID_ORDER_STATUS)');
+    }
+
+    const Order = require('../models/order'); 
+    const orderFull = await Order.findOrderById(orderId);
+
+    if (!orderFull) return;
+
+    const to = (orderFull?.user?.email || '').trim();
+    if (!to || !to.includes('@')) return;
+
+    const userName = `${orderFull?.user?.first_name || ''} ${orderFull?.user?.last_name || ''}`.trim() || 'Cliente';
+
+    const normalizedStatus = (newStatus || orderFull?.status || '').toString().trim().toUpperCase();
+
+    
+    const statusTranslations = {
+      PENDING: 'Pendiente',
+      CONFIRMED: 'Confirmado',
+      COMPLETED: 'Completado',
+      CANCELLED: 'Cancelado',
+      REFUNDED: 'Devuelto',
+      CLAIMED: 'Reclamado',
+    };
+
+    const orderState = statusTranslations[normalizedStatus] || normalizedStatus;
+
+  
+    const details = Array.isArray(orderFull?.order_details) ? orderFull.order_details : [];
+
+    const orderItem =
+      details
+        .map((d) => {
+          const name =
+            d?.publication?.product?.name ||
+            'Producto';
+          const qty = Number(d?.quantity ?? 1);
+          return qty > 1 ? `${name} x${qty}` : name;
+        })
+        .filter(Boolean)
+        .join(', ') || 'Sin detalle de productos';
+
+    const quantityItem =
+      details.reduce((acc, d) => acc + (Number(d?.quantity) || 0), 0) ||
+      Number(orderFull?.items_quantity) ||
+      1;
+
+    
+    const addr = orderFull?.address || {};
+    const userAddress =
+      [addr?.street_name, addr?.number, addr?.postal_code]
+        .filter(Boolean)
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim() || 'Sin dirección informada';
+
+    const msg = {
+      to,
+      from: 'no-reply@comidin.com.ar',
+      templateId,
+      dynamic_template_data: {
+        userName,
+        orderId: orderFull?.id,          // {{orderId}}
+        orderState,                      //  {{orderState}}
+        orderItem,                       // {{orderItem}}
+        quantityItem,                    // {{quantityItem}}
+        userAddress,                     // {{userAddress}}
+      },
+    };
+
+    await sgMail.send(msg);
+  } catch (error) {
+    console.error('Error al enviar mail de cambio de estado del pedido:', error);
+    if (error.response) console.error(error.response.body);
+
+  }
+};

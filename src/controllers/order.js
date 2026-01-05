@@ -135,6 +135,8 @@ exports.changeOrderStatus = async (req, res) => {
     const { status } = req.body;
     const { id } = req.params;
 
+    const normalizedStatus = (status || '').toString().trim().toUpperCase();
+
     await sequelize.transaction(async (t) => {
       const order = await Order.findByPk(id, { transaction: t });
       if (!order) {
@@ -143,14 +145,24 @@ exports.changeOrderStatus = async (req, res) => {
         throw err;
       }
 
-      order.status = status;
+      order.status = normalizedStatus;
       await order.save({ transaction: t });
 
       await OrderHistory.create(
-        { order_id: order.id, status },
+        { order_id: order.id, status: normalizedStatus },
         { transaction: t }
       );
     });
+
+    // ✅ Mail AFTER commit (si falla el mail, no te rompe la actualización del pedido)
+    try {
+      await emailSender.sendOrderStatusUpdateCustomer({
+        orderId: id,
+        newStatus: normalizedStatus,
+      });
+    } catch (mailError) {
+      console.error('Order status updated but email failed:', mailError);
+    }
 
     res.status(200).json({ message: 'Order status updated successfully' });
   } catch (error) {
@@ -162,6 +174,7 @@ exports.changeOrderStatus = async (req, res) => {
     res.status(409).json({ error: 'Conflict', message: error });
   }
 };
+
 
 /**
  * =========================
