@@ -1,4 +1,4 @@
-const { CognitoIdentityProviderClient, AdminCreateUserCommand, AdminDeleteUserCommand, ListUsersCommand } = require("@aws-sdk/client-cognito-identity-provider");
+const { CognitoIdentityProviderClient, AdminCreateUserCommand, AdminDeleteUserCommand, AdminSetUserPasswordCommand, ListUsersCommand } = require("@aws-sdk/client-cognito-identity-provider");
 const client = new CognitoIdentityProviderClient({
     region: process.env.AWS_REGION,
     credentials: {
@@ -9,8 +9,9 @@ const client = new CognitoIdentityProviderClient({
 const employeePoolId = process.env.COGNITO_EMPLOYEE_POOL_ID;
 const userPoolId = process.env.COGNITO_USER_POOL_ID;
 
-exports.createNewEmployee = async (employee) => {
+exports.createNewEmployee = async (employee, options = {}) => {
     try {
+        const makePermanent = Boolean(options.makePermanent || employee.makePermanent);
         const params = {
             UserPoolId: employeePoolId,
             Username: generateUniqueUsername(employee.email),
@@ -33,6 +34,17 @@ exports.createNewEmployee = async (employee) => {
         };
 
         const command = new AdminCreateUserCommand(params);
+
+        //Si es propietario no le pidamos cambio de contraseña
+        if (makePermanent && response?.User?.Username) {
+          await client.send(new AdminSetUserPasswordCommand({
+            UserPoolId: employeePoolId,
+            Username: response.User.Username,
+            Password: employee.password,
+            Permanent: true,
+          }));
+        }
+        
         const response = await client.send(command);
 
         console.log("Empleado creado exitosamente:", response);

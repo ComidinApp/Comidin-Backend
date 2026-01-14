@@ -4,7 +4,7 @@ const Employee = require('../models/employee');
 
 // 👇 IMPORTAMOS EL SERVICIO DE COGNITO (ajustá la ruta si tu archivo tiene otro nombre)
 const { createNewEmployee } = require('../services/cognitoService');
-
+const { sendEmployeeWelcome } = require('../services/emailSender');
 // ===========================================================================
 // CREAR EMPLEADO  (BD + COGNITO)
 // ===========================================================================
@@ -15,6 +15,8 @@ exports.createEmployee = async (req, res) => {
     // 1) Crear empleado en BD
     const newEmployee = await Employee.create(data);
 
+    const roleId = Number(newEmployee.role_id ?? data.role_id);
+
     // 2) Crear usuario en Cognito
     //    Usamos email, first_name y password del body
     try {
@@ -22,7 +24,14 @@ exports.createEmployee = async (req, res) => {
         email: newEmployee.email,
         first_name: newEmployee.first_name,
         password: data.password, // viene en el body del request
-      });
+        },
+        {
+          makePermanent: roleId === 6 // Si el rol es propietario (6), hacerlo permanente
+        }
+      );
+      if (roleId !== 6) {
+        await sendEmployeeWelcome(newEmployee);
+      } // No le enviamos email de bienvenida al propietario
     } catch (cognitoError) {
       console.error('Error creando empleado en Cognito:', cognitoError);
       // Opcional: acá podrías borrar el empleado de la BD si querés consistencia estricta:
