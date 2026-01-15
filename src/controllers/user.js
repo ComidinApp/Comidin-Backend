@@ -1,14 +1,24 @@
 const User = require('../models/user');
-const { deleteUserAccount } = require('../services/cognitoService')
+const { deleteUserAccount } = require('../services/cognitoService');
+const { sendEmployeeWelcome } = require('../services/emailSender'); 
 
 exports.createUser = async (req, res) => {
   try {
     const { body } = req;
-    const user = await User.create(body); 
-    res.status(201).json(user);
+
+    const user = await User.create(body);
+
+    // no bloquea el response si SendGrid tarda o falla
+    Promise.resolve()
+      .then(() => sendEmployeeWelcome(user))
+      .catch((err) => {
+        console.error('Error enviando mail de bienvenida (employee):', err);
+      });
+
+    return res.status(201).json(user);
   } catch (error) {
     console.error('Error creating User:', error);
-    res.status(409).json({ error: 'Conflict', meesage: error });
+    return res.status(409).json({ error: 'Conflict', meesage: error });
   }
 };
 

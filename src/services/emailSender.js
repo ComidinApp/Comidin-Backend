@@ -45,25 +45,31 @@ exports.sendCommerceWelcome = async (commerce) => {
   }
 };
 
-exports.sendEmployeeWelcome = async (employee) => {
+exports.sendEmployeeWelcome = async (user) => {
   try {
-    const fullname = `${employee.first_name} ${employee.last_name}`;
+    const email = (user?.email || '').trim();
+    if (!email || !email.includes('@')) return;
+
+    const fullname =
+      `${user?.first_name || ''} ${user?.last_name || ''}`.trim() ||
+      user?.name ||
+      user?.username ||
+      'Hola';
 
     const msg = {
-      to: employee.email,
+      to: email,
       from: 'no-reply@comidin.com.ar',
       templateId: process.env.SENDGRID_EMPLOYEE_WELCOME,
       dynamic_template_data: {
         userName: fullname,
+        contactMail: process.env.CONTACT_MAIL || 'contactoar@comidin.com.ar',
       },
     };
 
     await sgMail.send(msg);
   } catch (error) {
-    console.error('Error al enviar mensaje de bienvenida al empleado:', error);
-    if (error.response) {
-      console.error(error.response.body);
-    }
+    console.error('Error al enviar mensaje de bienvenida al usuario:', error);
+    if (error.response) console.error(error.response.body);
   }
 };
 
