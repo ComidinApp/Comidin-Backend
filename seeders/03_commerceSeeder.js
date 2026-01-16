@@ -304,6 +304,22 @@ module.exports = {
           status: 'admitted',
           available_days: 'lunes,martes,miercoles,jueves,viernes,sabado,domingo',
         },
+
+        { // DEMO 21
+  name: 'Demo',
+  commerce_category_id: 3, // Rotisería (ajustalo si tu catálogo usa otro id)
+  street_name: 'Av. Colón',
+  number: '1234',
+  postal_code: '5000',
+  commerce_national_id: 'DEMO-0001',
+  is_active: true,
+  image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-logos/Comidin.png',
+  open_at: '09:00:00',
+  close_at: '23:00:00',
+  created_at: new Date(),
+  status: 'admitted',
+  available_days: 'lunes,martes,miercoles,jueves,viernes,sabado,domingo',
+}
       ], {});
     } catch (error) {
       console.error('Error executing seeder (commerce):', error);

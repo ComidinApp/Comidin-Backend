@@ -331,7 +331,55 @@ module.exports = {
         product_id: 27,
         created_at: new Date('2025-01-01'),
         expiration_date: new Date('2026-01-01'),
-      }
+      },
+      {
+  id: 9001,
+  available_stock: 100,
+  price: 2500,
+  discounted_price: 2300,
+  discount_percentaje: 8,
+  is_active: 'active',
+  commerce_id: 21,
+  product_id: 1,
+  created_at: new Date(),
+  expiration_date: Sequelize.literal("DATE_ADD(CURDATE(), INTERVAL 6 MONTH)")
+},
+{
+  id: 9002,
+  available_stock: 120,
+  price: 1800,
+  discounted_price: 1700,
+  discount_percentaje: 5,
+  is_active: 'active',
+  commerce_id: 21,
+  product_id: 2,
+  created_at: new Date(),
+  expiration_date: Sequelize.literal("DATE_ADD(CURDATE(), INTERVAL 6 MONTH)")
+},
+{
+  id: 9003,
+  available_stock: 80,
+  price: 900,
+  discounted_price: 900,
+  discount_percentaje: 0,
+  is_active: 'active',
+  commerce_id: 21,
+  product_id: 3,
+  created_at: new Date(),
+  expiration_date: Sequelize.literal("DATE_ADD(CURDATE(), INTERVAL 6 MONTH)")
+},
+{
+  id: 9004,
+  available_stock: 60,
+  price: 3200,
+  discounted_price: 2900,
+  discount_percentaje: 10,
+  is_active: 'active',
+  commerce_id: 21,
+  product_id: 4,
+  created_at: new Date(),
+  expiration_date: Sequelize.literal("DATE_ADD(CURDATE(), INTERVAL 6 MONTH)")
+}
   ], {});
       
 } catch (error) {

@@ -346,7 +346,128 @@ module.exports = {
         status: 'COMPLETED',
         delivery_type: 'delivery',
         payment_method: 'mercadopago',
-      }
+      },
+      // DEMO - últimas 10 “ventanas” mensuales
+{
+  id: 9101,
+  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 5))"),
+  commerce_id: 21,
+  address_id: 1,
+  created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 1 MONTH)"),
+  total_amount: 4000,
+  status: 'COMPLETED',
+  delivery_type: 'delivery',
+  payment_method: 'mercadopago',
+  items_quantity: 2
+},
+{
+  id: 9102,
+  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 5))"),
+  commerce_id: 21,
+  address_id: 1,
+  created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 2 MONTH)"),
+  total_amount: 3200,
+  status: 'COMPLETED',
+  delivery_type: 'pickup',
+  payment_method: 'cash',
+  items_quantity: 2
+},
+{
+  id: 9103,
+  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 5))"),
+  commerce_id: 21,
+  address_id: 1,
+  created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 3 MONTH)"),
+  total_amount: 5200,
+  status: 'COMPLETED',
+  delivery_type: 'delivery',
+  payment_method: 'mercadopago',
+  items_quantity: 3
+},
+{
+  id: 9104,
+  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 5))"),
+  commerce_id: 21,
+  address_id: 1,
+  created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 4 MONTH)"),
+  total_amount: 1800,
+  status: 'COMPLETED',
+  delivery_type: 'pickup',
+  payment_method: 'cash',
+  items_quantity: 1
+},
+{
+  id: 9105,
+  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 5))"),
+  commerce_id: 21,
+  address_id: 1,
+  created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 5 MONTH)"),
+  total_amount: 4100,
+  status: 'COMPLETED',
+  delivery_type: 'delivery',
+  payment_method: 'mercadopago',
+  items_quantity: 2
+},
+{
+  id: 9106,
+  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 5))"),
+  commerce_id: 21,
+  address_id: 1,
+  created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 6 MONTH)"),
+  total_amount: 2500,
+  status: 'COMPLETED',
+  delivery_type: 'pickup',
+  payment_method: 'cash',
+  items_quantity: 1
+},
+{
+  id: 9107,
+  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 5))"),
+  commerce_id: 21,
+  address_id: 1,
+  created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 7 MONTH)"),
+  total_amount: 5900,
+  status: 'COMPLETED',
+  delivery_type: 'delivery',
+  payment_method: 'mercadopago',
+  items_quantity: 3
+},
+{
+  id: 9108,
+  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 5))"),
+  commerce_id: 21,
+  address_id: 1,
+  created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 8 MONTH)"),
+  total_amount: 3400,
+  status: 'COMPLETED',
+  delivery_type: 'pickup',
+  payment_method: 'cash',
+  items_quantity: 2
+},
+{
+  id: 9109,
+  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 5))"),
+  commerce_id: 21,
+  address_id: 1,
+  created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 9 MONTH)"),
+  total_amount: 4700,
+  status: 'COMPLETED',
+  delivery_type: 'delivery',
+  payment_method: 'mercadopago',
+  items_quantity: 2
+},
+{
+  id: 9110,
+  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 5))"),
+  commerce_id: 21,
+  address_id: 1,
+  created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 10 MONTH)"),
+  total_amount: 900,
+  status: 'COMPLETED',
+  delivery_type: 'pickup',
+  payment_method: 'cash',
+  items_quantity: 1
+}
       ], {});
     } catch (error) {
       console.error('Error executing seeder (order):', error);

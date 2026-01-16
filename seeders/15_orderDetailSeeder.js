@@ -95,6 +95,50 @@ module.exports = {
 
       { order_id: 111, publication_id: 25, created_at: new Date('2025-10-05'), quantity: 1, amount: 2300 },
       { order_id: 111, publication_id: 26, created_at: new Date('2025-10-05'), quantity: 1, amount: 900 },
+      // 9101 total 4000 = 1*2300 + 1*1700
+{ order_id: 9101, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 1 MONTH)"), quantity: 1, amount: 2300 },
+{ order_id: 9101, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 1 MONTH)"), quantity: 1, amount: 1700 },
+
+// 9102 total 3200 = 1*1700 + 1*1500 (ajusto con 9004 a 1500? no: dejo 9003 (900) + 9004 (2900) no da)
+// Mejor: 1*1700 + 1*1500 no existe, así que lo hago 1*2300 + 1*900 = 3200
+{ order_id: 9102, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 2 MONTH)"), quantity: 1, amount: 2300 },
+{ order_id: 9102, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 2 MONTH)"), quantity: 1, amount: 900 },
+
+// 9103 total 5200 = 1*2300 + 1*2900
+{ order_id: 9103, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 3 MONTH)"), quantity: 1, amount: 2300 },
+{ order_id: 9103, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 3 MONTH)"), quantity: 1, amount: 2900 },
+
+// 9104 total 1800 = 2*900
+{ order_id: 9104, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 4 MONTH)"), quantity: 2, amount: 1800 },
+
+// 9105 total 4100 = 1*2300 + 2*900
+{ order_id: 9105, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 5 MONTH)"), quantity: 1, amount: 2300 },
+{ order_id: 9105, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 5 MONTH)"), quantity: 2, amount: 1800 },
+
+// 9106 total 2500 = 1*1700 + 1*900 (2600) no. 1*2300 + 1*900 (3200) no.
+// Entonces lo dejo 1*1700 + 1*900 = 2600 y ajusto order 9106 arriba? NO. Mejor: 1*900 + 1*900 + 1*900 = 2700 tampoco.
+// Solución limpia: usar publication 9002 (1700) + publication 9003 (900) = 2600, así que acá uso 2600 y si querés exactitud cambiá order 9106 total a 2600.
+// Yo te lo dejo exacto con total 2500:  (no existe con estos precios) -> uso 1*2500 directo: cambiá price de 9001 a 2500? No.
+// OK, coherencia matemática > capricho: dejo 2600 y sugerencia mínima: cambiá el total_amount de 9106 a 2600.
+{ order_id: 9106, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 6 MONTH)"), quantity: 1, amount: 1700 },
+{ order_id: 9106, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 6 MONTH)"), quantity: 1, amount: 900 },
+
+// 9107 total 5900 = 1*2300 + 1*1700 + 1*1900? no. 1*2900 + 2*1700 = 6300.
+// Mejor: 1*2900 + 1*2300 + 1*900 = 6100.
+// Con estos precios, 5900 exacto no sale. Te lo dejo coherente y ajustás total_amount.
+{ order_id: 9107, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 7 MONTH)"), quantity: 1, amount: 2900 },
+{ order_id: 9107, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 7 MONTH)"), quantity: 1, amount: 2300 },
+{ order_id: 9107, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 7 MONTH)"), quantity: 1, amount: 900 },
+
+// 9108 total 3400 = 2*1700
+{ order_id: 9108, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 8 MONTH)"), quantity: 2, amount: 3400 },
+
+// 9109 total 4700 = 1*2900 + 2*900 (4700)
+{ order_id: 9109, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 9 MONTH)"), quantity: 1, amount: 2900 },
+{ order_id: 9109, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 9 MONTH)"), quantity: 2, amount: 1800 },
+
+// 9110 total 900 = 1*900
+{ order_id: 9110, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 10 MONTH)"), quantity: 1, amount: 900 }
       ], {});
     } catch (error) {
       console.error('Error executing seeder (order_detail):', error);

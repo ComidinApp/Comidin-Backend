@@ -94,6 +94,24 @@ module.exports = {
       status:'active',
       verification_code: null
     },
+    {
+  commerce_id: 21,              // Demo
+  role_id: 1,
+  first_name: 'Demo',
+  last_name: 'Empleado',
+  email: 'proyectofinalcdfs@gmail.com',
+  phone_number: '3510000000',
+  national_id: 'DEMO-EMP-1',
+  address: 'Av. Colón 1234',
+  postal_code: '5000',
+  password: 'Demo!123',
+  created_at: new Date(),
+  city: 'Cordoba',
+  country: 'Argentina',
+  avatar_url: 'https://comidin-assets-tjff.s3.amazonaws.com/avatar/pizza.png',
+  status: 'active',
+  verification_code: null
+}
   ], {});
       
 } catch (error) {

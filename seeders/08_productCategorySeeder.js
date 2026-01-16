@@ -187,6 +187,11 @@ module.exports = {
     commerce_id: 20,
     name: 'Gaseosas',
     description: 'Variedad de gaseosas y juegos.'
+  },
+  {
+    commerce_id: 21, // Demo
+    name: 'Rotiseria',
+    description: 'Comidas listas, clásicas y rendidoras.'
   }
 
   ], {});
