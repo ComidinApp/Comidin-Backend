@@ -350,7 +350,7 @@ module.exports = {
       // DEMO - últimas 10 “ventanas” mensuales
 {
   id: 9101,
-  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 5))"),
+  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 4))"),
   commerce_id: 21,
   address_id: 1,
   created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 1 MONTH)"),
@@ -362,7 +362,7 @@ module.exports = {
 },
 {
   id: 9102,
-  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 5))"),
+  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 4))"),
   commerce_id: 21,
   address_id: 1,
   created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 2 MONTH)"),
@@ -374,7 +374,7 @@ module.exports = {
 },
 {
   id: 9103,
-  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 5))"),
+  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 4))"),
   commerce_id: 21,
   address_id: 1,
   created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 3 MONTH)"),
@@ -386,7 +386,7 @@ module.exports = {
 },
 {
   id: 9104,
-  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 5))"),
+  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 4))"),
   commerce_id: 21,
   address_id: 1,
   created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 4 MONTH)"),
@@ -398,7 +398,7 @@ module.exports = {
 },
 {
   id: 9105,
-  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 5))"),
+  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 4))"),
   commerce_id: 21,
   address_id: 1,
   created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 5 MONTH)"),
@@ -410,7 +410,7 @@ module.exports = {
 },
 {
   id: 9106,
-  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 5))"),
+  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 4))"),
   commerce_id: 21,
   address_id: 1,
   created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 6 MONTH)"),
@@ -422,7 +422,7 @@ module.exports = {
 },
 {
   id: 9107,
-  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 5))"),
+  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 4))"),
   commerce_id: 21,
   address_id: 1,
   created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 7 MONTH)"),
@@ -434,7 +434,7 @@ module.exports = {
 },
 {
   id: 9108,
-  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 5))"),
+  user_id: Sequelize.literal("FLOOR(1 + (RAND() * 4))"),
   commerce_id: 21,
   address_id: 1,
   created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 8 MONTH)"),
