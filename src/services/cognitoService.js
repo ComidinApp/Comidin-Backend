@@ -1,27 +1,122 @@
+const crypto = require("crypto");
 const {
   CognitoIdentityProviderClient,
   AdminCreateUserCommand,
   AdminDeleteUserCommand,
   AdminSetUserPasswordCommand,
   ListUsersCommand,
-  AdminGetUserCommand,
 } = require("@aws-sdk/client-cognito-identity-provider");
 
-// Client 
+// ============================
+// Cognito Client
+// ============================
 const client = new CognitoIdentityProviderClient({
   region: process.env.AWS_REGION,
-  credentials: process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
-    ? {
-        accessKeyId: process.env.AWS_ACCESS_KEY_ID,
-        secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
-      }
-    : undefined,
+  // Ideal: IAM Role en EC2. Si igual vas con keys en env, esto funciona.
+  credentials:
+    process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
+      ? {
+          accessKeyId: process.env.AWS_ACCESS_KEY_ID,
+          secretAccessKey: process.env.AWS_SECRET_ACCESS_KEY,
+        }
+      : undefined,
 });
 
 const employeePoolId = process.env.COGNITO_EMPLOYEE_POOL_ID;
 const userPoolId = process.env.COGNITO_USER_POOL_ID;
 
+// ============================
+// Helpers
+// ============================
+function formatAwsError(error, extra = {}) {
+  return {
+    name: error?.name,
+    message: error?.message,
+    statusCode: error?.$metadata?.httpStatusCode,
+    requestId: error?.$metadata?.requestId,
+    fault: error?.$fault,
+    extra,
+  };
+}
 
+/**
+ * Cognito pool configurado con email como alias:
+ * - NO permite Username con formato email.
+ * - Username debe ser "interno" (random/sanitizado).
+ */
+function generateUsernameFromEmail(email) {
+  const safe = (email || "user")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "_")
+    .slice(0, 30);
+
+  const rand = crypto.randomBytes(6).toString("hex"); // 12 chars
+  return `${safe}_${rand}`;
+}
+
+async function findUserByEmail(poolId, emailToSearch) {
+  const res = await client.send(
+    new ListUsersCommand({
+      UserPoolId: poolId,
+      Filter: `email = "${emailToSearch}"`,
+      Limit: 1,
+    })
+  );
+
+  return res?.Users?.[0] || null;
+}
+
+async function getCognitoEmployeeByEmail(emailToSearch) {
+  try {
+    return await client.send(
+      new ListUsersCommand({
+        UserPoolId: employeePoolId,
+        Filter: `email = "${emailToSearch}"`,
+        Limit: 1,
+      })
+    );
+  } catch (error) {
+    console.error(
+      "Error buscando empleado en Cognito:",
+      formatAwsError(error, { emailToSearch, poolId: employeePoolId })
+    );
+    throw error;
+  }
+}
+
+async function getCognitoUserByEmail(emailToSearch) {
+  try {
+    return await client.send(
+      new ListUsersCommand({
+        UserPoolId: userPoolId,
+        Filter: `email = "${emailToSearch}"`,
+        Limit: 1,
+      })
+    );
+  } catch (error) {
+    console.error(
+      "Error buscando usuario en Cognito:",
+      formatAwsError(error, { emailToSearch, poolId: userPoolId })
+    );
+    throw error;
+  }
+}
+
+// ============================
+// Exports
+// ============================
+
+/**
+ * Crea un empleado en Cognito.
+ * - Username se genera (NO email) por configuración del pool (email alias).
+ * - Guarda email como atributo.
+ * - MessageAction: "SUPPRESS" para que Cognito NO mande mail (lo manejás con SendGrid).
+ * - Si makePermanent = true: setea password permanente y no fuerza cambio.
+ *
+ * options:
+ * - makePermanent: boolean
+ * - returnIfExists: boolean (si ya existe por email, devuelve {alreadyExists:true, user})
+ */
 exports.createNewEmployee = async (employee, options = {}) => {
   let response;
 
@@ -32,37 +127,37 @@ exports.createNewEmployee = async (employee, options = {}) => {
     if (!employee?.password) throw new Error("Employee password is required");
 
     const makePermanent = Boolean(options.makePermanent ?? employee.makePermanent);
-    const useUniqueUsername = Boolean(options.useUniqueUsername); // default false
-    const username = useUniqueUsername
-      ? generateUniqueUsername(employee.email)
-      : employee.email;
 
+    // Si querés hacerlo idempotente: si existe por email, devolvés ese user y no creás de nuevo.
     if (options.returnIfExists) {
       const existing = await findUserByEmail(employeePoolId, employee.email);
       if (existing) {
-        return {
-          alreadyExists: true,
-          user: existing,
-        };
+        return { alreadyExists: true, user: existing };
       }
     }
+
+    // IMPORTANTE: Username NO puede ser email en tu pool
+    const username = generateUsernameFromEmail(employee.email);
 
     const params = {
       UserPoolId: employeePoolId,
       Username: username,
       UserAttributes: [
         { Name: "email", Value: employee.email },
-        { Name: "name", Value: `${employee.first_name || ""} ${employee.last_name || ""}`.trim() },
         { Name: "email_verified", Value: "true" },
+        // Atributo name como "Nombre Apellido"
+        {
+          Name: "name",
+          Value: `${employee.first_name || ""} ${employee.last_name || ""}`.trim(),
+        },
       ],
       TemporaryPassword: employee.password,
-
       MessageAction: "SUPPRESS",
     };
 
     response = await client.send(new AdminCreateUserCommand(params));
 
-    // Si querés que NO le pida cambio de contraseña:
+    // Si querés que NO pida cambio de password (ej: Propietario)
     if (makePermanent && response?.User?.Username) {
       await client.send(
         new AdminSetUserPasswordCommand({
@@ -82,43 +177,17 @@ exports.createNewEmployee = async (employee, options = {}) => {
 
     return response;
   } catch (error) {
-   
-    console.error("Error al crear el empleado en Cognito:", formatAwsError(error, {
-      email: employee?.email,
-      poolId: employeePoolId,
-      attemptedUsername: options?.useUniqueUsername ? "unique(email+timestamp)" : employee?.email,
-      lastResponse: response,
-    }));
-
+    console.error(
+      "Error al crear el empleado en Cognito:",
+      formatAwsError(error, {
+        email: employee?.email,
+        poolId: employeePoolId,
+        lastResponse: response,
+      })
+    );
     throw error;
   }
 };
-
-async function findUserByEmail(poolId, emailToSearch) {
-  const command = new ListUsersCommand({
-    UserPoolId: poolId,
-    Filter: `email = "${emailToSearch}"`,
-    Limit: 1,
-  });
-
-  const res = await client.send(command);
-  return res?.Users?.[0] || null;
-}
-
-async function getCognitoEmployeeByEmail(emailToSearch) {
-  try {
-    return await client.send(
-      new ListUsersCommand({
-        UserPoolId: employeePoolId,
-        Filter: `email = "${emailToSearch}"`,
-        Limit: 1,
-      })
-    );
-  } catch (error) {
-    console.error("Error buscando empleado en Cognito:", formatAwsError(error, { emailToSearch }));
-    throw error;
-  }
-}
 
 exports.deleteEmployeeAccount = async (email) => {
   try {
@@ -142,30 +211,13 @@ exports.deleteEmployeeAccount = async (email) => {
 
     return { deleted: true, username };
   } catch (error) {
-    console.error("Error borrando empleado en Cognito:", formatAwsError(error, { email }));
+    console.error(
+      "Error borrando empleado en Cognito:",
+      formatAwsError(error, { email, poolId: employeePoolId })
+    );
     throw error;
   }
 };
-
-function generateUniqueUsername(email) {
-  const timestamp = Date.now().toString();
-  return `${email}_${timestamp}`;
-}
-
-async function getCognitoUserByEmail(emailToSearch) {
-  try {
-    return await client.send(
-      new ListUsersCommand({
-        UserPoolId: userPoolId,
-        Filter: `email = "${emailToSearch}"`,
-        Limit: 1,
-      })
-    );
-  } catch (error) {
-    console.error("Error buscando usuario en Cognito:", formatAwsError(error, { emailToSearch }));
-    throw error;
-  }
-}
 
 exports.deleteUserAccount = async (email) => {
   try {
@@ -189,20 +241,10 @@ exports.deleteUserAccount = async (email) => {
 
     return { deleted: true, username };
   } catch (error) {
-    console.error("Error borrando usuario en Cognito:", formatAwsError(error, { email }));
+    console.error(
+      "Error borrando usuario en Cognito:",
+      formatAwsError(error, { email, poolId: userPoolId })
+    );
     throw error;
   }
 };
-
-// Helpers
-function formatAwsError(error, extra = {}) {
-  return {
-    name: error?.name,
-    message: error?.message,
-    statusCode: error?.$metadata?.httpStatusCode,
-    requestId: error?.$metadata?.requestId,
-    fault: error?.$fault,
-    // AWS SDK v3 a veces tiene "Code" en name, pero dejo todo
-    extra,
-  };
-}
