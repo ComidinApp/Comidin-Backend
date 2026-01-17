@@ -12,7 +12,6 @@ const {
 // ============================
 const client = new CognitoIdentityProviderClient({
   region: process.env.AWS_REGION,
-  // Ideal: IAM Role en EC2. Si igual vas con keys en env, esto funciona.
   credentials:
     process.env.AWS_ACCESS_KEY_ID && process.env.AWS_SECRET_ACCESS_KEY
       ? {
@@ -39,18 +38,13 @@ function formatAwsError(error, extra = {}) {
   };
 }
 
-/**
- * Cognito pool configurado con email como alias:
- * - NO permite Username con formato email.
- * - Username debe ser "interno" (random/sanitizado).
- */
 function generateUsernameFromEmail(email) {
   const safe = (email || "user")
     .toLowerCase()
     .replace(/[^a-z0-9]/g, "_")
     .slice(0, 30);
 
-  const rand = crypto.randomBytes(6).toString("hex"); // 12 chars
+  const rand = crypto.randomBytes(6).toString("hex");
   return `${safe}_${rand}`;
 }
 
@@ -106,17 +100,6 @@ async function getCognitoUserByEmail(emailToSearch) {
 // Exports
 // ============================
 
-/**
- * Crea un empleado en Cognito.
- * - Username se genera (NO email) por configuración del pool (email alias).
- * - Guarda email como atributo.
- * - MessageAction: "SUPPRESS" para que Cognito NO mande mail (lo manejás con SendGrid).
- * - Si makePermanent = true: setea password permanente y no fuerza cambio.
- *
- * options:
- * - makePermanent: boolean
- * - returnIfExists: boolean (si ya existe por email, devuelve {alreadyExists:true, user})
- */
 exports.createNewEmployee = async (employee, options = {}) => {
   let response;
 
@@ -128,7 +111,6 @@ exports.createNewEmployee = async (employee, options = {}) => {
 
     const makePermanent = Boolean(options.makePermanent ?? employee.makePermanent);
 
-    // Si querés hacerlo idempotente: si existe por email, devolvés ese user y no creás de nuevo.
     if (options.returnIfExists) {
       const existing = await findUserByEmail(employeePoolId, employee.email);
       if (existing) {
@@ -136,7 +118,6 @@ exports.createNewEmployee = async (employee, options = {}) => {
       }
     }
 
-    // IMPORTANTE: Username NO puede ser email en tu pool
     const username = generateUsernameFromEmail(employee.email);
 
     const params = {
@@ -145,7 +126,6 @@ exports.createNewEmployee = async (employee, options = {}) => {
       UserAttributes: [
         { Name: "email", Value: employee.email },
         { Name: "email_verified", Value: "true" },
-        // Atributo name como "Nombre Apellido"
         {
           Name: "name",
           Value: `${employee.first_name || ""} ${employee.last_name || ""}`.trim(),
@@ -157,7 +137,6 @@ exports.createNewEmployee = async (employee, options = {}) => {
 
     response = await client.send(new AdminCreateUserCommand(params));
 
-    // Si querés que NO pida cambio de password (ej: Propietario)
     if (makePermanent && response?.User?.Username) {
       await client.send(
         new AdminSetUserPasswordCommand({
@@ -175,7 +154,7 @@ exports.createNewEmployee = async (employee, options = {}) => {
       makePermanent,
     });
 
-    return response;
+    return response; // contiene User.Username
   } catch (error) {
     console.error(
       "Error al crear el empleado en Cognito:",

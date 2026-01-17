@@ -2,44 +2,54 @@
 const { Op } = require('sequelize');
 const Employee = require('../models/employee');
 
-// 👇 IMPORTAMOS EL SERVICIO DE COGNITO (ajustá la ruta si tu archivo tiene otro nombre)
 const { createNewEmployee } = require('../services/cognitoService');
 const { sendEmployeeWelcome } = require('../services/emailSender');
+
 // ===========================================================================
-// CREAR EMPLEADO  (BD + COGNITO)
+// CREAR EMPLEADO  (BD + COGNITO + MAIL)
 // ===========================================================================
 exports.createEmployee = async (req, res) => {
   try {
     const data = req.body;
 
+    // Validación mínima para que no se cree cualquier cosa
+    if (!data?.email) {
+      return res.status(400).json({ error: 'Bad Request', message: 'email es requerido' });
+    }
+    if (!data?.password) {
+      return res.status(400).json({ error: 'Bad Request', message: 'password provisoria es requerida' });
+    }
+
     // 1) Crear empleado en BD
     const newEmployee = await Employee.create(data);
-
     const roleId = Number(newEmployee.role_id ?? data.role_id);
 
     // 2) Crear usuario en Cognito
-    //    Usamos email, first_name y password del body
     try {
-      await createNewEmployee({
-        email: newEmployee.email,
-        first_name: newEmployee.first_name,
-        password: data.password, // viene en el body del request
+      await createNewEmployee(
+        {
+          email: newEmployee.email,
+          first_name: newEmployee.first_name,
+          last_name: newEmployee.last_name,
+          password: data.password, // 👈 viene del request
         },
         {
-          makePermanent: roleId === 6 // Si el rol es propietario (6), hacerlo permanente
+          makePermanent: roleId === 6, // Propietario: password permanente
         }
       );
+
+      // 3) Enviar email al empleado con contraseña provisoria (si NO es propietario)
       if (roleId !== 6) {
-        await sendEmployeeWelcome(newEmployee,password);
-      } // No le enviamos email de bienvenida al propietario
-    } catch (cognitoError) {
-      console.error('Error creando empleado en Cognito:', cognitoError);
-      // Opcional: acá podrías borrar el empleado de la BD si querés consistencia estricta:
+        await sendEmployeeWelcome(newEmployee, data.password); // 👈 acá estaba el bug
+      }
+    } catch (cognitoOrEmailError) {
+      console.error('Error creando empleado en Cognito o enviando mail:', cognitoOrEmailError);
+
+      // Si querés consistencia estricta, podrías revertir BD si Cognito falla:
       // await newEmployee.destroy();
-      // return res.status(500).json({
-      //   error: 'Error al crear el usuario en Cognito',
-      //   message: cognitoError.message || 'No se pudo crear el usuario en Cognito',
-      // });
+      // return res.status(500).json({ error: 'Error al crear usuario en Cognito', message: cognitoOrEmailError.message });
+
+      // Por ahora: no rompemos la creación del empleado en BD
     }
 
     return res.status(201).json({
@@ -166,9 +176,7 @@ exports.updateEmployee = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const [updated] = await Employee.update(req.body, {
-      where: { id },
-    });
+    const [updated] = await Employee.update(req.body, { where: { id } });
 
     if (!updated) {
       return res.status(404).json({ error: 'Empleado no encontrado' });
@@ -196,9 +204,7 @@ exports.deleteEmployee = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const deleted = await Employee.destroy({
-      where: { id },
-    });
+    const deleted = await Employee.destroy({ where: { id } });
 
     if (!deleted) {
       return res.status(404).json({ error: 'Empleado no encontrado' });
