@@ -25,23 +25,26 @@ exports.sendVerificationCode = async (employee, verificationCode) => {
   }
 };
 
-exports.sendCommerceWelcome = async (commerce) => {
+exports.sendEmployeeWelcome = async (employee, temporaryPassword) => {
   try {
     const msg = {
-      to: commerce.email,
+      to: employee.email,
       from: 'no-reply@comidin.com.ar',
-      templateId: process.env.SENDGRID_COMMERCE_WELCOME,
+      templateId: process.env.SENDGRID_EMPLOYEE_WELCOME,
       dynamic_template_data: {
-        commerceName: commerce.name,
+        userName: employee.first_name || 'Hola',
+        contactMail: 'soporte@comidin.com.ar', // o process.env.SUPPORT_EMAIL
+        temporaryPassword: temporaryPassword,
+        loginUrl: process.env.FRONTEND_URL ? `${process.env.FRONTEND_URL}/login` : 'https://comidin.com.ar/login',
       },
     };
 
     await sgMail.send(msg);
+    console.log('Email bienvenida empleado enviado:', { to: employee.email });
   } catch (error) {
-    console.error('Error al enviar mensaje de bienvenida al comercio:', error);
-    if (error.response) {
-      console.error(error.response.body);
-    }
+    console.error('Error al enviar bienvenida empleado (SendGrid):', error);
+    if (error.response) console.error(error.response.body);
+    throw error; // si querés enterarte y no “tragar” el error
   }
 };
 
@@ -68,6 +71,7 @@ exports.sendEmployeeWelcome = async (user) => {
 
     await sgMail.send(msg);
   } catch (error) {
+  
     console.error('Error al enviar mensaje de bienvenida al usuario:', error);
     if (error.response) console.error(error.response.body);
   }
