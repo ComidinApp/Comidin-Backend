@@ -30,7 +30,7 @@ exports.createEmployee = async (req, res) => {
         }
       );
       if (roleId !== 6) {
-        await sendEmployeeWelcome(newEmployee);
+        await sendEmployeeWelcome(newEmployee,password);
       } // No le enviamos email de bienvenida al propietario
     } catch (cognitoError) {
       console.error('Error creando empleado en Cognito:', cognitoError);
