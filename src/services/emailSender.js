@@ -296,3 +296,125 @@ exports.sendOrderStatusUpdateCustomer = async ({ orderId, newStatus }) => {
 
   }
 };
+
+exports.sendNewOrderToCommerceEmployees = async ({ orderId, roleIds = [1, 5, 6] }) => {
+  try {
+    const templateId = process.env.SENGRID_NEW_ORDER || process.env.SENDGRID_NEW_ORDER;
+
+    if (!templateId) {
+      throw new Error('Missing env var: SENGRID_NEW_ORDER (or SENDGRID_NEW_ORDER)');
+    }
+
+    const Order = require('../models/order');
+    const getEmployeeModel = () => require('../models/employee');
+
+    const orderFull = await Order.findOrderById(orderId);
+    if (!orderFull) return;
+
+    const commerceId = orderFull?.commerce_id || orderFull?.commerce?.id;
+    if (!commerceId) return;
+
+    // Empleados del comercio 
+    const Employee = getEmployeeModel();
+    const employees = await Employee.findEmployeesByCommerceIdAndRoleIds(commerceId, roleIds);
+
+    const recipients = (employees || [])
+      .map(e => (e?.email || '').trim())
+      .filter(email => email && email.includes('@'));
+
+    const uniqueRecipients = [...new Set(recipients)];
+    if (uniqueRecipients.length === 0) return;
+
+    // Items
+    const details = Array.isArray(orderFull?.order_details) ? orderFull.order_details : [];
+    const orderItems =
+      details
+        .map((d) => {
+          const name = d?.publication?.product?.name || 'Producto';
+          const qty = Number(d?.quantity ?? 1);
+          return qty > 1 ? `${name} x${qty}` : name;
+        })
+        .filter(Boolean)
+        .join(', ') || 'Sin detalle de productos';
+
+    const quantityItem =
+      details.reduce((acc, d) => acc + (Number(d?.quantity) || 0), 0) ||
+      Number(orderFull?.items_quantity) ||
+      1;
+
+    // Total
+    const totalAmountRaw =
+      orderFull?.total_amount ??
+      orderFull?.total ??
+      orderFull?.total_price ??
+      null;
+
+    const totalAmountFallback = details.reduce((acc, d) => {
+      const qty = Number(d?.quantity ?? 0) || 0;
+      const price =
+        Number(d?.price ?? d?.unit_price ?? d?.publication?.discounted_price ?? d?.publication?.price ?? 0) || 0;
+      return acc + qty * price;
+    }, 0);
+
+    const totalAmountNumber = Number(totalAmountRaw ?? totalAmountFallback ?? 0) || 0;
+
+    const totalAmount = totalAmountNumber.toLocaleString('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      minimumFractionDigits: 2,
+    });
+
+    // Dirección
+    const addr = orderFull?.address || {};
+    const userAddress =
+      [addr?.street_name, addr?.number, addr?.postal_code]
+        .filter(Boolean)
+        .join(' ')
+        .replace(/\s+/g, ' ')
+        .trim() || 'Sin dirección informada';
+
+    // Cliente
+    const userName =
+      `${orderFull?.user?.first_name || ''} ${orderFull?.user?.last_name || ''}`.trim() ||
+      orderFull?.user?.email ||
+      'Cliente';
+
+   
+    const payMethod =
+      (orderFull?.pay_method || orderFull?.payment_method || orderFull?.payment?.method || 'No informado')
+        .toString()
+        .trim();
+
+    const commerceName = orderFull?.commerce?.name || 'tu comercio';
+
+    const dynamic_template_data = {
+      commerceName,
+      orderId: orderFull?.id,          // {{orderId}}
+      orderItems,                      // {{orderItems}}
+      quantityItem,                    // {{quantityItem}}
+      totalAmount,                     // {{totalAmount}}
+      userAddress,                     // {{userAddress}}
+      userName,                        // {{userName}}
+      payMethod,                       // {{payMethod}}
+    };
+
+   
+    for (const to of uniqueRecipients) {
+      await sgMail.send({
+        to,
+        from: 'no-reply@comidin.com.ar',
+        templateId,
+        dynamic_template_data,
+      });
+    }
+
+    console.log('New order email sent to commerce employees:', {
+      orderId: orderFull?.id,
+      recipients: uniqueRecipients.length,
+    });
+  } catch (error) {
+    console.error('Error sending new order email to commerce employees:', error);
+    if (error.response) console.error(error.response.body);
+    throw error;
+  }
+};

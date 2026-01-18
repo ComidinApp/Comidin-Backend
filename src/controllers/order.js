@@ -48,7 +48,18 @@ exports.createOrder = async (req, res) => {
       return order;
     });
 
+
     res.status(201).json(result);
+
+  
+    try {
+      await emailSender.sendNewOrderToCommerceEmployees({
+        orderId: result.id,
+        // roleIds: [1, 5, 6], 
+      });
+    } catch (mailError) {
+      console.error('Order created but new-order email failed:', mailError);
+    }
   } catch (error) {
     console.error('Error creating Order:', error);
     res.status(409).json({ error: 'Conflict', message: error });
