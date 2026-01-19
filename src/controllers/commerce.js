@@ -3,11 +3,7 @@ const Employee = require('../models/employee');
 const Publication = require('../models/publication');
 const Rating = require('../models/rating'); // 👈 NUEVO
 
-const {
-  sendCommerceWelcome,
-  sendRejectedNoticeCommerce,
-  sendAdmittedNoticeCommerce,
-} = require('../services/emailSender');
+const emailSender = require('../services/emailSender');
 
 const { uploadCommerceImage } = require('../services/s3Service');
 const { processImage } = require('../helpers/imageHelper');
@@ -29,7 +25,7 @@ exports.createCommerce = async (req, res) => {
     // 2) Enviar mail de bienvenida al COMERCIO (no al empleado)
     //    Si querés que un fallo de email no rompa la creación, lo dejamos en try/catch separado.
     try {
-      await sendCommerceWelcome(commerce);
+      await emailSender.sendCommerceWelcome(commerce);
     } catch (emailError) {
       console.error('Error enviando mail de bienvenida al comercio:', emailError);
       // No cortamos el flujo: el comercio ya se creó.
