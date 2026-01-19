@@ -1,7 +1,7 @@
 const Commerce = require('../models/commerce');
 const Employee = require('../models/employee');
 const Publication = require('../models/publication');
-const Rating = require('../models/rating'); // 👈 NUEVO
+const Rating = require('../models/rating');
 
 const emailSender = require('../services/emailSender');
 
@@ -12,23 +12,27 @@ exports.createCommerce = async (req, res) => {
   try {
     const { image_url, image_name, ...commerceData } = req.body;
 
-    // Imagen (si viene)
     if (image_url) {
       const { buffer, contentType, filename } = processImage(image_url, image_name);
       const imageUrl = await uploadCommerceImage(buffer, contentType, filename);
       commerceData.image_url = imageUrl;
     }
 
-    // 1) Crear comercio en BD
     const commerce = await Commerce.create(commerceData);
 
-    // 2) Enviar mail de bienvenida al COMERCIO (no al empleado)
-    //    Si querés que un fallo de email no rompa la creación, lo dejamos en try/catch separado.
     try {
-      await emailSender.sendCommerceWelcome(commerce);
+      const toEmail =
+        (req.body?.email ||
+          req.body?.owner_email ||
+          req.body?.admin_email ||
+          '').trim();
+
+      await emailSender.sendCommerceWelcome({
+        commerce,
+        toEmail,
+      });
     } catch (emailError) {
       console.error('Error enviando mail de bienvenida al comercio:', emailError);
-      // No cortamos el flujo: el comercio ya se creó.
     }
 
     return res.status(201).json(commerce);
@@ -57,7 +61,6 @@ exports.findCommerceById = async (req, res) => {
       return res.status(404).json({ error: 'Commerce not found with id: ' + id });
     }
 
-    // --- 🔢 Cálculo de rating para este comercio ---
     let ratingSummary = null;
     const ratings = await Rating.findRatingsByCommerceId(id);
 
@@ -106,7 +109,7 @@ exports.changeCommerceStatus = async (req, res) => {
     const { status } = req.body;
     const { id } = req.params;
 
-    let commerce = await Commerce.findByPk(id);
+    const commerce = await Commerce.findByPk(id);
     if (!commerce) {
       return res.status(404).json({ error: 'Commerce not found with id: ' + id });
     }
@@ -114,18 +117,17 @@ exports.changeCommerceStatus = async (req, res) => {
     commerce.status = status;
     await commerce.save();
 
-    let employeeAdmin = await Employee.findAdminEmployeeByCommerceId(id);
+    const employeeAdmin = await Employee.findAdminEmployeeByCommerceId(id);
     if (!employeeAdmin) {
       return res.status(404).json({ error: 'Employee not found with commerce id: ' + id });
     }
 
-    // Ojo: poné await para no dejar promesas volando en producción.
     switch (status) {
       case 'admitted':
-        await sendAdmittedNoticeCommerce(employeeAdmin);
+        await emailSender.sendAdmittedNoticeCommerce(employeeAdmin);
         break;
       case 'rejected':
-        await sendRejectedNoticeCommerce(employeeAdmin);
+        await emailSender.sendRejectedNoticeCommerce(employeeAdmin);
         break;
       default:
         break;
@@ -142,7 +144,7 @@ exports.activateCommerce = async (req, res) => {
   try {
     const { id } = req.params;
 
-    let commerce = await Commerce.findByPk(id);
+    const commerce = await Commerce.findByPk(id);
     if (!commerce) {
       return res.status(404).json({ error: 'Commerce not found with id: ' + id });
     }
@@ -190,7 +192,6 @@ exports.findCommercesByCategoryId = async (req, res) => {
   }
 };
 
-// 🔎 Búsqueda con filtros (código postal / publicaciones próximas a vencer)
 exports.searchCommerces = async (req, res) => {
   try {
     const { postal_code, expiring_publications } = req.query;
