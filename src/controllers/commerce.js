@@ -1,3 +1,4 @@
+// src/controllers/commerce.js
 const Commerce = require('../models/commerce');
 const Employee = require('../models/employee');
 const Publication = require('../models/publication');
@@ -20,20 +21,10 @@ exports.createCommerce = async (req, res) => {
 
     const commerce = await Commerce.create(commerceData);
 
-    try {
-      const toEmail =
-        (req.body?.email ||
-          req.body?.owner_email ||
-          req.body?.admin_email ||
-          '').trim();
-
-      await emailSender.sendCommerceWelcome({
-        commerce,
-        toEmail,
-      });
-    } catch (emailError) {
-      console.error('Error enviando mail de bienvenida al comercio:', emailError);
-    }
+    // ✅ IMPORTANTE:
+    // Ya NO enviamos el mail acá.
+    // Porque el recipient real es el admin employee (role_id=6) y todavía no existe.
+    // El mail se envía en el flujo de creación del employee/Cognito.
 
     return res.status(201).json(commerce);
   } catch (error) {

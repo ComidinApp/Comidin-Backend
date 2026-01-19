@@ -1,12 +1,21 @@
 // src/controllers/employee.js
 const { Op } = require('sequelize');
 const Employee = require('../models/employee');
+const Commerce = require('../models/commerce');
 
 const { createNewEmployee } = require('../services/cognitoService');
-const { sendEmployeeWelcome } = require('../services/emailSender');
+const { sendEmployeeWelcome, sendCommerceWelcome } = require('../services/emailSender');
 
 // ===========================================================================
 // CREAR EMPLEADO  (BD + COGNITO + MAIL)
+// ===========================================================================
+// Reglas de negocio:
+// - role_id === 6 (admin/propietario):
+//   - Cognito con password permanente
+//   - Enviar sendCommerceWelcome al mail del empleado (recipient real)
+// - role_id !== 6:
+//   - Cognito normal
+//   - Enviar sendEmployeeWelcome con password provisoria
 // ===========================================================================
 exports.createEmployee = async (req, res) => {
   try {
@@ -31,16 +40,46 @@ exports.createEmployee = async (req, res) => {
           email: newEmployee.email,
           first_name: newEmployee.first_name,
           last_name: newEmployee.last_name,
-          password: data.password, // 👈 viene del request
+          password: data.password, // viene del request
         },
         {
           makePermanent: roleId === 6, // Propietario: password permanente
         }
       );
 
-      // 3) Enviar email al empleado con contraseña provisoria (si NO es propietario)
-      if (roleId !== 6) {
-        await sendEmployeeWelcome(newEmployee, data.password); // 👈 acá estaba el bug
+      // 3) Enviar mails según rol
+      if (roleId === 6) {
+        // ✅ Admin/propietario: mail “welcome commerce” al email del empleado
+        // Necesitamos commerceName, así que traemos el comercio por commerce_id
+        const commerceId = newEmployee.commerce_id;
+
+        if (!commerceId) {
+          console.warn('Owner employee created but missing commerce_id. Skipping sendCommerceWelcome.', {
+            employeeId: newEmployee.id,
+            email: newEmployee.email,
+          });
+        } else {
+          const commerce = await Commerce.findByPk(commerceId);
+
+          // Si no existe por algún motivo raro, igual no rompemos el flujo
+          if (!commerce) {
+            console.warn('Commerce not found for owner employee. Skipping sendCommerceWelcome.', {
+              commerceId,
+              employeeId: newEmployee.id,
+            });
+          } else {
+            await sendCommerceWelcome({
+              commerce,
+              toEmail: newEmployee.email,
+            });
+          }
+        }
+
+        // 🔕 NO enviamos sendEmployeeWelcome para role 6 (mantengo tu regla original)
+        // Si en algún momento querés mandar ambos, lo agregás acá.
+      } else {
+        // 4) No propietario: enviar email al empleado con contraseña provisoria
+        await sendEmployeeWelcome(newEmployee, data.password);
       }
     } catch (cognitoOrEmailError) {
       console.error('Error creando empleado en Cognito o enviando mail:', cognitoOrEmailError);

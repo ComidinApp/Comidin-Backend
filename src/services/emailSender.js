@@ -420,26 +420,21 @@ exports.sendNewOrderToCommerceEmployees = async ({ orderId, roleIds = [1, 5, 6] 
 };
 
 
-exports.sendCommerceWelcome = async (commerce) => {
+// ✅ ESTA es la clave: mail del comercio (en realidad para el admin), pero se llama con toEmail explícito
+exports.sendCommerceWelcome = async ({ commerce, toEmail } = {}) => {
   try {
     const templateId = process.env.SENDGRID_COMMERCE_WELCOME;
     if (!templateId) {
       throw new Error('Missing env var: SENDGRID_COMMERCE_WELCOME');
     }
 
-    // 1) Intento 1: email directo del comercio
-    let to = (commerce?.email || '').trim();
-
-    // 2) Fallback: email del admin employee
-    if (!to || !to.includes('@')) {
-      const Employee = require('../models/employee');
-      const adminEmployee = await Employee.findAdminEmployeeByCommerceId(commerce?.id);
-
-      to = (adminEmployee?.email || '').trim();
-    }
+    const to = (toEmail || '').trim();
 
     if (!to || !to.includes('@')) {
-      console.log('Commerce welcome: no recipient email found', { commerceId: commerce?.id });
+      console.log('Commerce welcome: no recipient email found', {
+        commerceId: commerce?.id,
+        toEmail,
+      });
       return;
     }
 
@@ -453,7 +448,7 @@ exports.sendCommerceWelcome = async (commerce) => {
     };
 
     await sgMail.send(msg);
-s
+
     console.log('Commerce welcome email sent:', { commerceId: commerce?.id, to });
   } catch (error) {
     console.error('Error enviando mail de bienvenida al comercio:', error);
