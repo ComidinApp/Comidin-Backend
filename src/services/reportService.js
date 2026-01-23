@@ -75,7 +75,7 @@ const ciStatusIn = (values) =>
    ========================== */
 // Nota: en reportes generalmente se exportan "según preset" (validStatuses),
 // pero también se usan estos en PDFs en algunos lugares.
-const DONE_STATUSES = ['PAID', 'DELIVERED', 'COMPLETED'];
+const DONE_STATUSES = ['DELIVERED', 'COMPLETED'];
 const CLAIM_GROUP_STATUSES = ['CLAIMED', 'RETURNED']; // ✅ agrupación única "reclamado"
 
 /* ==========================

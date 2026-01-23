@@ -240,7 +240,7 @@ exports.sendOrderStatusUpdateCustomer = async ({ orderId, newStatus }) => {
       CONFIRMED: 'Confirmado',
       COMPLETED: 'Completado',
       CANCELLED: 'Cancelado',
-      REFUNDED: 'Devuelto',
+      Delivered: 'Entregado',
       CLAIMED: 'Reclamado',
     };
 

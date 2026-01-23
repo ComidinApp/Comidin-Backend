@@ -37,8 +37,8 @@ exports.getOverview = async (req, res) => {
 
     // Presets de estados
     const STATUS_PRESETS = {
-      valid: ['PAID', 'DELIVERED', 'COMPLETED'],             // ventas concretadas
-      open:  ['PAID', 'DELIVERED', 'COMPLETED', 'PENDING'],  // incluye pendientes
+      valid: ['DELIVERED', 'COMPLETED'],             // ventas concretadas
+      open:  ['DELIVERED', 'COMPLETED', 'PENDING'],  // incluye pendientes
       all:   'ALL',                                          // sin filtro por estado
     };
     const preset = String(status).toLowerCase();

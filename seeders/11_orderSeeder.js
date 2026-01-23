@@ -24,7 +24,7 @@ module.exports = {
           address_id: 1,
           created_at: new Date('2024-09-26'),
           total_amount: 300,               // = 1*100 + 1*200
-          status: 'PAID',
+          status: 'PENDING',
           delivery_type: 'pickup',
           payment_method: 'cash',
           items_quantity: 2                // = 1 + 1
@@ -86,7 +86,7 @@ module.exports = {
           address_id: 1,
           created_at: new Date('2024-10-01'),
           total_amount: 1100,              // = 3*200 + 1*500
-          status: 'PAID',
+          status: 'DELIVERED',
           delivery_type: 'pickup',
           payment_method: 'mercadopago',
           items_quantity: 4
@@ -136,7 +136,7 @@ module.exports = {
           address_id: 1,
           created_at: new Date('2024-10-05'),
           total_amount: 1600,              // = 4*400
-          status: 'PAID',
+          status: 'CONFIRMED',
           delivery_type: 'pickup',
           payment_method: 'mercadopago',
           items_quantity: 4
@@ -186,7 +186,7 @@ module.exports = {
           address_id: 1,
           created_at: new Date('2024-10-09'),
           total_amount: 4000,              // = 8*500
-          status: 'PAID',
+          status: 'CONFIRMED',
           delivery_type: 'pickup',
           payment_method: 'mercadopago',
           items_quantity: 8
@@ -211,7 +211,7 @@ module.exports = {
         created_at: new Date('2024-11-15'),
         total_amount: 2500,
         items_quantity: 3,
-        status: 'PAID',
+        status: 'CONFIRMED',
         delivery_type: 'delivery',
         payment_method: 'mercadopago',
       },
@@ -247,7 +247,7 @@ module.exports = {
         created_at: new Date('2025-02-08'),
         total_amount: 2700,
         items_quantity: 3,
-        status: 'PAID',
+        status: 'CONFIRMED',
         delivery_type: 'delivery',
         payment_method: 'mercadopago',
       },
@@ -283,7 +283,7 @@ module.exports = {
         created_at: new Date('2025-05-23'),
         total_amount: 2800,
         items_quantity: 3,
-        status: 'PAID',
+        status: 'CONFIRMED',
         delivery_type: 'delivery',
         payment_method: 'mercadopago',
       },
@@ -319,7 +319,7 @@ module.exports = {
         created_at: new Date('2025-08-16'),
         total_amount: 2300,
         items_quantity: 3,
-        status: 'PAID',
+        status: 'CONFIRMED',
         delivery_type: 'delivery',
         payment_method: 'mercadopago',
       },
@@ -355,7 +355,7 @@ module.exports = {
   address_id: 1,
   created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 1 MONTH)"),
   total_amount: 4000,
-  status: 'COMPLETED',
+  status: 'CLAIMED',
   delivery_type: 'delivery',
   payment_method: 'mercadopago',
   items_quantity: 2
@@ -367,7 +367,7 @@ module.exports = {
   address_id: 1,
   created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 2 MONTH)"),
   total_amount: 3200,
-  status: 'COMPLETED',
+  status: 'CLAIMED',
   delivery_type: 'pickup',
   payment_method: 'cash',
   items_quantity: 2

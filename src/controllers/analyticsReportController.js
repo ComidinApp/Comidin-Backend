@@ -22,8 +22,8 @@ exports.getExecutiveReportPDF = async (req, res) => {
 
     // Presets de estados (igual que controller original)
     const STATUS_PRESETS = {
-      valid: ['PAID', 'DELIVERED', 'COMPLETED'],
-      open:  ['PAID', 'DELIVERED', 'COMPLETED', 'PENDING'],
+      valid: ['DELIVERED', 'COMPLETED'],
+      open:  ['DELIVERED', 'COMPLETED', 'PENDING'],
       all:   'ALL',
     };
     const preset = String(status).toLowerCase();
@@ -73,8 +73,8 @@ exports.getOrdersExportXLSX = async (req, res) => {
 
     // Igual preset que en overview (por defecto exportamos TODO: status = all)
     const STATUS_PRESETS = {
-      valid: ['PAID', 'DELIVERED', 'COMPLETED'],
-      open:  ['PAID', 'DELIVERED', 'COMPLETED', 'PENDING'],
+      valid: ['DELIVERED', 'COMPLETED'],
+      open:  ['DELIVERED', 'COMPLETED', 'PENDING'],
       all:   'ALL',
     };
     const preset = String(status).toLowerCase();

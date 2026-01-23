@@ -14,7 +14,7 @@ const {
 // =======================
 // Estados de negocio
 // =======================
-const DONE_STATUSES = ['PAID', 'DELIVERED', 'COMPLETED'];
+const DONE_STATUSES = ['DELIVERED', 'COMPLETED'];
 
 // "devuelto o reclamado" => siempre cuenta como "reclamado"
 const CLAIM_GROUP_STATUSES = ['CLAIMED', 'RETURNED'];
@@ -90,7 +90,7 @@ function monthKeyFromYYYYMM01(v) {
 exports.getOverview = async ({
   commerceId,
   period = 'last3m',
-  validStatuses = ['PAID', 'DELIVERED', 'COMPLETED'],
+  validStatuses = ['DELIVERED', 'COMPLETED'],
 } = {}) => {
   const { start, end, monthsForSeries, mode } = computeWindow(period);
   const useWindow = !!start;
