@@ -95,50 +95,241 @@ module.exports = {
 
       { order_id: 111, publication_id: 25, created_at: new Date('2025-10-05'), quantity: 1, amount: 2300 },
       { order_id: 111, publication_id: 26, created_at: new Date('2025-10-05'), quantity: 1, amount: 900 },
-      // 9101 total 4000 = 1*2300 + 1*1700
-{ order_id: 9101, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 1 MONTH)"), quantity: 1, amount: 2300 },
-{ order_id: 9101, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 1 MONTH)"), quantity: 1, amount: 1700 },
+{ order_id: 9401, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 1 MONTH)"), quantity: 2, amount: 3400 },
+{ order_id: 9401, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 1 MONTH)"), quantity: 1, amount: 900 },
 
-// 9102 total 3200 = 1*1700 + 1*1500 (ajusto con 9004 a 1500? no: dejo 9003 (900) + 9004 (2900) no da)
-// Mejor: 1*1700 + 1*1500 no existe, así que lo hago 1*2300 + 1*900 = 3200
-{ order_id: 9102, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 2 MONTH)"), quantity: 1, amount: 2300 },
-{ order_id: 9102, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 2 MONTH)"), quantity: 1, amount: 900 },
+{ order_id: 9402, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 1 MONTH), INTERVAL 1 DAY)"), quantity: 3, amount: 2700 },
 
-// 9103 total 5200 = 1*2300 + 1*2900
-{ order_id: 9103, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 3 MONTH)"), quantity: 1, amount: 2300 },
-{ order_id: 9103, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 3 MONTH)"), quantity: 1, amount: 2900 },
+{ order_id: 9403, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 1 MONTH), INTERVAL 3 DAY)"), quantity: 2, amount: 5800 },
 
-// 9104 total 1800 = 2*900
-{ order_id: 9104, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 4 MONTH)"), quantity: 2, amount: 1800 },
+{ order_id: 9404, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 1 MONTH), INTERVAL 5 DAY)"), quantity: 2, amount: 4600 },
 
-// 9105 total 4100 = 1*2300 + 2*900
-{ order_id: 9105, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 5 MONTH)"), quantity: 1, amount: 2300 },
-{ order_id: 9105, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 5 MONTH)"), quantity: 2, amount: 1800 },
+{ order_id: 9405, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 2 MONTH)"), quantity: 1, amount: 1700 },
+{ order_id: 9405, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 2 MONTH)"), quantity: 1, amount: 900 },
+{ order_id: 9405, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 2 MONTH)"), quantity: 1, amount: 2300 },
 
-// 9106 total 2500 = 1*1700 + 1*900 (2600) no. 1*2300 + 1*900 (3200) no.
-// Entonces lo dejo 1*1700 + 1*900 = 2600 y ajusto order 9106 arriba? NO. Mejor: 1*900 + 1*900 + 1*900 = 2700 tampoco.
-// Solución limpia: usar publication 9002 (1700) + publication 9003 (900) = 2600, así que acá uso 2600 y si querés exactitud cambiá order 9106 total a 2600.
-// Yo te lo dejo exacto con total 2500:  (no existe con estos precios) -> uso 1*2500 directo: cambiá price de 9001 a 2500? No.
-// OK, coherencia matemática > capricho: dejo 2600 y sugerencia mínima: cambiá el total_amount de 9106 a 2600.
-{ order_id: 9106, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 6 MONTH)"), quantity: 1, amount: 1700 },
-{ order_id: 9106, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 6 MONTH)"), quantity: 1, amount: 900 },
+{ order_id: 9406, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 2 MONTH), INTERVAL 1 DAY)"), quantity: 1, amount: 1700 },
 
-// 9107 total 5900 = 1*2300 + 1*1700 + 1*1900? no. 1*2900 + 2*1700 = 6300.
-// Mejor: 1*2900 + 1*2300 + 1*900 = 6100.
-// Con estos precios, 5900 exacto no sale. Te lo dejo coherente y ajustás total_amount.
-{ order_id: 9107, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 7 MONTH)"), quantity: 1, amount: 2900 },
-{ order_id: 9107, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 7 MONTH)"), quantity: 1, amount: 2300 },
-{ order_id: 9107, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 7 MONTH)"), quantity: 1, amount: 900 },
+{ order_id: 9407, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 2 MONTH), INTERVAL 3 DAY)"), quantity: 2, amount: 1800 },
 
-// 9108 total 3400 = 2*1700
-{ order_id: 9108, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 8 MONTH)"), quantity: 2, amount: 3400 },
+{ order_id: 9408, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 2 MONTH), INTERVAL 5 DAY)"), quantity: 2, amount: 5800 },
 
-// 9109 total 4700 = 1*2900 + 2*900 (4700)
-{ order_id: 9109, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 9 MONTH)"), quantity: 1, amount: 2900 },
-{ order_id: 9109, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 9 MONTH)"), quantity: 2, amount: 1800 },
+{ order_id: 9409, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 2 MONTH), INTERVAL 7 DAY)"), quantity: 2, amount: 4600 },
 
-// 9110 total 900 = 1*900
-{ order_id: 9110, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 10 MONTH)"), quantity: 1, amount: 900 }
+{ order_id: 9410, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 2 MONTH), INTERVAL 9 DAY)"), quantity: 3, amount: 2700 },
+
+{ order_id: 9411, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 2 MONTH), INTERVAL 11 DAY)"), quantity: 2, amount: 5800 },
+
+{ order_id: 9412, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 3 MONTH)"), quantity: 2, amount: 4600 },
+
+{ order_id: 9413, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 3 MONTH), INTERVAL 1 DAY)"), quantity: 1, amount: 1700 },
+{ order_id: 9413, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 3 MONTH), INTERVAL 1 DAY)"), quantity: 1, amount: 900 },
+{ order_id: 9413, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 3 MONTH), INTERVAL 1 DAY)"), quantity: 1, amount: 2300 },
+
+{ order_id: 9414, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 3 MONTH), INTERVAL 3 DAY)"), quantity: 1, amount: 2300 },
+
+{ order_id: 9415, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 3 MONTH), INTERVAL 5 DAY)"), quantity: 2, amount: 1800 },
+
+{ order_id: 9416, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 3 MONTH), INTERVAL 7 DAY)"), quantity: 2, amount: 5800 },
+
+{ order_id: 9417, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 3 MONTH), INTERVAL 9 DAY)"), quantity: 2, amount: 4600 },
+
+{ order_id: 9418, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 3 MONTH), INTERVAL 11 DAY)"), quantity: 3, amount: 2700 },
+
+{ order_id: 9419, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 3 MONTH), INTERVAL 13 DAY)"), quantity: 2, amount: 5800 },
+
+{ order_id: 9420, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 3 MONTH), INTERVAL 15 DAY)"), quantity: 2, amount: 4600 },
+
+{ order_id: 9421, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 3 MONTH), INTERVAL 17 DAY)"), quantity: 1, amount: 2300 },
+{ order_id: 9421, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 3 MONTH), INTERVAL 17 DAY)"), quantity: 1, amount: 1700 },
+{ order_id: 9421, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 3 MONTH), INTERVAL 17 DAY)"), quantity: 2, amount: 1800 },
+
+{ order_id: 9422, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 4 MONTH)"), quantity: 1, amount: 2300 },
+
+{ order_id: 9423, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 4 MONTH), INTERVAL 1 DAY)"), quantity: 2, amount: 1800 },
+
+{ order_id: 9424, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 4 MONTH), INTERVAL 3 DAY)"), quantity: 2, amount: 5800 },
+
+{ order_id: 9425, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 4 MONTH), INTERVAL 5 DAY)"), quantity: 2, amount: 4600 },
+
+{ order_id: 9426, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 4 MONTH), INTERVAL 7 DAY)"), quantity: 3, amount: 2700 },
+
+{ order_id: 9427, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 4 MONTH), INTERVAL 9 DAY)"), quantity: 2, amount: 5800 },
+
+{ order_id: 9428, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 4 MONTH), INTERVAL 11 DAY)"), quantity: 2, amount: 4600 },
+
+{ order_id: 9429, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 4 MONTH), INTERVAL 13 DAY)"), quantity: 1, amount: 1700 },
+{ order_id: 9429, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 4 MONTH), INTERVAL 13 DAY)"), quantity: 1, amount: 900 },
+{ order_id: 9429, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 4 MONTH), INTERVAL 13 DAY)"), quantity: 1, amount: 2300 },
+
+{ order_id: 9430, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 4 MONTH), INTERVAL 15 DAY)"), quantity: 1, amount: 1700 },
+
+{ order_id: 9431, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 4 MONTH), INTERVAL 17 DAY)"), quantity: 2, amount: 1800 },
+
+{ order_id: 9432, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 4 MONTH), INTERVAL 19 DAY)"), quantity: 2, amount: 5800 },
+
+{ order_id: 9433, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 4 MONTH), INTERVAL 21 DAY)"), quantity: 2, amount: 4600 },
+
+{ order_id: 9434, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 4 MONTH), INTERVAL 23 DAY)"), quantity: 3, amount: 2700 },
+
+// Mes 5 (9435–9450)
+{ order_id: 9435, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 5 MONTH)"), quantity: 1, amount: 2300 },
+
+{ order_id: 9436, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 5 MONTH), INTERVAL 1 DAY)"), quantity: 2, amount: 1800 },
+
+{ order_id: 9437, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 5 MONTH), INTERVAL 2 DAY)"), quantity: 2, amount: 4600 },
+
+{ order_id: 9438, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 5 MONTH), INTERVAL 3 DAY)"), quantity: 2, amount: 3400 },
+
+{ order_id: 9439, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 5 MONTH), INTERVAL 4 DAY)"), quantity: 1, amount: 2900 },
+
+{ order_id: 9440, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 5 MONTH), INTERVAL 5 DAY)"), quantity: 1, amount: 2300 },
+{ order_id: 9440, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 5 MONTH), INTERVAL 5 DAY)"), quantity: 1, amount: 2900 },
+
+{ order_id: 9441, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 5 MONTH), INTERVAL 6 DAY)"), quantity: 1, amount: 1700 },
+
+{ order_id: 9442, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 5 MONTH), INTERVAL 7 DAY)"), quantity: 1, amount: 2300 },
+{ order_id: 9442, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 5 MONTH), INTERVAL 7 DAY)"), quantity: 2, amount: 1800 },
+
+{ order_id: 9443, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 5 MONTH), INTERVAL 8 DAY)"), quantity: 1, amount: 900 },
+
+{ order_id: 9444, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 5 MONTH), INTERVAL 9 DAY)"), quantity: 2, amount: 5800 },
+
+{ order_id: 9445, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 5 MONTH), INTERVAL 10 DAY)"), quantity: 1, amount: 1700 },
+{ order_id: 9445, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 5 MONTH), INTERVAL 10 DAY)"), quantity: 1, amount: 900 },
+
+{ order_id: 9446, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 5 MONTH), INTERVAL 11 DAY)"), quantity: 2, amount: 4600 },
+
+{ order_id: 9447, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 5 MONTH), INTERVAL 12 DAY)"), quantity: 3, amount: 2700 },
+
+{ order_id: 9448, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 5 MONTH), INTERVAL 13 DAY)"), quantity: 1, amount: 2300 },
+
+{ order_id: 9449, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 5 MONTH), INTERVAL 14 DAY)"), quantity: 2, amount: 1800 },
+
+{ order_id: 9450, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 5 MONTH), INTERVAL 15 DAY)"), quantity: 2, amount: 3400 },
+{ order_id: 9450, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 5 MONTH), INTERVAL 15 DAY)"), quantity: 1, amount: 2900 },
+
+// Mes 6 (9451–9468)
+{ order_id: 9451, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 6 MONTH)"), quantity: 1, amount: 1700 },
+
+{ order_id: 9452, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 6 MONTH), INTERVAL 1 DAY)"), quantity: 1, amount: 2300 },
+{ order_id: 9452, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 6 MONTH), INTERVAL 1 DAY)"), quantity: 1, amount: 2900 },
+
+{ order_id: 9453, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 6 MONTH), INTERVAL 2 DAY)"), quantity: 1, amount: 2300 },
+
+{ order_id: 9454, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 6 MONTH), INTERVAL 3 DAY)"), quantity: 2, amount: 3400 },
+
+{ order_id: 9455, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 6 MONTH), INTERVAL 4 DAY)"), quantity: 1, amount: 2300 },
+{ order_id: 9455, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 6 MONTH), INTERVAL 4 DAY)"), quantity: 2, amount: 1800 },
+
+{ order_id: 9456, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 6 MONTH), INTERVAL 5 DAY)"), quantity: 2, amount: 1800 },
+
+{ order_id: 9457, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 6 MONTH), INTERVAL 6 DAY)"), quantity: 2, amount: 4600 },
+
+{ order_id: 9458, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 6 MONTH), INTERVAL 7 DAY)"), quantity: 1, amount: 900 },
+
+{ order_id: 9459, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 6 MONTH), INTERVAL 8 DAY)"), quantity: 2, amount: 5800 },
+
+{ order_id: 9460, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 6 MONTH), INTERVAL 9 DAY)"), quantity: 1, amount: 1700 },
+{ order_id: 9460, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 6 MONTH), INTERVAL 9 DAY)"), quantity: 1, amount: 900 },
+
+{ order_id: 9461, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 6 MONTH), INTERVAL 10 DAY)"), quantity: 2, amount: 4600 },
+
+{ order_id: 9462, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 6 MONTH), INTERVAL 11 DAY)"), quantity: 3, amount: 2700 },
+
+{ order_id: 9463, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 6 MONTH), INTERVAL 12 DAY)"), quantity: 1, amount: 2300 },
+
+{ order_id: 9464, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 6 MONTH), INTERVAL 13 DAY)"), quantity: 2, amount: 1800 },
+
+{ order_id: 9465, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 6 MONTH), INTERVAL 14 DAY)"), quantity: 2, amount: 3400 },
+{ order_id: 9465, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 6 MONTH), INTERVAL 14 DAY)"), quantity: 1, amount: 2900 },
+
+{ order_id: 9466, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 6 MONTH), INTERVAL 15 DAY)"), quantity: 2, amount: 3400 },
+
+{ order_id: 9467, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 6 MONTH), INTERVAL 16 DAY)"), quantity: 1, amount: 2900 },
+
+{ order_id: 9468, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 6 MONTH), INTERVAL 17 DAY)"), quantity: 1, amount: 2300 },
+{ order_id: 9468, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 6 MONTH), INTERVAL 17 DAY)"), quantity: 2, amount: 1800 },
+
+// Mes 7 (9469–9487) 19 órdenes listadas en tu P2
+{ order_id: 9469, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 7 MONTH)"), quantity: 1, amount: 2300 },
+
+{ order_id: 9470, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 1 DAY)"), quantity: 2, amount: 1800 },
+
+{ order_id: 9471, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 2 DAY)"), quantity: 1, amount: 2300 },
+{ order_id: 9471, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 2 DAY)"), quantity: 1, amount: 2900 },
+
+{ order_id: 9472, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 3 DAY)"), quantity: 1, amount: 1700 },
+{ order_id: 9472, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 3 DAY)"), quantity: 1, amount: 900 },
+
+{ order_id: 9473, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 4 DAY)"), quantity: 1, amount: 2900 },
+
+{ order_id: 9474, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 5 DAY)"), quantity: 2, amount: 3400 },
+
+{ order_id: 9475, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 6 DAY)"), quantity: 1, amount: 2300 },
+{ order_id: 9475, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 6 DAY)"), quantity: 2, amount: 1800 },
+
+{ order_id: 9476, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 7 DAY)"), quantity: 1, amount: 900 },
+
+{ order_id: 9477, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 8 DAY)"), quantity: 2, amount: 5800 },
+
+{ order_id: 9478, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 9 DAY)"), quantity: 1, amount: 1700 },
+{ order_id: 9478, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 9 DAY)"), quantity: 1, amount: 900 },
+
+{ order_id: 9479, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 10 DAY)"), quantity: 2, amount: 4600 },
+
+{ order_id: 9480, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 11 DAY)"), quantity: 3, amount: 2700 },
+
+{ order_id: 9481, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 12 DAY)"), quantity: 1, amount: 2300 },
+
+{ order_id: 9482, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 13 DAY)"), quantity: 2, amount: 1800 },
+
+{ order_id: 9483, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 14 DAY)"), quantity: 2, amount: 3400 },
+{ order_id: 9483, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 14 DAY)"), quantity: 1, amount: 2900 },
+
+{ order_id: 9484, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 15 DAY)"), quantity: 2, amount: 3400 },
+
+{ order_id: 9485, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 16 DAY)"), quantity: 1, amount: 2900 },
+
+{ order_id: 9486, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 17 DAY)"), quantity: 1, amount: 2300 },
+{ order_id: 9486, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 17 DAY)"), quantity: 2, amount: 1800 },
+
+{ order_id: 9487, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 7 MONTH), INTERVAL 18 DAY)"), quantity: 1, amount: 1700 },
+
+// Mes 8 (9488–9512) 25 órdenes listadas en tu P2
+{ order_id: 9488, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 8 MONTH)"), quantity: 1, amount: 2300 },
+{ order_id: 9489, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 1 DAY)"), quantity: 2, amount: 1800 },
+{ order_id: 9490, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 2 DAY)"), quantity: 1, amount: 2300 },
+{ order_id: 9490, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 2 DAY)"), quantity: 1, amount: 2900 },
+{ order_id: 9491, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 3 DAY)"), quantity: 1, amount: 1700 },
+{ order_id: 9491, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 3 DAY)"), quantity: 1, amount: 900 },
+{ order_id: 9492, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 4 DAY)"), quantity: 1, amount: 2900 },
+{ order_id: 9493, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 5 DAY)"), quantity: 2, amount: 3400 },
+{ order_id: 9494, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 6 DAY)"), quantity: 1, amount: 2300 },
+{ order_id: 9494, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 6 DAY)"), quantity: 2, amount: 1800 },
+{ order_id: 9495, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 7 DAY)"), quantity: 1, amount: 900 },
+{ order_id: 9496, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 8 DAY)"), quantity: 2, amount: 5800 },
+{ order_id: 9497, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 9 DAY)"), quantity: 1, amount: 1700 },
+{ order_id: 9497, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 9 DAY)"), quantity: 1, amount: 900 },
+{ order_id: 9498, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 10 DAY)"), quantity: 2, amount: 4600 },
+{ order_id: 9499, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 11 DAY)"), quantity: 3, amount: 2700 },
+{ order_id: 9500, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 12 DAY)"), quantity: 1, amount: 2300 },
+{ order_id: 9501, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 13 DAY)"), quantity: 2, amount: 1800 },
+{ order_id: 9502, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 14 DAY)"), quantity: 2, amount: 3400 },
+{ order_id: 9502, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 14 DAY)"), quantity: 1, amount: 2900 },
+{ order_id: 9503, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 15 DAY)"), quantity: 2, amount: 3400 },
+{ order_id: 9504, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 16 DAY)"), quantity: 1, amount: 2900 },
+{ order_id: 9505, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 17 DAY)"), quantity: 1, amount: 2300 },
+{ order_id: 9505, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 17 DAY)"), quantity: 2, amount: 1800 },
+{ order_id: 9506, publication_id: 9002, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 18 DAY)"), quantity: 1, amount: 1700 },
+{ order_id: 9507, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 19 DAY)"), quantity: 1, amount: 2300 },
+{ order_id: 9507, publication_id: 9004, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 19 DAY)"), quantity: 1, amount: 2900 },
+{ order_id: 9508, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 20 DAY)"), quantity: 2, amount: 1800 },
+{ order_id: 9509, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 21 DAY)"), quantity: 2, amount: 4600 },
+{ order_id: 9510, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 22 DAY)"), quantity: 3, amount: 2700 },
+{ order_id: 9511, publication_id: 9001, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 23 DAY)"), quantity: 1, amount: 2300 },
+{ order_id: 9512, publication_id: 9003, created_at: Sequelize.literal("DATE_SUB(DATE_SUB(NOW(), INTERVAL 8 MONTH), INTERVAL 24 DAY)"), quantity: 2, amount: 1800 },
+
    ], {});
     } catch (error) {
       console.error('Error executing seeder (order_detail):', error);
