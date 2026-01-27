@@ -332,17 +332,18 @@ module.exports = {
         created_at: new Date('2025-01-01'),
         expiration_date: new Date('2026-01-01'),
       },
-      {
+      
+{
   id: 9001,
   available_stock: 100,
   price: 2500,
   discounted_price: 2300,
   discount_percentaje: 8,
-  is_active: 'active',
+  is_active: 'active', 
   commerce_id: 21,
   product_id: 1,
-  created_at: new Date(),
-  expiration_date: Sequelize.literal("DATE_ADD(CURDATE(), INTERVAL 6 MONTH)")
+  created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 7 DAY)"),
+  expiration_date: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 1 DAY)")
 },
 {
   id: 9002,

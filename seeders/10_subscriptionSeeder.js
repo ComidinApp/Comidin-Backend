@@ -60,6 +60,11 @@ module.exports = {
     plan_id: 1, // Plan Aperitivo
     created_at: new Date()
   },
+    {
+    commerce_id: 21, 
+    plan_id: 2, // Plan Aperitivo
+    created_at: new Date()
+  },
   ], {});
       
 } catch (error) {

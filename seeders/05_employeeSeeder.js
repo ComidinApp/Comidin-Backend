@@ -96,7 +96,7 @@ module.exports = {
     },
     {
   commerce_id: 21,              // Demo
-  role_id: 1,
+  role_id: 6,
   first_name: 'Demo',
   last_name: 'Empleado',
   email: 'proyectofinalcdfs@gmail.com',
@@ -105,7 +105,43 @@ module.exports = {
   address: 'Av. Colón 1234',
   postal_code: '5000',
   password: 'Demo!123',
-  created_at: new Date(),
+  created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 12 MONTH)"),
+  city: 'Cordoba',
+  country: 'Argentina',
+  avatar_url: 'https://comidin-assets-tjff.s3.amazonaws.com/avatar/pizza.png',
+  status: 'active',
+  verification_code: null
+},
+    {
+  commerce_id: 21,              // Demo
+  role_id: 5,
+  first_name: 'Demo2',
+  last_name: 'Supervisor',
+  email: 'proyectofinalcdfs2@gmail.com',
+  phone_number: '3510600000',
+  national_id: 'DEMO-EMP-2',
+  address: 'Av. Colón 1234',
+  postal_code: '5000',
+  password: 'Demo!123',
+  created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 12 MONTH)"),
+  city: 'Cordoba',
+  country: 'Argentina',
+  avatar_url: 'https://comidin-assets-tjff.s3.amazonaws.com/avatar/pizza.png',
+  status: 'active',
+  verification_code: null
+},
+    {
+  commerce_id: 21,              // Demo
+  role_id: 5,
+  first_name: 'Demo3',
+  last_name: 'Cajero',
+  email: 'proyectofinalcdfs3@gmail.com',
+  phone_number: '3510604000',
+  national_id: 'DEMO-EMP-2',
+  address: 'Av. Colón 1234',
+  postal_code: '5000',
+  password: 'Demo!123',
+  created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 12 MONTH)"),
   city: 'Cordoba',
   country: 'Argentina',
   avatar_url: 'https://comidin-assets-tjff.s3.amazonaws.com/avatar/pizza.png',
