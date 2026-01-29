@@ -1,4 +1,3 @@
-// src/services/analyticsService.js
 const { Op, fn, col, literal, where } = require('sequelize');
 
 let Models;
@@ -11,26 +10,15 @@ const {
   product: Product,
 } = Models;
 
-// =======================
-// Estados de negocio
-// =======================
 const DONE_STATUSES = ['DELIVERED', 'COMPLETED'];
-
-// "devuelto o reclamado" => siempre cuenta como "reclamado"
 const CLAIM_GROUP_STATUSES = ['CLAIMED', 'RETURNED'];
-
-// (opcional) devueltos reales
 const RETURN_STATUSES = ['RETURNED'];
 
-// Case-insensitive IN para status
 const ciStatusIn = (values) =>
   where(fn('LOWER', col('status')), {
     [Op.in]: values.map((v) => String(v).toLowerCase()),
   });
 
-// =======================
-// Helpers de fecha (SIN timezone)
-// =======================
 function pad2(n) { return String(n).padStart(2, '0'); }
 function toMysqlDateTime(d) {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
@@ -84,45 +72,25 @@ function monthKeyFromYYYYMM01(v) {
   return String(v).slice(0, 7);
 }
 
-// =======================
-// Servicio principal
-// =======================
 exports.getOverview = async ({
   commerceId,
   period = 'last3m',
-  validStatuses = ['DELIVERED', 'COMPLETED'], // se mantiene por compatibilidad
+  validStatuses = ['DELIVERED', 'COMPLETED'],
 } = {}) => {
   const { start, end, monthsForSeries, mode } = computeWindow(period);
   const useWindow = !!start;
 
-  // Preset opcional (si alguna métrica querés filtrarla por preset)
-  let statusCondition;
-  if (validStatuses !== 'ALL' && Array.isArray(validStatuses) && validStatuses.length > 0) {
-    statusCondition = ciStatusIn(validStatuses);
-  }
-
   const baseFilterNoStatus = { commerce_id: commerceId };
 
-  // ✅ FILTRO CANÓNICO PARA "VENDIDO" (NO depende de presets)
   const baseFilterSold = {
     commerce_id: commerceId,
     [Op.and]: [ciStatusIn(DONE_STATUSES)],
   };
 
-  // Si alguna métrica querés que respete el preset, queda acá:
-  const baseFilterWithPreset = statusCondition
-    ? { commerce_id: commerceId, [Op.and]: [statusCondition] }
-    : { commerce_id: commerceId };
-
   const dateFilter = useWindow
     ? { created_at: { [Op.between]: [start, end] } }
     : {};
 
-  // =======================
-  // KPIs
-  // =======================
-
-  // ✅ Revenue CANÓNICO: vendido = DONE
   const totalRevenueRow = await Order.findOne({
     attributes: [[fn('COALESCE', fn('SUM', col('total_amount')), 0), 'revenue']],
     where: { ...baseFilterSold, ...dateFilter },
@@ -130,7 +98,6 @@ exports.getOverview = async ({
   });
   const totalRevenue = Number(totalRevenueRow?.revenue ?? 0);
 
-  // ✅ Total orders CANÓNICO: vendido = DONE
   const totalOrders = await Order.count({
     where: {
       ...baseFilterNoStatus,
@@ -139,7 +106,6 @@ exports.getOverview = async ({
     },
   });
 
-  // Reclamados (grupo)
   const claimedOrders = await Order.count({
     where: {
       ...baseFilterNoStatus,
@@ -148,7 +114,6 @@ exports.getOverview = async ({
     },
   });
 
-  // Devueltos reales
   const returnedOrders = await Order.count({
     where: {
       ...baseFilterNoStatus,
@@ -157,34 +122,37 @@ exports.getOverview = async ({
     },
   });
 
-  // =======================
-  // ✅ Productos vencidos SOLO del período seleccionado
-  // (Si period = all, NO devolvemos histórico porque vos NO lo querés)
-  // =======================
-  let expiredProducts = 0;
+  let expiredStock = 0;
+  let expiredCount = 0;
 
-  if (useWindow) {
-    const expiredRow = await Publication.findOne({
-      attributes: [[fn('COALESCE', fn('SUM', col('available_stock')), 0), 'expiredStock']],
-      where: {
-        commerce_id: commerceId,
-        expiration_date: {
-          [Op.between]: [start, end],
-          [Op.lt]: literal('NOW()'),
-        },
-      },
-      raw: true,
-    });
-    expiredProducts = Number(expiredRow?.expiredStock ?? 0);
-  } else {
-    // period=all => histórico. Como NO lo querés, lo apagamos.
-    expiredProducts = 0; // o null si preferís diferenciar "no aplica"
-  }
+  const expiredWhere = {
+    commerce_id: commerceId,
+    ...(useWindow
+      ? {
+          expiration_date: {
+            [Op.between]: [start, end],
+            [Op.lt]: literal('NOW()'),
+          },
+        }
+      : {
+          expiration_date: { [Op.lt]: literal('NOW()') },
+        }),
+  };
 
-  // =======================
-  // IDs de órdenes del período (para top3 y vendidos)
-  // ✅ CANÓNICO: solo DONE
-  // =======================
+  const expiredStockRow = await Publication.findOne({
+    attributes: [[fn('COALESCE', fn('SUM', col('available_stock')), 0), 'expiredStock']],
+    where: expiredWhere,
+    raw: true,
+  });
+  expiredStock = Number(expiredStockRow?.expiredStock ?? 0);
+
+  const expiredCountRow = await Publication.findOne({
+    attributes: [[fn('COUNT', fn('DISTINCT', col('product_id'))), 'expiredCount']],
+    where: expiredWhere,
+    raw: true,
+  });
+  expiredCount = Number(expiredCountRow?.expiredCount ?? 0);
+
   const soldOrderIdsRows = await Order.findAll({
     attributes: ['id'],
     where: { ...baseFilterSold, ...dateFilter },
@@ -192,9 +160,6 @@ exports.getOverview = async ({
   });
   const soldOrderIds = soldOrderIdsRows.map((r) => r.id);
 
-  // =======================
-  // Top 3 productos por unidades
-  // =======================
   let topProductsBar = [];
   if (soldOrderIds.length) {
     const top3Raw = await OrderDetail.findAll({
@@ -202,9 +167,7 @@ exports.getOverview = async ({
         [col('publication->product.name'), 'productName'],
         [fn('SUM', col('quantity')), 'units'],
       ],
-      where: {
-        order_id: { [Op.in]: soldOrderIds },
-      },
+      where: { order_id: { [Op.in]: soldOrderIds } },
       include: [
         {
           model: Publication,
@@ -226,9 +189,6 @@ exports.getOverview = async ({
     }));
   }
 
-  // =======================
-  // Pie productos: vendidos vs vencidos
-  // =======================
   const soldUnitsRow = soldOrderIds.length
     ? await OrderDetail.findOne({
         attributes: [[fn('COALESCE', fn('SUM', col('quantity')), 0), 'sold']],
@@ -238,10 +198,6 @@ exports.getOverview = async ({
     : { sold: 0 };
   const soldUnits = Number(soldUnitsRow?.sold ?? 0);
 
-  // =======================
-  // Histórico mensual
-  // ✅ CANÓNICO: vendido = DONE
-  // =======================
   const monthExpr = literal(`DATE_FORMAT(created_at, '%Y-%m-01')`);
 
   const monthlyRows = await Order.findAll({
@@ -267,7 +223,7 @@ exports.getOverview = async ({
   });
 
   const now = new Date();
-  const totalMonths = mode === 'all' ? 12 : (monthsForSeries || 12);
+  const totalMonths = monthsForSeries || 12;
 
   const salesByMonth = [];
   for (let i = totalMonths - 1; i >= 0; i--) {
@@ -276,27 +232,22 @@ exports.getOverview = async ({
     salesByMonth.push(monthMap[key] ?? { month: key, ordersCount: 0, totalAmount: 0 });
   }
 
-  // =======================
-  // Respuesta
-  // =======================
   return {
     totalRevenue,
     totalOrders,
     claimedOrders,
     returnedOrders,
-    expiredProducts,
-
+    expiredStock,
+    expiredCount,
     topProductsBar,
-    pieProducts: { soldUnits, expiredUnits: expiredProducts },
-
-    pieOrders: { completedOrders: totalOrders, claimedOrders },
-    salesByMonth,
-
-    _meta: {
-      period,
-      validStatusesPreset: validStatuses,
-      soldDefinition: DONE_STATUSES,
-      expiredDefinition: useWindow ? 'expiration_date in window' : 'disabled_for_all',
+    pieProducts: {
+      soldUnits,
+      expiredUnits: expiredStock,
     },
+    pieOrders: {
+      completedOrders: totalOrders,
+      claimedOrders,
+    },
+    salesByMonth,
   };
 };
