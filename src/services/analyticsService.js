@@ -90,19 +90,28 @@ function monthKeyFromYYYYMM01(v) {
 exports.getOverview = async ({
   commerceId,
   period = 'last3m',
-  validStatuses = ['DELIVERED', 'COMPLETED'],
+  validStatuses = ['DELIVERED', 'COMPLETED'], // se mantiene por compatibilidad (ej: reportes),
+  // pero "VENDIDO" se calcula SIEMPRE con DONE_STATUSES (ver abajo).
 } = {}) => {
   const { start, end, monthsForSeries, mode } = computeWindow(period);
   const useWindow = !!start;
 
-  // preset de status (para métricas que lo respetan)
+  // Preset opcional (para métricas que quieras filtrar "a pedido")
   let statusCondition;
   if (validStatuses !== 'ALL' && Array.isArray(validStatuses) && validStatuses.length > 0) {
     statusCondition = ciStatusIn(validStatuses);
   }
 
   const baseFilterNoStatus = { commerce_id: commerceId };
-  const baseFilterWithStatus = statusCondition
+
+  // ✅ FILTRO CANÓNICO PARA "VENDIDO" (NO depende de presets)
+  const baseFilterSold = {
+    commerce_id: commerceId,
+    [Op.and]: [ciStatusIn(DONE_STATUSES)],
+  };
+
+  // Si alguna métrica querés que respete el preset, queda acá:
+  const baseFilterWithPreset = statusCondition
     ? { commerce_id: commerceId, [Op.and]: [statusCondition] }
     : { commerce_id: commerceId };
 
@@ -113,13 +122,16 @@ exports.getOverview = async ({
   // =======================
   // KPIs
   // =======================
+
+  // ✅ Revenue CANÓNICO: vendido = DONE
   const totalRevenueRow = await Order.findOne({
     attributes: [[fn('COALESCE', fn('SUM', col('total_amount')), 0), 'revenue']],
-    where: { ...baseFilterWithStatus, ...dateFilter },
+    where: { ...baseFilterSold, ...dateFilter },
     raw: true,
   });
   const totalRevenue = Number(totalRevenueRow?.revenue ?? 0);
 
+  // ✅ Total orders CANÓNICO: vendido = DONE
   const totalOrders = await Order.count({
     where: {
       ...baseFilterNoStatus,
@@ -128,6 +140,7 @@ exports.getOverview = async ({
     },
   });
 
+  // Reclamados (grupo)
   const claimedOrders = await Order.count({
     where: {
       ...baseFilterNoStatus,
@@ -136,6 +149,7 @@ exports.getOverview = async ({
     },
   });
 
+  // Devueltos reales (si los querés aparte)
   const returnedOrders = await Order.count({
     where: {
       ...baseFilterNoStatus,
@@ -159,29 +173,27 @@ exports.getOverview = async ({
 
   // =======================
   // IDs de órdenes del período (para top3 y vendidos)
-  // Respeta preset + ventana
+  // ✅ CANÓNICO: solo DONE
   // =======================
-  const orderIdsRows = await Order.findAll({
+  const soldOrderIdsRows = await Order.findAll({
     attributes: ['id'],
-    where: { ...baseFilterWithStatus, ...dateFilter },
+    where: { ...baseFilterSold, ...dateFilter },
     raw: true,
   });
-  const orderIds = orderIdsRows.map((r) => r.id);
+  const soldOrderIds = soldOrderIdsRows.map((r) => r.id);
 
   // =======================
   // Top 3 productos por unidades
   // =======================
   let topProductsBar = [];
-  if (orderIds.length) {
+  if (soldOrderIds.length) {
     const top3Raw = await OrderDetail.findAll({
       attributes: [
         [col('publication->product.name'), 'productName'],
         [fn('SUM', col('quantity')), 'units'],
       ],
       where: {
-        order_id: { [Op.in]: orderIds },
-        // OJO: NO filtramos por created_at de order_detail porque puede no ser relevante;
-        // ya filtramos por orderIds que vienen de Order dentro de la ventana.
+        order_id: { [Op.in]: soldOrderIds },
       },
       include: [
         {
@@ -207,10 +219,10 @@ exports.getOverview = async ({
   // =======================
   // Pie productos: vendidos vs vencidos
   // =======================
-  const soldUnitsRow = orderIds.length
+  const soldUnitsRow = soldOrderIds.length
     ? await OrderDetail.findOne({
         attributes: [[fn('COALESCE', fn('SUM', col('quantity')), 0), 'sold']],
-        where: { order_id: { [Op.in]: orderIds } },
+        where: { order_id: { [Op.in]: soldOrderIds } },
         raw: true,
       })
     : { sold: 0 };
@@ -218,6 +230,7 @@ exports.getOverview = async ({
 
   // =======================
   // Histórico mensual
+  // ✅ CANÓNICO: vendido = DONE
   // =======================
   const monthExpr = literal(`DATE_FORMAT(created_at, '%Y-%m-01')`);
 
@@ -227,7 +240,7 @@ exports.getOverview = async ({
       [fn('COUNT', col('id')), 'ordersCount'],
       [fn('COALESCE', fn('SUM', col('total_amount')), 0), 'totalAmount'],
     ],
-    where: { ...baseFilterWithStatus, ...dateFilter },
+    where: { ...baseFilterSold, ...dateFilter },
     group: [monthExpr],
     order: [monthExpr],
     raw: true,
@@ -268,5 +281,12 @@ exports.getOverview = async ({
 
     pieOrders: { completedOrders: totalOrders, claimedOrders },
     salesByMonth,
+
+    
+    _meta: {
+      period,
+      validStatusesPreset: validStatuses,
+      soldDefinition: DONE_STATUSES,
+    },
   };
 };
