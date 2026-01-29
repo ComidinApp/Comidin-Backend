@@ -72,12 +72,27 @@ function monthKeyFromYYYYMM01(v) {
   return String(v).slice(0, 7);
 }
 
+function resolvePublicationProductIdDbField() {
+  const attrs = Publication?.rawAttributes || {};
+
+  for (const attrName of Object.keys(attrs)) {
+    const field = attrs[attrName]?.field || attrName;
+
+    if (field === 'product_id') return 'product_id';
+
+    if (attrName === 'productId') return field;
+    if (field === 'productId') return 'productId';
+  }
+
+  return 'product_id';
+}
+
 exports.getOverview = async ({
   commerceId,
   period = 'last3m',
   validStatuses = ['DELIVERED', 'COMPLETED'],
 } = {}) => {
-  const { start, end, monthsForSeries, mode } = computeWindow(period);
+  const { start, end, monthsForSeries } = computeWindow(period);
   const useWindow = !!start;
 
   const baseFilterNoStatus = { commerce_id: commerceId };
@@ -146,8 +161,9 @@ exports.getOverview = async ({
   });
   expiredStock = Number(expiredStockRow?.expiredStock ?? 0);
 
+  const productIdDbField = resolvePublicationProductIdDbField();
   const expiredCountRow = await Publication.findOne({
-    attributes: [[fn('COUNT', fn('DISTINCT', col('product_id'))), 'expiredCount']],
+    attributes: [[literal(`COUNT(DISTINCT ${productIdDbField})`), 'expiredCount']],
     where: expiredWhere,
     raw: true,
   });
