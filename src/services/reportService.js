@@ -20,7 +20,9 @@ function toMysqlDateTime(d) {
 function resolvePeriod(period) {
   const p = String(period || '').toLowerCase();
 
-  if (p === 'all') return { mode: 'all' };
+  // ✅ Cambio: "all" = últimos 12 meses (coherente con analytics)
+  if (p === 'all') return { mode: 'months', months: 12 };
+
   if (p === 'this_month' || p === 'last1m') return { mode: 'this_month' };
   if (p === 'last30d') return { mode: 'days', days: 30 };
   if (p === 'last3m') return { mode: 'months', months: 3 };
@@ -34,10 +36,6 @@ function resolvePeriod(period) {
 function computeWindowMysql(period) {
   const cfg = resolvePeriod(period);
   const now = new Date();
-
-  if (cfg.mode === 'all') {
-    return { start: null, end: toMysqlDateTime(now) };
-  }
 
   if (cfg.mode === 'this_month') {
     const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
@@ -73,6 +71,8 @@ const ciStatusIn = (values) =>
 /* ==========================
    Estados
    ========================== */
+// Nota: en reportes generalmente se exportan "según preset" (validStatuses),
+// pero también se usan estos en PDFs en algunos lugares.
 const DONE_STATUSES = ['DELIVERED', 'COMPLETED'];
 const CLAIM_GROUP_STATUSES = ['CLAIMED', 'RETURNED']; // ✅ agrupación única "reclamado"
 
@@ -81,7 +81,7 @@ const CLAIM_GROUP_STATUSES = ['CLAIMED', 'RETURNED']; // ✅ agrupación única 
    ========================== */
 function periodLabel(period) {
   const p = String(period || '').toLowerCase();
-  if (p === 'all') return 'Histórico completo';
+  if (p === 'all') return 'Últimos 12 meses';
   if (p === 'this_month') return 'Este mes';
   if (p === 'last30d' || p === 'last1m') return 'Últimos 30 días';
   if (p === 'last3m') return 'Últimos 3 meses';
@@ -373,8 +373,35 @@ exports.streamExecutivePDF = async (res, { period, statusPreset, overview, conte
 
   y += kpiH + 14;
 
-  kpiCard(doc, left, y, kpiW, kpiH, 'Pedidos reclamados', integer(overview.claimedOrders ?? overview?.pieOrders?.claimedOrders ?? 0), '#EF4444');
-  kpiCard(doc, left + kpiW + 24, y, kpiW, kpiH, 'Productos vencidos', integer(overview.expiredProducts), '#F59E0B');
+  // ✅ Reclamados
+  kpiCard(
+    doc,
+    left,
+    y,
+    kpiW,
+    kpiH,
+    'Pedidos reclamados',
+    integer(overview.claimedOrders ?? overview?.pieOrders?.claimedOrders ?? 0),
+    '#EF4444'
+  );
+
+  // ✅ Productos vencidos: AHORA mostramos cantidad de productos (expiredCount)
+  // fallback a overview.expiredProducts si llega viejo
+  const expiredCount =
+    Number(overview?.expiredCount ?? 0) ||
+    Number(overview?.expiredProductsCount ?? 0) ||
+    0;
+
+  kpiCard(
+    doc,
+    left + kpiW + 24,
+    y,
+    kpiW,
+    kpiH,
+    'Productos vencidos',
+    integer(expiredCount),
+    '#F59E0B'
+  );
 
   y += kpiH + 26;
 
@@ -432,8 +459,15 @@ exports.streamExecutivePDF = async (res, { period, statusPreset, overview, conte
   doc.fontSize(13).fillColor(THEME.text).text('Resumen de productos y pedidos', left, y);
   y += 18;
 
-  const sold = overview?.pieProducts?.soldUnits || 0;
-  const expi = overview?.pieProducts?.expiredUnits || 0;
+  const soldUnits = overview?.pieProducts?.soldUnits || 0;
+
+  // ✅ Stock vencido del período (expiredStock). Fallback a expiredProducts viejo.
+  const expiredStock =
+    Number(overview?.expiredStock ?? 0) ||
+    Number(overview?.expiredProducts ?? 0) ||
+    Number(overview?.pieProducts?.expiredUnits ?? 0) ||
+    0;
+
   const compl = overview?.pieOrders?.completedOrders || 0;
   const claim = overview?.pieOrders?.claimedOrders || 0;
 
@@ -443,8 +477,8 @@ exports.streamExecutivePDF = async (res, { period, statusPreset, overview, conte
   doc.save().roundedRect(left, y, cardW, cardH, 12).fill(THEME.card).restore();
   doc.fontSize(11).fillColor(THEME.muted).text('Productos', left + 12, y + 12);
   doc.fontSize(12)
-    .fillColor(THEME.primary).text(`Vendidos: ${integer(sold)}`, left + 12, y + 36, { continued: true })
-    .fillColor('#EF4444').text(`   Vencidos: ${integer(expi)}`);
+    .fillColor(THEME.primary).text(`Vendidos (unid.): ${integer(soldUnits)}`, left + 12, y + 34)
+    .fillColor('#EF4444').text(`Stock vencido: ${integer(expiredStock)}`, left + 12, y + 52);
 
   const rightX = left + cardW + 14;
   doc.save().roundedRect(rightX, y, cardW, cardH, 12).fill(THEME.card).restore();

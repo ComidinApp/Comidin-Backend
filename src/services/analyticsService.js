@@ -90,13 +90,12 @@ function monthKeyFromYYYYMM01(v) {
 exports.getOverview = async ({
   commerceId,
   period = 'last3m',
-  validStatuses = ['DELIVERED', 'COMPLETED'], // se mantiene por compatibilidad (ej: reportes),
-  // pero "VENDIDO" se calcula SIEMPRE con DONE_STATUSES (ver abajo).
+  validStatuses = ['DELIVERED', 'COMPLETED'], // se mantiene por compatibilidad
 } = {}) => {
   const { start, end, monthsForSeries, mode } = computeWindow(period);
   const useWindow = !!start;
 
-  // Preset opcional (para métricas que quieras filtrar "a pedido")
+  // Preset opcional (si alguna métrica querés filtrarla por preset)
   let statusCondition;
   if (validStatuses !== 'ALL' && Array.isArray(validStatuses) && validStatuses.length > 0) {
     statusCondition = ciStatusIn(validStatuses);
@@ -149,7 +148,7 @@ exports.getOverview = async ({
     },
   });
 
-  // Devueltos reales (si los querés aparte)
+  // Devueltos reales
   const returnedOrders = await Order.count({
     where: {
       ...baseFilterNoStatus,
@@ -158,18 +157,29 @@ exports.getOverview = async ({
     },
   });
 
-  // Productos vencidos (stock vencido)
-  const expiredRows = await Publication.findAll({
-    attributes: [[fn('COALESCE', fn('SUM', col('available_stock')), 0), 'expiredStock']],
-    where: {
-      commerce_id: commerceId,
-      ...(useWindow
-        ? { expiration_date: { [Op.between]: [start, end] } }
-        : { expiration_date: { [Op.lt]: literal('NOW()') } }),
-    },
-    raw: true,
-  });
-  const expiredProducts = Number(expiredRows?.[0]?.expiredStock ?? 0);
+  // =======================
+  // ✅ Productos vencidos SOLO del período seleccionado
+  // (Si period = all, NO devolvemos histórico porque vos NO lo querés)
+  // =======================
+  let expiredProducts = 0;
+
+  if (useWindow) {
+    const expiredRow = await Publication.findOne({
+      attributes: [[fn('COALESCE', fn('SUM', col('available_stock')), 0), 'expiredStock']],
+      where: {
+        commerce_id: commerceId,
+        expiration_date: {
+          [Op.between]: [start, end],
+          [Op.lt]: literal('NOW()'),
+        },
+      },
+      raw: true,
+    });
+    expiredProducts = Number(expiredRow?.expiredStock ?? 0);
+  } else {
+    // period=all => histórico. Como NO lo querés, lo apagamos.
+    expiredProducts = 0; // o null si preferís diferenciar "no aplica"
+  }
 
   // =======================
   // IDs de órdenes del período (para top3 y vendidos)
@@ -282,11 +292,11 @@ exports.getOverview = async ({
     pieOrders: { completedOrders: totalOrders, claimedOrders },
     salesByMonth,
 
-    
     _meta: {
       period,
       validStatusesPreset: validStatuses,
       soldDefinition: DONE_STATUSES,
+      expiredDefinition: useWindow ? 'expiration_date in window' : 'disabled_for_all',
     },
   };
 };
