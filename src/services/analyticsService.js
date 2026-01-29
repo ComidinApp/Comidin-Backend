@@ -137,9 +137,6 @@ exports.getOverview = async ({
     },
   });
 
-  let expiredStock = 0;
-  let expiredCount = 0;
-
   const expiredWhere = {
     commerce_id: commerceId,
     ...(useWindow
@@ -159,7 +156,7 @@ exports.getOverview = async ({
     where: expiredWhere,
     raw: true,
   });
-  expiredStock = Number(expiredStockRow?.expiredStock ?? 0);
+  const expiredStock = Number(expiredStockRow?.expiredStock ?? 0);
 
   const productIdDbField = resolvePublicationProductIdDbField();
   const expiredCountRow = await Publication.findOne({
@@ -167,7 +164,7 @@ exports.getOverview = async ({
     where: expiredWhere,
     raw: true,
   });
-  expiredCount = Number(expiredCountRow?.expiredCount ?? 0);
+  const expiredCount = Number(expiredCountRow?.expiredCount ?? 0);
 
   const soldOrderIdsRows = await Order.findAll({
     attributes: ['id'],
@@ -255,6 +252,7 @@ exports.getOverview = async ({
     returnedOrders,
     expiredStock,
     expiredCount,
+    expiredProducts: expiredStock,
     topProductsBar,
     pieProducts: {
       soldUnits,
