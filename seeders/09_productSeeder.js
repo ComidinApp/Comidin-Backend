@@ -5,7 +5,7 @@ module.exports = {
     try {
   await queryInterface.bulkInsert('product', [
     {
-      commerce_id: 1,
+      commerce_id: 21,
       name: 'Pan de Campo',
       description: 'Pan artesanal de masa madre',
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/panDeCampo.jfif',
@@ -14,7 +14,7 @@ module.exports = {
       created_at: new Date()
     },
     {
-      commerce_id: 1,
+      commerce_id: 21,
       name: 'Facturas Mixtas',
       description: 'Variedad de facturas con dulce de leche y crema',
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/facturasMixtas.jfif',
@@ -23,7 +23,7 @@ module.exports = {
       created_at: new Date()
     },
     {
-      commerce_id: 1,
+      commerce_id: 21,
       name: 'Chipa',
       description: 'Deliciosos chipas de queso',
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/chipa.jfif',
