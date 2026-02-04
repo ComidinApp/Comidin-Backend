@@ -192,6 +192,11 @@ module.exports = {
     commerce_id: 21, // Demo
     name: 'Rotiseria',
     description: 'Comidas listas, clásicas y rendidoras.'
+  },
+{
+    commerce_id: 21, // Demo
+    name: 'Otros',
+    description: 'Otros productos no clasificados.'
   }
 
   ], {});

@@ -98,6 +98,19 @@ function statusLabel(preset) {
   return s;
 }
 
+function translateOrderStatus(status) {
+  const s = String(status || '').toUpperCase();
+  switch (s) {
+    case 'PENDING': return 'Pendiente';
+    case 'DELIVERED': return 'Entregado';
+    case 'COMPLETED': return 'Completado';
+    case 'CLAIMED': return 'Reclamado';
+    case 'RETURNED': return 'Devuelto';
+    case 'CANCELLED': return 'Cancelado';
+    default: return status || '';
+  }
+}
+
 /* ==========================
    Excel robusto
    ========================== */
@@ -154,7 +167,7 @@ exports.getOrdersForExport = async ({ commerceId, period, validStatuses = 'ALL' 
   return orders.map((o) => ({
     orderId: o.id,
     date: map.created_at ? (o[map.created_at] ?? null) : null, // string "YYYY-MM-DD HH:mm:ss"
-    status: map.status ? (o[map.status] ?? '') : '',
+    status: translateOrderStatus(map.status ? (o[map.status] ?? '') : ''),
     total: map.total_amount ? Number(o[map.total_amount] ?? 0) : 0,
     paymentMethod: map.payment_method ? (o[map.payment_method] ?? '') : '',
     customerName: map.customer_name ? (o[map.customer_name] ?? '') : '',
