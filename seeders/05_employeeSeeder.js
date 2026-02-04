@@ -20,7 +20,8 @@ module.exports = {
       country: 'Argentina',
       avatar_url: 'https://comidin-assets-tjff.s3.amazonaws.com/avatar/icecream.png',
       status:'active',
-      verification_code: null
+      verification_code: null,
+      is_deleted: false
     },
     {
       commerce_id: 20,
@@ -38,7 +39,8 @@ module.exports = {
       country: 'Argentina',
       avatar_url: 'https://comidin-assets-tjff.s3.amazonaws.com/avatar/fries.png',
       status:'active',
-      verification_code: null
+      verification_code: null,
+      is_deleted: false
     },
     {
       commerce_id: 20,
@@ -56,7 +58,8 @@ module.exports = {
       country: 'Argentina',
       avatar_url: 'https://comidin-assets-tjff.s3.amazonaws.com/avatar/bread.png',
       status:'active',
-      verification_code: null
+      verification_code: null,
+      is_deleted: false
     },
     {
       commerce_id: 20,
@@ -74,7 +77,8 @@ module.exports = {
       country: 'Argentina',
       avatar_url: 'https://comidin-assets-tjff.s3.amazonaws.com/avatar/pizza.png',
       status:'active',
-      verification_code: null
+      verification_code: null,
+      is_deleted: false
     },
     {
       commerce_id: 3,
@@ -92,7 +96,8 @@ module.exports = {
       country: 'Argentina',
       avatar_url: 'https://comidin-assets-tjff.s3.amazonaws.com/avatar/coffe.png',
       status:'active',
-      verification_code: null
+      verification_code: null,
+      is_deleted: false
     },
     {
   commerce_id: 21,              // Demo
@@ -110,7 +115,8 @@ module.exports = {
   country: 'Argentina',
   avatar_url: 'https://comidin-assets-tjff.s3.amazonaws.com/avatar/pizza.png',
   status: 'active',
-  verification_code: null
+  verification_code: null,
+  is_deleted: false
 },
   ], {});
       

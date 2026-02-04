@@ -15,6 +15,7 @@ module.exports = {
       created_at: new Date(),
       price: 300,
       expiration_date:new Date(),
+      is_deleted: false,
     
     },
     {
@@ -28,6 +29,7 @@ module.exports = {
       created_at: new Date(),
       price:'30',
       expiration_date:new Date(),
+      is_deleted: false,
     },
     {
       available_stock: 22,
@@ -40,6 +42,7 @@ module.exports = {
       created_at: new Date(),
       price:'60',
       expiration_date:new Date(),
+      is_deleted: false,
     },
     {
       available_stock: 10,
@@ -52,6 +55,7 @@ module.exports = {
       created_at: new Date(),
       price:'300',
       expiration_date:new Date(),
+      is_deleted: false,
     
     },
     {
@@ -65,6 +69,7 @@ module.exports = {
       created_at: new Date(),
       price:'100',
       expiration_date:new Date(),
+      is_deleted: false,
     },
     {
       available_stock: 2,
@@ -77,6 +82,7 @@ module.exports = {
       created_at: new Date(),
       price:'70',
       expiration_date:new Date(),
+      is_deleted: false,
     },
     {
       available_stock: 30,
@@ -89,6 +95,7 @@ module.exports = {
       created_at: new Date(),
       price:'700',
       expiration_date:new Date(),
+      is_deleted: false,
     
     },
     {
@@ -102,6 +109,7 @@ module.exports = {
       created_at: new Date(),
       price:'110',
       expiration_date:new Date(),
+      is_deleted: false,
     },
     {
       available_stock: 22,
@@ -114,6 +122,7 @@ module.exports = {
       created_at: new Date(),
       price:'3000',
       expiration_date:new Date(),
+      is_deleted: false,
     },
     {
       available_stock: 2,
@@ -126,6 +135,7 @@ module.exports = {
       created_at: new Date(),
       price:'2500',
       expiration_date:new Date(),
+      is_deleted: false,
     
     },
     {
@@ -139,6 +149,7 @@ module.exports = {
       created_at: new Date(),
       price:'500',
       expiration_date:new Date(),
+      is_deleted: false,
     },
     {
       available_stock: 10,
@@ -151,6 +162,7 @@ module.exports = {
       created_at: new Date(),
       price:'600',
       expiration_date:new Date(),
+      is_deleted: false,
     },
     {
       available_stock: 12,
@@ -163,6 +175,7 @@ module.exports = {
       created_at: new Date(),
       price:'700',
       expiration_date:new Date(),
+      is_deleted: false,
     
     },
     {
@@ -176,6 +189,7 @@ module.exports = {
       created_at: new Date(),
       price:'300',
       expiration_date:new Date(),
+      is_deleted: false,
     },
     {
       available_stock: 22,
@@ -188,6 +202,7 @@ module.exports = {
       created_at: new Date(),
       price:'890',
       expiration_date:new Date(),
+      is_deleted: false,
     },
     {
       available_stock: 4,
@@ -200,6 +215,7 @@ module.exports = {
       created_at: new Date(),
       price:'300',
       expiration_date:new Date(),
+      is_deleted: false,
     
     },
     {
@@ -213,6 +229,7 @@ module.exports = {
       created_at: new Date(),
       price:'300',
       expiration_date:new Date(),
+      is_deleted: false,
     },
     {
       available_stock: 22,
@@ -225,6 +242,7 @@ module.exports = {
       created_at: new Date(),
       price:'300',
       expiration_date:new Date(),
+      is_deleted: false,
     },
     {
       available_stock: 10,
@@ -237,6 +255,7 @@ module.exports = {
       created_at: new Date(),
       price:'780',
       expiration_date:new Date(),
+      is_deleted: false,
     
     },
     {
@@ -250,6 +269,7 @@ module.exports = {
       created_at: new Date(),
       price:'1500',
       expiration_date:new Date(),
+      is_deleted: false,
     },
     {
       available_stock: 22,
@@ -262,6 +282,7 @@ module.exports = {
       created_at: new Date(),
       price:'1500',
       expiration_date:new Date(),
+      is_deleted: false,
     },
     {
       available_stock: 8,
@@ -274,6 +295,7 @@ module.exports = {
       created_at: new Date(),
       price:'3000',
       expiration_date:new Date(),
+      is_deleted: false,
     
     },
     {
@@ -287,6 +309,7 @@ module.exports = {
       created_at: new Date(),
       price:'1200',
       expiration_date:new Date(),
+      is_deleted: false,
     },
      {
         available_stock: 100,
@@ -298,6 +321,7 @@ module.exports = {
         product_id: 24,
         created_at: new Date('2025-01-01'),
         expiration_date: new Date('2026-01-01'),
+        is_deleted: false,
       },
       {
         available_stock: 80,
@@ -309,6 +333,7 @@ module.exports = {
         product_id: 25,
         created_at: new Date('2025-01-01'),
         expiration_date: new Date('2026-01-01'),
+        is_deleted: false,
       },
       {
         available_stock: 150,
@@ -320,6 +345,7 @@ module.exports = {
         product_id: 26,
         created_at: new Date('2025-01-01'),
         expiration_date: new Date('2026-01-01'),
+        is_deleted: false,
       },
       {
         available_stock: 200,
@@ -331,6 +357,7 @@ module.exports = {
         product_id: 27,
         created_at: new Date('2025-01-01'),
         expiration_date: new Date('2026-01-01'),
+        is_deleted: false,
       },
       
 {
@@ -343,7 +370,8 @@ module.exports = {
   commerce_id: 21,
   product_id: 1,
   created_at: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 7 DAY)"),
-  expiration_date: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 1 DAY)")
+  expiration_date: Sequelize.literal("DATE_SUB(NOW(), INTERVAL 1 DAY)"),
+  is_deleted: false
 },
 {
   id: 9002,
@@ -355,7 +383,8 @@ module.exports = {
   commerce_id: 21,
   product_id: 2,
   created_at: new Date(),
-  expiration_date: Sequelize.literal("DATE_ADD(CURDATE(), INTERVAL 6 MONTH)")
+  expiration_date: Sequelize.literal("DATE_ADD(CURDATE(), INTERVAL 6 MONTH)"),
+  is_deleted: false
 },
 {
   id: 9003,
@@ -367,7 +396,8 @@ module.exports = {
   commerce_id: 21,
   product_id: 3,
   created_at: new Date(),
-  expiration_date: Sequelize.literal("DATE_ADD(CURDATE(), INTERVAL 6 MONTH)")
+  expiration_date: Sequelize.literal("DATE_ADD(CURDATE(), INTERVAL 6 MONTH)"),
+  is_deleted: false
 },
 {
   id: 9004,
@@ -379,7 +409,8 @@ module.exports = {
   commerce_id: 21,
   product_id: 4,
   created_at: new Date(),
-  expiration_date: Sequelize.literal("DATE_ADD(CURDATE(), INTERVAL 6 MONTH)")
+  expiration_date: Sequelize.literal("DATE_ADD(CURDATE(), INTERVAL 6 MONTH)"),
+  is_deleted: false
 }
   ], {});
       

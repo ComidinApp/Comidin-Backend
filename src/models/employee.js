@@ -47,6 +47,11 @@ const Employee = sequelize.define(
     },
     avatar_url: { type: Sequelize.STRING, allowNull: false },
     verification_code: { type: Sequelize.STRING, allowNull: true },
+    is_deleted: {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    }
   },
   {
     createdAt: false,
@@ -74,6 +79,7 @@ Employee.hasMany(Subscription, {
 Employee.findAllEmployees = async function () {
   try {
     return await Employee.findAll({
+      where: { is_deleted: false },
       include: [
         { association: 'role', attributes: ['id', 'name'] },
         { association: 'commerce', attributes: ['id', 'name'] },
@@ -87,7 +93,8 @@ Employee.findAllEmployees = async function () {
 
 Employee.findEmployeeById = async function (id) {
   try {
-    return await Employee.findByPk(id, {
+    return await Employee.findOne({
+      where: { id, is_deleted: false },
       include: [
         { association: 'role', attributes: ['id', 'name'] },
         { association: 'commerce', attributes: ['id', 'name'] },
@@ -102,7 +109,7 @@ Employee.findEmployeeById = async function (id) {
 Employee.findAdminEmployeeByCommerceId = async function (commerceId) {
   try {
     return await Employee.findOne({
-      where: { commerce_id: commerceId },
+      where: { commerce_id: commerceId, is_deleted: false },
       include: [
         {
           association: 'role',
@@ -124,7 +131,7 @@ Employee.findAdminEmployeeByCommerceId = async function (commerceId) {
 Employee.findEmployeesByCommerceId = async function (commerceId) {
   try {
     return await Employee.findAll({
-      where: { commerce_id: commerceId },
+      where: { commerce_id: commerceId, is_deleted: false },
       include: [
         { association: 'role', attributes: ['id', 'name'] },
         { association: 'commerce', attributes: ['id', 'name'] },
@@ -139,7 +146,7 @@ Employee.findEmployeesByCommerceId = async function (commerceId) {
 Employee.findEmployeesByRoleId = async function (roleId) {
   try {
     return await Employee.findAll({
-      where: { role_id: roleId },
+      where: { role_id: roleId, is_deleted: false },
     });
   } catch (error) {
     console.error('Error finding Employees:', error);
@@ -150,7 +157,7 @@ Employee.findEmployeesByRoleId = async function (roleId) {
 Employee.findEmployeeByEmail = async function (email) {
   try {
     return await Employee.findOne({
-      where: { email },
+      where: { email, is_deleted: false },
       include: [
         { association: 'role', attributes: ['id', 'name'] },
         { association: 'commerce', attributes: ['id', 'name', 'status'] },
@@ -189,6 +196,7 @@ Employee.findEmployeesByCommerceIdAndRoleIds = async function (
       where: {
         commerce_id: commerceId,
         role_id: { [Op.in]: roleIds },
+        is_deleted: false,
       },
       attributes: [
         'id',

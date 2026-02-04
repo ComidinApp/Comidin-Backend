@@ -243,11 +243,13 @@ exports.deleteEmployee = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const deleted = await Employee.destroy({ where: { id } });
+    const employee = await Employee.findOne({ where: { id } });
 
-    if (!deleted) {
+    if (!employee) {
       return res.status(404).json({ error: 'Empleado no encontrado' });
     }
+
+    await employee.update({ is_deleted: true });
 
     return res.json({ message: 'Empleado eliminado con éxito' });
   } catch (error) {

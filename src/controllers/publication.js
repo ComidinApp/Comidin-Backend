@@ -85,7 +85,7 @@ exports.deletePublication = async (req, res) => {
   try {
     const { id } = req.params;
 
-    const publication = await Publication.findByPk(id);
+    const publication = await Publication.findOne({ where: { id } });
     if (!publication) {
       return res.status(404).json({
         error: 'No encontrada',
@@ -93,7 +93,7 @@ exports.deletePublication = async (req, res) => {
       });
     }
 
-    await publication.destroy();
+    await publication.update({ is_deleted: true });
     console.log('[Publication] Eliminada publicación id:', id);
 
     return res.status(200).json({ message: 'Publicación eliminada correctamente' });

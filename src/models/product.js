@@ -46,6 +46,11 @@ const Product = sequelize.define('product', {
     type: Sequelize.DATE,
     allowNull: false,
     defaultValue: Sequelize.NOW
+  },
+  is_deleted: {
+    type: Sequelize.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
   }
 }, {
   createdAt: false,
@@ -58,7 +63,8 @@ Product.belongsTo(Commerce, { foreignKey: 'commerce_id' });
 
 Product.findAllProducts = async function() {
   try {
-    const employees = await Product.findAll({
+    const products = await Product.findAll({
+      where: { is_deleted: false },
       include: [
         {
           model: ProductCategory,
@@ -71,9 +77,9 @@ Product.findAllProducts = async function() {
       ]
     });
 
-    return employees;
+    return products;
   } catch (error) {
-    console.error('Error finding Employees with Role and Commerce:', error);
+    console.error('Error finding Products with Category and Commerce:', error);
     throw error;
   }
 };
@@ -81,7 +87,7 @@ Product.findAllProducts = async function() {
 Product.findProductsByCommerceId = async function(commerceId) {
   try {
     const products = await Product.findAll({
-      where: { commerce_id: commerceId },
+      where: { commerce_id: commerceId, is_deleted: false },
       include: [
         {
           model: ProductCategory,
@@ -104,7 +110,7 @@ Product.findProductsByCommerceId = async function(commerceId) {
 Product.findProductsByCategoryId = async function(categoryId) {
   try {
     const products = await Product.findAll({
-      where: { product_category_id: categoryId }
+      where: { product_category_id: categoryId, is_deleted: false }
     });
 
     return products;

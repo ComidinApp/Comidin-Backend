@@ -62,6 +62,11 @@ const Publication = sequelize.define(
       allowNull: false,
       defaultValue: Sequelize.NOW,
     },
+    is_deleted: {
+      type: Sequelize.BOOLEAN,
+      allowNull: false,
+      defaultValue: false,
+    }
   },
   {
     createdAt: false,
@@ -76,6 +81,7 @@ Publication.belongsTo(Commerce, { foreignKey: 'commerce_id' });
 Publication.findAllPublications = async function () {
   try {
     const employees = await Publication.findAll({
+      where: { is_deleted: false },
       include: [
         {
           model: Product,
@@ -104,7 +110,7 @@ Publication.findAllPublications = async function () {
 Publication.findPublicationsByCommerceId = async function (commerceId) {
   try {
     const publications = await Publication.findAll({
-      where: { commerce_id: commerceId },
+      where: { commerce_id: commerceId, is_deleted: false },
       include: [
         {
           model: Product,
@@ -141,6 +147,7 @@ Publication.findCommercesWithExpiringPublications = async function ({ postalCode
     // ---- ARMAR EL WHERE ----
     const wherePublication = {
       is_active: 'active',
+      is_deleted: false,
       expiration_date: {
         [Op.between]: [startOfToday, endOfToday],
       },

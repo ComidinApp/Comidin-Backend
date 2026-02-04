@@ -11,7 +11,8 @@ module.exports = {
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/panDeCampo.jfif',
       product_code: '101',
       product_category_id: 2,
-      created_at: new Date()
+      created_at: new Date(),
+      is_deleted: false,
     },
     {
       commerce_id: 21,
@@ -20,7 +21,8 @@ module.exports = {
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/facturasMixtas.jfif',
       product_code: '102',
       product_category_id: 2,
-      created_at: new Date()
+      created_at: new Date(),
+      is_deleted: false,
     },
     {
       commerce_id: 21,
@@ -29,7 +31,8 @@ module.exports = {
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/chipa.jfif',
       product_code: '103',
       product_category_id: 2,
-      created_at: new Date()
+      created_at: new Date(),
+      is_deleted: false,
     },
     
     // El Vergel - Panadería (id: 2)
@@ -40,7 +43,8 @@ module.exports = {
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/BizcochosdeGrasa.jfif',
       product_code: '201',
       product_category_id: 4,
-      created_at: new Date()
+      created_at: new Date(),
+      is_deleted: false,
     },
     {
       commerce_id: 2,
@@ -49,7 +53,8 @@ module.exports = {
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/PanIntegral.jfif',
       product_code: '202',
       product_category_id: 5,
-      created_at: new Date()
+      created_at: new Date(),
+      is_deleted: false,
     },
     {
       commerce_id: 2,
@@ -58,7 +63,8 @@ module.exports = {
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/TortadeManzana.jfif',
       product_code: '203',
       product_category_id: 6,
-      created_at: new Date()
+      created_at: new Date(),
+      is_deleted: false,
     },
     
     // Locos por el Asado - Carnicería (id: 3)
@@ -69,7 +75,8 @@ module.exports = {
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/ChorizoCriollo.jfif',
       product_code: '301',
       product_category_id: 8,
-      created_at: new Date()
+      created_at: new Date(),
+      is_deleted: false,
     },
     {
       commerce_id: 3,
@@ -78,7 +85,8 @@ module.exports = {
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/Morcilla.jfif',
       product_code: '302',
       product_category_id: 8,
-      created_at: new Date()
+      created_at: new Date(),
+      is_deleted: false,
     },
     {
       commerce_id: 3,
@@ -87,7 +95,8 @@ module.exports = {
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/TiradeAsado.jfif',
       product_code: '303',
       product_category_id: 7,
-      created_at: new Date()
+      created_at: new Date(),
+      is_deleted: false,
     },
     
     // La Tuca - Carnicería (id: 4)
@@ -98,7 +107,8 @@ module.exports = {
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/Vac%C3%ADo.jfif',
       product_code: '401',
       product_category_id: 10,
-      created_at: new Date()
+      created_at: new Date(),
+      is_deleted: false,
     },
     {
       commerce_id: 4,
@@ -107,7 +117,8 @@ module.exports = {
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/MilanesadeCarne.jfif',
       product_code: '402',
       product_category_id: 10,
-      created_at: new Date()
+      created_at: new Date(),
+      is_deleted: false,
     },
     {
       commerce_id: 4,
@@ -116,7 +127,8 @@ module.exports = {
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/Costillar.jfif',
       product_code: '403',
       product_category_id: 10,
-      created_at: new Date()
+      created_at: new Date(),
+      is_deleted: false,
     },
     
     // En entrerriano - Panchería (id: 5)
@@ -127,7 +139,8 @@ module.exports = {
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/SuperPancho.jfif',
       product_code: '501',
       product_category_id: 13,
-      created_at: new Date()
+      created_at: new Date(),
+      is_deleted: false,
     },
     {
       commerce_id: 5,
@@ -136,7 +149,8 @@ module.exports = {
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/PanchoconCheddar.jfif',
       product_code: '502',
       product_category_id: 13,
-      created_at: new Date()
+      created_at: new Date(),
+      is_deleted: false,
     },
     {
       commerce_id: 5,
@@ -145,7 +159,8 @@ module.exports = {
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/PanchoCl%C3%A1sico.jfif',
       product_code: '503',
       product_category_id: 13,
-      created_at: new Date()
+      created_at: new Date(),
+      is_deleted: false,
     },
     
     // Panceto - Panchería (id: 6)
@@ -156,7 +171,8 @@ module.exports = {
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/PanchoPanceto.jfif',
       product_code: '601',
       product_category_id: 16,
-      created_at: new Date()
+      created_at: new Date(),
+      is_deleted: false,
     },
     {
       commerce_id: 6,
@@ -165,7 +181,8 @@ module.exports = {
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/PanchoCompleto.jfif',
       product_code: '602',
       product_category_id: 16,
-      created_at: new Date()
+      created_at: new Date(),
+      is_deleted: false,
     },
     {
       commerce_id: 6,
@@ -174,7 +191,8 @@ module.exports = {
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/PanchoVegetariano.jfif',
       product_code: '603',
       product_category_id: 16,
-      created_at: new Date()
+      created_at: new Date(),
+      is_deleted: false,
     },
     
     //  Pescados la Carihuela- Pescadería (id: 13)
@@ -185,7 +203,8 @@ module.exports = {
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/FiletdeMerluza.jfif',
       product_code: '701',
       product_category_id: 20,
-      created_at: new Date()
+      created_at: new Date(),
+      is_deleted: false,
     },
     {
       commerce_id: 13,
@@ -194,7 +213,8 @@ module.exports = {
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/Camarones.jfif',
       product_code: '702',
       product_category_id: 21,
-      created_at: new Date()
+      created_at: new Date(),
+      is_deleted: false,
     },
     {
       commerce_id: 13,
@@ -203,7 +223,8 @@ module.exports = {
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/Pulpo.jfif',
       product_code: '703',
       product_category_id: 21,
-      created_at: new Date()
+      created_at: new Date(),
+      is_deleted: false,
     },
     
     // La Lonja - Pescadería (id: 14)
@@ -214,7 +235,8 @@ module.exports = {
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/Trucha.jfif',
       product_code: '801',
       product_category_id: 23,
-      created_at: new Date()
+      created_at: new Date(),
+      is_deleted: false,
     },
     {
       commerce_id: 14,
@@ -223,7 +245,8 @@ module.exports = {
       image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-products/Salm%C3%B3nRosado.jfif',
       product_code: '802',
       product_category_id: 23,
-      created_at: new Date()
+      created_at: new Date(),
+      is_deleted: false,
     },
      { //24
         commerce_id: 20,
@@ -233,6 +256,7 @@ module.exports = {
         product_code: '2001',
         product_category_id: 31,
         created_at: new Date(),
+        is_deleted: false,
       },
       {
         commerce_id: 20,
@@ -242,6 +266,7 @@ module.exports = {
         product_code: '2002',
         product_category_id: 31,
         created_at: new Date(),
+        is_deleted: false,
       },
       {
         commerce_id: 20,
@@ -251,6 +276,7 @@ module.exports = {
         product_code: '2003',
         product_category_id: 32,
         created_at: new Date(),
+        is_deleted: false,
       },
       {
         commerce_id: 20,
@@ -260,6 +286,7 @@ module.exports = {
         product_code: '2004',
         product_category_id: 33,
         created_at: new Date(),
+        is_deleted: false,
       }
   ], {});
       

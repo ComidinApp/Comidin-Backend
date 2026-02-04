@@ -71,14 +71,13 @@ exports.updateProduct = async (req, res) => {
 
 exports.deleteProduct = async (req, res) => {
   try {
-    const deleted = await Product.destroy({
-      where: { id: req.params.id }
-    });
-    if (deleted) {
-      res.status(204).json();
-    } else {
-      res.status(404).json({ error: 'Product not found' });
+    const product = await Product.findOne({ where: { id: req.params.id } });
+    if (!product) {
+      return res.status(404).json({ error: 'Product not found' });
     }
+
+    await product.update({ is_deleted: true });
+    res.status(200).json({ message: 'Product deleted successfully' });
   } catch (error) {
     console.error('Error deleting Product:', error);
     res.status(409).json({ error: 'Conflict', meesage: error });
