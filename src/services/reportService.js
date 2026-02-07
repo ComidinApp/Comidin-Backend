@@ -128,7 +128,6 @@ const CLAIM_GROUP_STATUSES = ['CLAIMED', 'RETURNED']; // ✅ agrupación única 
 function periodLabel(period, range = {}) {
   const p = String(period || '').toLowerCase();
 
-  // ✅ NUEVO: label para custom
   if (p === 'custom') {
     const s = String(range.startDate || '');
     const e = String(range.endDate || '');
@@ -199,7 +198,6 @@ function pickOrderAttributes() {
 exports.getOrdersForExport = async ({ commerceId, period, startDate, endDate, validStatuses = 'ALL' }) => {
   const { start, end, mode } = computeWindowMysql(period, { startDate, endDate });
 
-  // ✅ si pidieron custom y vino mal, error claro
   if (String(period).toLowerCase() === 'custom' && (!start || mode === 'custom_invalid')) {
     throw new Error('Período custom inválido. Requiere startDate y endDate con formato YYYY-MM-DD');
   }
@@ -224,10 +222,9 @@ exports.getOrdersForExport = async ({ commerceId, period, startDate, endDate, va
     raw: true,
   });
 
-  // ✅ IMPORTANTÍSIMO: devolvemos fecha como string tal cual viene (sin new Date())
   return orders.map((o) => ({
     orderId: o.id,
-    date: map.created_at ? (o[map.created_at] ?? null) : null, // string "YYYY-MM-DD HH:mm:ss"
+    date: map.created_at ? (o[map.created_at] ?? null) : null,
     status: translateOrderStatus(map.status ? (o[map.status] ?? '') : ''),
     total: map.total_amount ? Number(o[map.total_amount] ?? 0) : 0,
     paymentMethod: map.payment_method ? (o[map.payment_method] ?? '') : '',
@@ -247,7 +244,7 @@ exports.buildOrdersXLSX = async (rows, meta = {}) => {
   const columns = [
     { header: 'N° Orden', key: 'orderId', width: 14 },
     { header: 'Fecha', key: 'date', width: 20 },
-    { header: 'Estado', key: 'status', width: 16 },
+    { header: 'Estado', key: 'status', width: 22 },
     { header: 'Total', key: 'total', width: 14 },
   ];
   if (hasPayment) columns.push({ header: 'Medio de pago', key: 'paymentMethod', width: 18 });
@@ -257,7 +254,6 @@ exports.buildOrdersXLSX = async (rows, meta = {}) => {
   ws.columns = columns;
 
   rows.forEach((r) => {
-    // ✅ Fecha como TEXTO para evitar corrimientos por timezone/parsing
     ws.addRow({
       ...r,
       date: r.date ? String(r.date) : '',
@@ -266,19 +262,14 @@ exports.buildOrdersXLSX = async (rows, meta = {}) => {
 
   ws.getRow(1).font = { bold: true };
 
-  // formato de dinero
   const totalCol = ws.getColumn('total');
   if (totalCol) totalCol.numFmt = '"$" #,##0.00';
 
-  // Hoja meta
   const metaSheet = wb.addWorksheet('Meta');
   metaSheet.addRow(['Período', String(meta.period || '')]);
   metaSheet.addRow(['Filtro estado', String(meta.status || '')]);
-
-  // ✅ NUEVO: guardamos rango si aplica
   if (meta.startDate) metaSheet.addRow(['Desde', String(meta.startDate)]);
   if (meta.endDate) metaSheet.addRow(['Hasta', String(meta.endDate)]);
-
   metaSheet.getRow(1).font = { bold: true };
   metaSheet.getRow(2).font = { bold: true };
 
@@ -430,9 +421,8 @@ exports.streamExecutivePDF = async (res, { period, statusPreset, overview, conte
   const title = 'Informe de Ventas';
   const subtitle = [
     commerceText,
-    // ✅ custom label usando context.startDate / context.endDate si vienen
-    `Período: ${periodLabel(period, context)}`,
-    `Estado: ${statusLabel(statusPreset)}`,
+    `Período analizado: ${periodLabel(period, context)}`,
+    `Filtro de estado: ${statusLabel(statusPreset)}`,
     `Generado: ${nowStr}`,
   ].join('  •  ');
 
@@ -448,24 +438,26 @@ exports.streamExecutivePDF = async (res, { period, statusPreset, overview, conte
   const kpiW = Math.floor((pageW - 24) / 2);
   const kpiH = 64;
 
-  kpiCard(doc, left, y, kpiW, kpiH, 'Ventas totales', currency(overview.totalRevenue), THEME.primary);
-  kpiCard(doc, left + kpiW + 24, y, kpiW, kpiH, 'Pedidos realizados', integer(overview.totalOrders), THEME.accent);
+  kpiCard(doc, left, y, kpiW, kpiH, 'Monto total de ventas', currency(overview.totalRevenue), THEME.primary);
+  kpiCard(doc, left + kpiW + 24, y, kpiW, kpiH, 'Cantidad de pedidos realizados', integer(overview.totalOrders), THEME.accent);
 
   y += kpiH + 14;
 
-  // ✅ Reclamados
+  // ✅ Reclamados (más descriptivo)
+  const claimsCount = Number(overview.claimedOrders ?? overview?.pieOrders?.claimedOrders ?? 0);
+
   kpiCard(
     doc,
     left,
     y,
     kpiW,
     kpiH,
-    'Pedidos reclamados',
-    integer(overview.claimedOrders ?? overview?.pieOrders?.claimedOrders ?? 0),
+    'Cantidad de pedidos con reclamos',
+    integer(claimsCount),
     '#EF4444'
   );
 
-  // ✅ Productos vencidos: AHORA mostramos cantidad de productos (expiredCount)
+  // ✅ Productos vencidos: mostramos cantidad de productos (expiredCount)
   const expiredCount =
     Number(overview?.expiredCount ?? 0) ||
     Number(overview?.expiredProductsCount ?? 0) ||
@@ -477,15 +469,15 @@ exports.streamExecutivePDF = async (res, { period, statusPreset, overview, conte
     y,
     kpiW,
     kpiH,
-    'Productos vencidos',
+    'Cantidad de productos vencidos',
     integer(expiredCount),
     '#F59E0B'
   );
 
   y += kpiH + 26;
 
-  // Ventas y pedidos por mes
-  doc.fontSize(13).fillColor(THEME.text).text('Ventas y pedidos por mes', left, y);
+  // Ventas y pedidos por mes (título más descriptivo)
+  doc.fontSize(13).fillColor(THEME.text).text('Cantidad de pedidos y monto de ventas por mes', left, y);
   y += 10;
 
   const monthRows = (overview.salesByMonth || []).map((m) => {
@@ -500,14 +492,15 @@ exports.streamExecutivePDF = async (res, { period, statusPreset, overview, conte
   const tableBottomY = table(
     doc,
     { x: left, y: y + 6, w: pageW },
-    ['Mes', 'Pedidos', 'Ventas ($)'],
-    monthRows
+    ['Mes', 'Cantidad de pedidos', 'Ventas ($)'],
+    monthRows,
+    { colWidths: [160, 170, pageW - 330] }
   );
 
   y = tableBottomY + 20;
 
-  // Top 3 productos
-  doc.fontSize(13).fillColor(THEME.text).text('Top 3 productos por unidades', left, y);
+  // Top 3 productos (título más descriptivo)
+  doc.fontSize(13).fillColor(THEME.text).text('Top 3 productos por cantidad de unidades vendidas', left, y);
   y += 8;
 
   const top = overview.topProductsBar || [];
@@ -535,12 +528,11 @@ exports.streamExecutivePDF = async (res, { period, statusPreset, overview, conte
   }
 
   // Resumen
-  doc.fontSize(13).fillColor(THEME.text).text('Resumen de productos y pedidos', left, y);
+  doc.fontSize(13).fillColor(THEME.text).text('Resumen de productos y pedidos (cantidades)', left, y);
   y += 18;
 
   const soldUnits = overview?.pieProducts?.soldUnits || 0;
 
-  // ✅ Stock vencido del período (expiredStock). Fallback a expiredProducts viejo.
   const expiredStock =
     Number(overview?.expiredStock ?? 0) ||
     Number(overview?.expiredProducts ?? 0) ||
@@ -551,20 +543,32 @@ exports.streamExecutivePDF = async (res, { period, statusPreset, overview, conte
   const claim = overview?.pieOrders?.claimedOrders || 0;
 
   const cardW = Math.floor((pageW - 14) / 2);
-  const cardH = 72;
+  const cardH = 84; // un poquito más alto para textos largos
 
+  // Card Productos
   doc.save().roundedRect(left, y, cardW, cardH, 12).fill(THEME.card).restore();
-  doc.fontSize(11).fillColor(THEME.muted).text('Productos', left + 12, y + 12);
-  doc.fontSize(12)
-    .fillColor(THEME.primary).text(`Vendidos (unid.): ${integer(soldUnits)}`, left + 12, y + 34)
-    .fillColor('#EF4444').text(`Stock vencido: ${integer(expiredStock)}`, left + 12, y + 52);
+  doc.fontSize(11).fillColor(THEME.muted).text('Resumen de productos', left + 12, y + 12);
 
+  doc.fontSize(12)
+    .fillColor(THEME.primary)
+    .text(`Cantidad de unidades vendidas: ${integer(soldUnits)}`, left + 12, y + 36);
+
+  doc.fontSize(12)
+    .fillColor('#EF4444')
+    .text(`Cantidad de stock vencido: ${integer(expiredStock)}`, left + 12, y + 56);
+
+  // Card Pedidos
   const rightX = left + cardW + 14;
   doc.save().roundedRect(rightX, y, cardW, cardH, 12).fill(THEME.card).restore();
-  doc.fontSize(11).fillColor(THEME.muted).text('Pedidos', rightX + 12, y + 12);
+  doc.fontSize(11).fillColor(THEME.muted).text('Resumen de pedidos', rightX + 12, y + 12);
+
   doc.fontSize(12)
-    .fillColor(THEME.accent).text(`Realizados: ${integer(compl)}`, rightX + 12, y + 36, { continued: true })
-    .fillColor('#EF4444').text(`   Reclamados: ${integer(claim)}`);
+    .fillColor(THEME.accent)
+    .text(`Cantidad de pedidos realizados: ${integer(compl)}`, rightX + 12, y + 36);
+
+  doc.fontSize(12)
+    .fillColor('#EF4444')
+    .text(`Cantidad de pedidos con reclamos: ${integer(claim)}`, rightX + 12, y + 56);
 
   doc.end();
   try { footerNumbering(doc); } catch {}
