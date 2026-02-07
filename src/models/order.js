@@ -215,7 +215,7 @@ Order.findOrderById = async function(id) {
         },
         {
           model: Commerce,
-          attributes: ['name']
+          attributes: ['name','street_name','number','postal_code']
         },
         {
           model: OrderDetail,
