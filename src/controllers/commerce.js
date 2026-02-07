@@ -21,10 +21,18 @@ exports.createCommerce = async (req, res) => {
 
     const commerce = await Commerce.create(commerceData);
 
-    // ✅ IMPORTANTE:
-    // Ya NO enviamos el mail acá.
-    // Porque el recipient real es el admin employee (role_id=6) y todavía no existe.
-    // El mail se envía en el flujo de creación del employee/Cognito.
+    // ✅ NUEVO: notificar a todos los admins globales (role_id = 1)
+    // Esto NO depende de que exista el empleado "propietario" del comercio.
+    try {
+      const adminEmployees = await Employee.findEmployeesByRoleId(1); // role admin global
+      await emailSender.sendNewCommerceRequestToAdmins({
+        commerce,
+        adminEmployees,
+      });
+    } catch (mailErr) {
+      // No rompemos el alta por un mail, porque el negocio > email.
+      console.error('[createCommerce] Error enviando mail a admins:', mailErr?.message || mailErr);
+    }
 
     return res.status(201).json(commerce);
   } catch (error) {

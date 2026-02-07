@@ -33,7 +33,7 @@ exports.sendEmployeeWelcome = async (employee, temporaryPassword) => {
       templateId: process.env.SENDGRID_EMPLOYEE_WELCOME,
       dynamic_template_data: {
         userName: employee.first_name || 'Hola',
-        contactMail: 'soporte@comidin.com.ar', // o process.env.SUPPORT_EMAIL
+        contactMail: 'soporte@comidin.com.ar',
         temporaryPassword: temporaryPassword,
         loginUrl: process.env.FRONTEND_URL ? `${process.env.FRONTEND_URL}/login` : 'https://comidin.com.ar/login',
       },
@@ -44,10 +44,9 @@ exports.sendEmployeeWelcome = async (employee, temporaryPassword) => {
   } catch (error) {
     console.error('Error al enviar bienvenida empleado (SendGrid):', error);
     if (error.response) console.error(error.response.body);
-    throw error; // si querés enterarte y no “tragar” el error
+    throw error;
   }
 };
-
 
 exports.sendAdmittedNoticeCommerce = async (adminEmployee) => {
   try {
@@ -222,7 +221,7 @@ exports.sendOrderStatusUpdateCustomer = async ({ orderId, newStatus }) => {
       throw new Error('Missing env var: SENDGRID_ORDER_STATUS (or SENGRID_ORDER_STATUS)');
     }
 
-    const Order = require('../models/order'); 
+    const Order = require('../models/order');
     const orderFull = await Order.findOrderById(orderId);
 
     if (!orderFull) return;
@@ -234,7 +233,6 @@ exports.sendOrderStatusUpdateCustomer = async ({ orderId, newStatus }) => {
 
     const normalizedStatus = (newStatus || orderFull?.status || '').toString().trim().toUpperCase();
 
-    
     const statusTranslations = {
       PENDING: 'Pendiente',
       CONFIRMED: 'Confirmado',
@@ -246,7 +244,6 @@ exports.sendOrderStatusUpdateCustomer = async ({ orderId, newStatus }) => {
 
     const orderState = statusTranslations[normalizedStatus] || normalizedStatus;
 
-  
     const details = Array.isArray(orderFull?.order_details) ? orderFull.order_details : [];
 
     const orderItem =
@@ -266,7 +263,6 @@ exports.sendOrderStatusUpdateCustomer = async ({ orderId, newStatus }) => {
       Number(orderFull?.items_quantity) ||
       1;
 
-    
     const addr = orderFull?.address || {};
     const userAddress =
       [addr?.street_name, addr?.number, addr?.postal_code]
@@ -281,11 +277,11 @@ exports.sendOrderStatusUpdateCustomer = async ({ orderId, newStatus }) => {
       templateId,
       dynamic_template_data: {
         userName,
-        orderId: orderFull?.id,          // {{orderId}}
-        orderState,                      //  {{orderState}}
-        orderItem,                       // {{orderItem}}
-        quantityItem,                    // {{quantityItem}}
-        userAddress,                     // {{userAddress}}
+        orderId: orderFull?.id,
+        orderState,
+        orderItem,
+        quantityItem,
+        userAddress,
       },
     };
 
@@ -293,7 +289,6 @@ exports.sendOrderStatusUpdateCustomer = async ({ orderId, newStatus }) => {
   } catch (error) {
     console.error('Error al enviar mail de cambio de estado del pedido:', error);
     if (error.response) console.error(error.response.body);
-
   }
 };
 
@@ -314,7 +309,6 @@ exports.sendNewOrderToCommerceEmployees = async ({ orderId, roleIds = [1, 5, 6] 
     const commerceId = orderFull?.commerce_id || orderFull?.commerce?.id;
     if (!commerceId) return;
 
-    // Empleados del comercio 
     const Employee = getEmployeeModel();
     const employees = await Employee.findEmployeesByCommerceIdAndRoleIds(commerceId, roleIds);
 
@@ -325,7 +319,6 @@ exports.sendNewOrderToCommerceEmployees = async ({ orderId, roleIds = [1, 5, 6] 
     const uniqueRecipients = [...new Set(recipients)];
     if (uniqueRecipients.length === 0) return;
 
-    // Items
     const details = Array.isArray(orderFull?.order_details) ? orderFull.order_details : [];
     const orderItems =
       details
@@ -342,7 +335,6 @@ exports.sendNewOrderToCommerceEmployees = async ({ orderId, roleIds = [1, 5, 6] 
       Number(orderFull?.items_quantity) ||
       1;
 
-    // Total
     const totalAmountRaw =
       orderFull?.total_amount ??
       orderFull?.total ??
@@ -364,7 +356,6 @@ exports.sendNewOrderToCommerceEmployees = async ({ orderId, roleIds = [1, 5, 6] 
       minimumFractionDigits: 2,
     });
 
-    // Dirección
     const addr = orderFull?.address || {};
     const userAddress =
       [addr?.street_name, addr?.number, addr?.postal_code]
@@ -373,13 +364,11 @@ exports.sendNewOrderToCommerceEmployees = async ({ orderId, roleIds = [1, 5, 6] 
         .replace(/\s+/g, ' ')
         .trim() || 'Sin dirección informada';
 
-    // Cliente
     const userName =
       `${orderFull?.user?.first_name || ''} ${orderFull?.user?.last_name || ''}`.trim() ||
       orderFull?.user?.email ||
       'Cliente';
 
-   
     const payMethod =
       (orderFull?.pay_method || orderFull?.payment_method || orderFull?.payment?.method || 'No informado')
         .toString()
@@ -389,16 +378,15 @@ exports.sendNewOrderToCommerceEmployees = async ({ orderId, roleIds = [1, 5, 6] 
 
     const dynamic_template_data = {
       commerceName,
-      orderId: orderFull?.id,          // {{orderId}}
-      orderItems,                      // {{orderItems}}
-      quantityItem,                    // {{quantityItem}}
-      totalAmount,                     // {{totalAmount}}
-      userAddress,                     // {{userAddress}}
-      userName,                        // {{userName}}
-      payMethod,                       // {{payMethod}}
+      orderId: orderFull?.id,
+      orderItems,
+      quantityItem,
+      totalAmount,
+      userAddress,
+      userName,
+      payMethod,
     };
 
-   
     for (const to of uniqueRecipients) {
       await sgMail.send({
         to,
@@ -419,8 +407,6 @@ exports.sendNewOrderToCommerceEmployees = async ({ orderId, roleIds = [1, 5, 6] 
   }
 };
 
-
-// ✅ ESTA es la clave: mail del comercio (en realidad para el admin), pero se llama con toEmail explícito
 exports.sendCommerceWelcome = async ({ commerce, toEmail } = {}) => {
   try {
     const templateId = process.env.SENDGRID_COMMERCE_WELCOME;
@@ -452,6 +438,87 @@ exports.sendCommerceWelcome = async ({ commerce, toEmail } = {}) => {
     console.log('Commerce welcome email sent:', { commerceId: commerce?.id, to });
   } catch (error) {
     console.error('Error enviando mail de bienvenida al comercio:', error);
+    if (error.response) console.error(error.response.body);
+    throw error;
+  }
+};
+
+/* =========================================================
+   ✅ NUEVO: Aviso a ADMINs (role_id = 1) por alta de comercio
+   Env: NEW_COMMERCE_REQUEST
+   ========================================================= */
+exports.sendNewCommerceRequestToAdmins = async ({ commerce, adminEmployees } = {}) => {
+  try {
+    const templateId = process.env.SENGRID_NEW_COMMERCE_REQUEST;
+    if (!templateId) {
+      throw new Error('Missing env var: SENGRID_NEW_COMMERCE_REQUEST');
+    }
+
+    const recipients = (adminEmployees || [])
+      .map((e) => (e?.email || '').trim())
+      .filter((email) => email && email.includes('@'));
+
+    const uniqueRecipients = [...new Set(recipients)];
+
+    if (uniqueRecipients.length === 0) {
+      console.log('[sendNewCommerceRequestToAdmins] No admin recipients found. Skipping.', {
+        commerceId: commerce?.id,
+      });
+      return;
+    }
+
+    // Formatos “humanos”
+    const createdAtStr = commerce?.created_at
+      ? new Date(commerce.created_at).toLocaleString('es-AR', { timeZone: 'America/Argentina/Buenos_Aires' })
+      : '';
+
+    const isActiveLabel = commerce?.is_active ? 'Sí' : 'No';
+
+    // Link fijo que pediste
+    const adminPanelUrl = 'https://comidin.com.ar/dashboard/commerce';
+
+    // La categoría no está en el modelo base en este controller (create usa Commerce.create directo),
+    // así que mandamos vacío salvo que venga ya “hidratado”.
+    const commerceCategoryName =
+      commerce?.commerceCategory?.name ||
+      commerce?.commerce_category?.name ||
+      commerce?.category?.name ||
+      commerce?.commerceCategoryName ||
+      '';
+
+    const dynamic_template_data = {
+      commerceId: commerce?.id ?? '',
+      commerceName: commerce?.name ?? '',
+      commerceCategoryName,
+      streetName: commerce?.street_name ?? '',
+      streetNumber: commerce?.number ?? '',
+      postalCode: commerce?.postal_code ?? '',
+      commerceNationalId: commerce?.commerce_national_id ?? '',
+      status: commerce?.status ?? 'pending',
+      createdAt: createdAtStr,
+      openAt: commerce?.open_at ?? '',
+      closeAt: commerce?.close_at ?? '',
+      availableDays: commerce?.available_days ?? '',
+      isActive: isActiveLabel,
+      imageUrl: commerce?.image_url ?? '',
+      adminPanelUrl,
+    };
+
+    for (const to of uniqueRecipients) {
+      await sgMail.send({
+        to,
+        from: 'no-reply@comidin.com.ar',
+        templateId,
+        dynamic_template_data,
+      });
+    }
+
+    console.log('[sendNewCommerceRequestToAdmins] Email sent:', {
+      commerceId: commerce?.id,
+      recipients: uniqueRecipients.length,
+    });
+  } catch (error) {
+    console.error('Error al enviar solicitud de nuevo comercio a admins:', error);
     if (error.response) console.error(error.response.body);
     throw error;
   }
