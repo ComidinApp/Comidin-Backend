@@ -24,6 +24,53 @@ function toMysqlDateTime(d) {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
 }
 
+/* ==========================
+   ✅ Helpers custom range
+   ========================== */
+function parseYmd(s) {
+  if (!s) return null;
+  const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  const y = Number(m[1]);
+  const mo = Number(m[2]) - 1;
+  const d = Number(m[3]);
+  const dt = new Date(y, mo, d, 0, 0, 0);
+  if (Number.isNaN(dt.getTime())) return null;
+  return dt;
+}
+
+function normalizeCustomRange({ startDate, endDate }) {
+  const startD = parseYmd(startDate);
+  const endD = parseYmd(endDate);
+
+  if (!startD || !endD) return null;
+
+  // ✅ día completo
+  startD.setHours(0, 0, 0, 0);
+  endD.setHours(23, 59, 59, 0);
+
+  // swap si vienen al revés
+  if (startD.getTime() > endD.getTime()) {
+    const tmp = new Date(startD);
+    startD.setTime(endD.getTime());
+    endD.setTime(tmp.getTime());
+
+    startD.setHours(0, 0, 0, 0);
+    endD.setHours(23, 59, 59, 0);
+  }
+
+  const monthsForSeries =
+    (endD.getFullYear() - startD.getFullYear()) * 12 +
+    (endD.getMonth() - startD.getMonth()) + 1;
+
+  return {
+    start: toMysqlDateTime(startD),
+    end: toMysqlDateTime(endD),
+    monthsForSeries: Math.max(1, Math.min(monthsForSeries, 24)), // cap opcional
+    mode: 'custom',
+  };
+}
+
 function resolvePeriod(period) {
   const p = String(period || '').toLowerCase();
 
@@ -35,12 +82,25 @@ function resolvePeriod(period) {
   if (p === 'last12m') return { mode: 'months', months: 12 };
   if (p === 'prev_month') return { mode: 'prev_month' };
 
+  // ✅ NUEVO
+  if (p === 'custom') return { mode: 'custom' };
+
   return { mode: 'months', months: 3 };
 }
 
-function computeWindow(period) {
+function computeWindow(period, customRange = {}) {
   const cfg = resolvePeriod(period);
   const now = new Date();
+
+  // ✅ NUEVO: custom
+  if (cfg.mode === 'custom') {
+    const normalized = normalizeCustomRange(customRange);
+    // si no viene bien formado, devolvemos null start para que el controller decida (o caiga al default)
+    if (!normalized) {
+      return { start: null, end: toMysqlDateTime(now), monthsForSeries: 3, mode: 'custom_invalid' };
+    }
+    return normalized;
+  }
 
   if (cfg.mode === 'all') {
     return { start: null, end: toMysqlDateTime(now), monthsForSeries: 12, mode: 'all' };
@@ -90,9 +150,17 @@ function resolvePublicationProductIdDbField() {
 exports.getOverview = async ({
   commerceId,
   period = 'last3m',
+  startDate, // ✅ NUEVO
+  endDate,   // ✅ NUEVO
   validStatuses = ['DELIVERED', 'COMPLETED'],
 } = {}) => {
-  const { start, end, monthsForSeries } = computeWindow(period);
+  const { start, end, monthsForSeries, mode } = computeWindow(period, { startDate, endDate });
+
+  // ✅ si pidieron custom pero vino inválido, cortamos con error claro
+  if (String(period).toLowerCase() === 'custom' && (!start || mode === 'custom_invalid')) {
+    throw new Error('Período custom inválido. Requiere startDate y endDate con formato YYYY-MM-DD');
+  }
+
   const useWindow = !!start;
 
   const baseFilterNoStatus = { commerce_id: commerceId };

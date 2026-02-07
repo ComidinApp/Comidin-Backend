@@ -5,7 +5,13 @@ const reportService = require('../services/reportService');
 exports.getExecutiveReportPDF = async (req, res) => {
   try {
     const role = req.user?.role || 'employee';
-    const { period = 'last3m', status = 'open', commerceId: commerceIdParam } = req.query;
+    const {
+      period = 'last3m',
+      status = 'open',
+      commerceId: commerceIdParam,
+      startDate, // ✅ NUEVO
+      endDate,   // ✅ NUEVO
+    } = req.query;
 
     const allowPublic = process.env.ALLOW_PUBLIC_ANALYTICS === 'true';
     const tokenCommerceId = Number(req.user?.commerceId ?? req.user?.commerce_id);
@@ -18,6 +24,13 @@ exports.getExecutiveReportPDF = async (req, res) => {
 
     if (!Number.isFinite(commerceId)) {
       return res.status(400).json({ message: 'commerceId no disponible en el contexto' });
+    }
+
+    // ✅ Validación custom
+    if (String(period).toLowerCase() === 'custom' && (!startDate || !endDate)) {
+      return res.status(400).json({
+        message: 'Período custom requiere startDate y endDate (YYYY-MM-DD)',
+      });
     }
 
     // Presets de estados (igual que controller original)
@@ -33,6 +46,8 @@ exports.getExecutiveReportPDF = async (req, res) => {
     const overview = await analyticsService.getOverview({
       commerceId,
       period,
+      startDate,
+      endDate,
       validStatuses,
       timezone: 'America/Argentina/Buenos_Aires',
     });
@@ -45,7 +60,7 @@ exports.getExecutiveReportPDF = async (req, res) => {
       period,
       statusPreset: preset,
       overview,
-      context: { commerceId },
+      context: { commerceId, startDate, endDate }, // ✅ para periodLabel custom
     });
   } catch (err) {
     console.error('[getExecutiveReportPDF] Error:', err);
@@ -56,7 +71,13 @@ exports.getExecutiveReportPDF = async (req, res) => {
 exports.getOrdersExportXLSX = async (req, res) => {
   try {
     const role = req.user?.role || 'employee';
-    const { period = 'last3m', status = 'all', commerceId: commerceIdParam } = req.query;
+    const {
+      period = 'last3m',
+      status = 'all',
+      commerceId: commerceIdParam,
+      startDate, // ✅ NUEVO
+      endDate,   // ✅ NUEVO
+    } = req.query;
 
     const allowPublic = process.env.ALLOW_PUBLIC_ANALYTICS === 'true';
     const tokenCommerceId = Number(req.user?.commerceId ?? req.user?.commerce_id);
@@ -69,6 +90,13 @@ exports.getOrdersExportXLSX = async (req, res) => {
 
     if (!Number.isFinite(commerceId)) {
       return res.status(400).json({ message: 'commerceId no disponible en el contexto' });
+    }
+
+    // ✅ Validación custom
+    if (String(period).toLowerCase() === 'custom' && (!startDate || !endDate)) {
+      return res.status(400).json({
+        message: 'Período custom requiere startDate y endDate (YYYY-MM-DD)',
+      });
     }
 
     // Igual preset que en overview (por defecto exportamos TODO: status = all)
@@ -84,13 +112,15 @@ exports.getOrdersExportXLSX = async (req, res) => {
     const rows = await reportService.getOrdersForExport({
       commerceId,
       period,
+      startDate,
+      endDate,
       validStatuses,
     });
 
     const filename = `ordenes-${commerceId}-${period}.xlsx`;
     res.setHeader('Content-Type', 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet');
     res.setHeader('Content-Disposition', `attachment; filename="${filename}"`);
-    const buffer = await reportService.buildOrdersXLSX(rows, { period, status: preset });
+    const buffer = await reportService.buildOrdersXLSX(rows, { period, status: preset, startDate, endDate });
     return res.end(buffer);
   } catch (err) {
     console.error('[getOrdersExportXLSX] Error:', err);

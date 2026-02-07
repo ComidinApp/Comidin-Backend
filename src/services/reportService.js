@@ -17,6 +17,44 @@ function toMysqlDateTime(d) {
   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())} ${pad2(d.getHours())}:${pad2(d.getMinutes())}:${pad2(d.getSeconds())}`;
 }
 
+/* ==========================
+   ✅ Helpers custom range
+   ========================== */
+function parseYmd(s) {
+  if (!s) return null;
+  const m = String(s).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  const y = Number(m[1]);
+  const mo = Number(m[2]) - 1;
+  const d = Number(m[3]);
+  const dt = new Date(y, mo, d, 0, 0, 0);
+  if (Number.isNaN(dt.getTime())) return null;
+  return dt;
+}
+
+function normalizeCustomRange({ startDate, endDate }) {
+  const startD = parseYmd(startDate);
+  const endD = parseYmd(endDate);
+
+  if (!startD || !endD) return null;
+
+  // ✅ día completo
+  startD.setHours(0, 0, 0, 0);
+  endD.setHours(23, 59, 59, 0);
+
+  // swap si vienen invertidas
+  if (startD.getTime() > endD.getTime()) {
+    const tmp = new Date(startD);
+    startD.setTime(endD.getTime());
+    endD.setTime(tmp.getTime());
+
+    startD.setHours(0, 0, 0, 0);
+    endD.setHours(23, 59, 59, 0);
+  }
+
+  return { start: toMysqlDateTime(startD), end: toMysqlDateTime(endD) };
+}
+
 function resolvePeriod(period) {
   const p = String(period || '').toLowerCase();
 
@@ -30,12 +68,22 @@ function resolvePeriod(period) {
   if (p === 'last12m') return { mode: 'months', months: 12 };
   if (p === 'prev_month') return { mode: 'prev_month' };
 
+  // ✅ NUEVO: rango custom
+  if (p === 'custom') return { mode: 'custom' };
+
   return { mode: 'months', months: 3 };
 }
 
-function computeWindowMysql(period) {
+function computeWindowMysql(period, customRange = {}) {
   const cfg = resolvePeriod(period);
   const now = new Date();
+
+  // ✅ NUEVO: custom (usa startDate/endDate)
+  if (cfg.mode === 'custom') {
+    const normalized = normalizeCustomRange(customRange);
+    if (!normalized) return { start: null, end: toMysqlDateTime(now), mode: 'custom_invalid' };
+    return { ...normalized, mode: 'custom' };
+  }
 
   if (cfg.mode === 'this_month') {
     const start = new Date(now.getFullYear(), now.getMonth(), 1, 0, 0, 0);
@@ -71,16 +119,23 @@ const ciStatusIn = (values) =>
 /* ==========================
    Estados
    ========================== */
-// Nota: en reportes generalmente se exportan "según preset" (validStatuses),
-// pero también se usan estos en PDFs en algunos lugares.
 const DONE_STATUSES = ['DELIVERED', 'COMPLETED'];
 const CLAIM_GROUP_STATUSES = ['CLAIMED', 'RETURNED']; // ✅ agrupación única "reclamado"
 
 /* ==========================
    Traducciones
    ========================== */
-function periodLabel(period) {
+function periodLabel(period, range = {}) {
   const p = String(period || '').toLowerCase();
+
+  // ✅ NUEVO: label para custom
+  if (p === 'custom') {
+    const s = String(range.startDate || '');
+    const e = String(range.endDate || '');
+    if (s && e) return `Personalizado (${s} a ${e})`;
+    return 'Personalizado';
+  }
+
   if (p === 'all') return 'Últimos 12 meses';
   if (p === 'this_month') return 'Este mes';
   if (p === 'last30d' || p === 'last1m') return 'Últimos 30 días';
@@ -90,6 +145,7 @@ function periodLabel(period) {
   if (p === 'prev_month') return 'Mes anterior';
   return p;
 }
+
 function statusLabel(preset) {
   const s = String(preset || '').toLowerCase();
   if (s === 'valid') return 'Solo completados';
@@ -140,8 +196,13 @@ function pickOrderAttributes() {
   return { map, attributes };
 }
 
-exports.getOrdersForExport = async ({ commerceId, period, validStatuses = 'ALL' }) => {
-  const { start, end } = computeWindowMysql(period);
+exports.getOrdersForExport = async ({ commerceId, period, startDate, endDate, validStatuses = 'ALL' }) => {
+  const { start, end, mode } = computeWindowMysql(period, { startDate, endDate });
+
+  // ✅ si pidieron custom y vino mal, error claro
+  if (String(period).toLowerCase() === 'custom' && (!start || mode === 'custom_invalid')) {
+    throw new Error('Período custom inválido. Requiere startDate y endDate con formato YYYY-MM-DD');
+  }
 
   let statusCondition;
   if (validStatuses !== 'ALL' && Array.isArray(validStatuses) && validStatuses.length) {
@@ -213,6 +274,11 @@ exports.buildOrdersXLSX = async (rows, meta = {}) => {
   const metaSheet = wb.addWorksheet('Meta');
   metaSheet.addRow(['Período', String(meta.period || '')]);
   metaSheet.addRow(['Filtro estado', String(meta.status || '')]);
+
+  // ✅ NUEVO: guardamos rango si aplica
+  if (meta.startDate) metaSheet.addRow(['Desde', String(meta.startDate)]);
+  if (meta.endDate) metaSheet.addRow(['Hasta', String(meta.endDate)]);
+
   metaSheet.getRow(1).font = { bold: true };
   metaSheet.getRow(2).font = { bold: true };
 
@@ -364,7 +430,8 @@ exports.streamExecutivePDF = async (res, { period, statusPreset, overview, conte
   const title = 'Informe de Ventas';
   const subtitle = [
     commerceText,
-    `Período: ${periodLabel(period)}`,
+    // ✅ custom label usando context.startDate / context.endDate si vienen
+    `Período: ${periodLabel(period, context)}`,
     `Estado: ${statusLabel(statusPreset)}`,
     `Generado: ${nowStr}`,
   ].join('  •  ');
@@ -399,7 +466,6 @@ exports.streamExecutivePDF = async (res, { period, statusPreset, overview, conte
   );
 
   // ✅ Productos vencidos: AHORA mostramos cantidad de productos (expiredCount)
-  // fallback a overview.expiredProducts si llega viejo
   const expiredCount =
     Number(overview?.expiredCount ?? 0) ||
     Number(overview?.expiredProductsCount ?? 0) ||
