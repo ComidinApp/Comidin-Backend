@@ -42,33 +42,22 @@ function parseYmd(s) {
 function normalizeCustomRange({ startDate, endDate }) {
   const startD = parseYmd(startDate);
   const endD = parseYmd(endDate);
-
   if (!startD || !endD) return null;
 
   // ✅ día completo
   startD.setHours(0, 0, 0, 0);
   endD.setHours(23, 59, 59, 0);
 
-  // swap si vienen al revés
+  // swap si vienen invertidas
   if (startD.getTime() > endD.getTime()) {
     const tmp = new Date(startD);
     startD.setTime(endD.getTime());
     endD.setTime(tmp.getTime());
-
     startD.setHours(0, 0, 0, 0);
     endD.setHours(23, 59, 59, 0);
   }
 
-  const monthsForSeries =
-    (endD.getFullYear() - startD.getFullYear()) * 12 +
-    (endD.getMonth() - startD.getMonth()) + 1;
-
-  return {
-    start: toMysqlDateTime(startD),
-    end: toMysqlDateTime(endD),
-    monthsForSeries: Math.max(1, Math.min(monthsForSeries, 24)), // cap opcional
-    mode: 'custom',
-  };
+  return { start: toMysqlDateTime(startD), end: toMysqlDateTime(endD) };
 }
 
 function resolvePeriod(period) {
@@ -92,14 +81,13 @@ function computeWindow(period, customRange = {}) {
   const cfg = resolvePeriod(period);
   const now = new Date();
 
-  // ✅ NUEVO: custom
   if (cfg.mode === 'custom') {
     const normalized = normalizeCustomRange(customRange);
-    // si no viene bien formado, devolvemos null start para que el controller decida (o caiga al default)
     if (!normalized) {
-      return { start: null, end: toMysqlDateTime(now), monthsForSeries: 3, mode: 'custom_invalid' };
+      return { start: null, end: toMysqlDateTime(now), monthsForSeries: 1, mode: 'custom_invalid' };
     }
-    return normalized;
+    // monthsForSeries: cálculo simple para la serie, evitamos inventar: usamos 12 para no romper charts
+    return { start: normalized.start, end: normalized.end, monthsForSeries: 12, mode: 'custom' };
   }
 
   if (cfg.mode === 'all') {
@@ -150,14 +138,17 @@ function resolvePublicationProductIdDbField() {
 exports.getOverview = async ({
   commerceId,
   period = 'last3m',
-  startDate, // ✅ NUEVO
-  endDate,   // ✅ NUEVO
   validStatuses = ['DELIVERED', 'COMPLETED'],
+
+  // ✅ NUEVO
+  startDate,
+  endDate,
 } = {}) => {
   const { start, end, monthsForSeries, mode } = computeWindow(period, { startDate, endDate });
+  const isCustom = String(period || '').toLowerCase() === 'custom';
 
-  // ✅ si pidieron custom pero vino inválido, cortamos con error claro
-  if (String(period).toLowerCase() === 'custom' && (!start || mode === 'custom_invalid')) {
+  // ✅ si pidieron custom y vino mal, error claro (idealmente 400 desde controller)
+  if (isCustom && (!start || mode === 'custom_invalid')) {
     throw new Error('Período custom inválido. Requiere startDate y endDate con formato YYYY-MM-DD');
   }
 
