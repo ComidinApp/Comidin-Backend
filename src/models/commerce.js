@@ -79,6 +79,9 @@ Commerce.belongsTo(CommerceCategory, { foreignKey: 'commerce_category_id' });
 Commerce.findAllCommerces = async function() {
   try {
     const commerces = await Commerce.findAll({
+      where: {
+        name: { [Sequelize.Op.ne]: 'Equipo Comidin' }
+      },
       include: [
         {
           model: CommerceCategory,
