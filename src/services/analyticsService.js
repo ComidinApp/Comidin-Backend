@@ -11,8 +11,9 @@ const {
 } = Models;
 
 const DONE_STATUSES = ['DELIVERED', 'COMPLETED'];
-const CLAIM_GROUP_STATUSES = ['CLAIMED', 'RETURNED','RESOLVED'];
+const CLAIM_GROUP_STATUSES = ['CLAIMED', 'RETURNED'];
 const RETURN_STATUSES = ['RETURNED'];
+const RESOLVED_STATUSES = ['RESOLVED'];
 
 const ciStatusIn = (values) =>
   where(fn('LOWER', col('status')), {
@@ -196,6 +197,14 @@ exports.getOverview = async ({
     },
   });
 
+  const resolvedOrders = await Order.count({
+    where: {
+      ...baseFilterNoStatus,
+      ...dateFilter,
+      [Op.and]: [ciStatusIn(RESOLVED_STATUSES)],
+    },
+  });
+
   const expiredWhere = {
     commerce_id: commerceId,
     ...(useWindow
@@ -309,6 +318,7 @@ exports.getOverview = async ({
     totalOrders,
     claimedOrders,
     returnedOrders,
+    resolvedOrders,
     expiredStock,
     expiredCount,
     expiredProducts: expiredStock,
