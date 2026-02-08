@@ -313,7 +313,7 @@ module.exports = {
   postal_code: '5000',
   commerce_national_id: '30717889602',
   is_active: true,
-  image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-logos/Comidin.png',
+  image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-logos/delpilarr.png',
   open_at: '09:00:00',
   close_at: '23:00:00',
   created_at: new Date(),
