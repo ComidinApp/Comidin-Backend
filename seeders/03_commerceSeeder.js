@@ -306,12 +306,12 @@ module.exports = {
         },
 
         { // DEMO 21
-  name: 'Demo',
+  name: 'Del pilar',
   commerce_category_id: 3, // Rotisería (ajustalo si tu catálogo usa otro id)
   street_name: 'Av. Colón',
   number: '1234',
   postal_code: '5000',
-  commerce_national_id: 'DEMO-0001',
+  commerce_national_id: '30717889602',
   is_active: true,
   image_url: 'https://comidin-assets-tjff.s3.amazonaws.com/commerce-logos/Comidin.png',
   open_at: '09:00:00',
