@@ -11,7 +11,7 @@ const {
 } = Models;
 
 const DONE_STATUSES = ['DELIVERED', 'COMPLETED'];
-const CLAIM_GROUP_STATUSES = ['CLAIMED', 'RETURNED'];
+const CLAIM_GROUP_STATUSES = ['CLAIMED', 'RETURNED','RESOLVED'];
 const RETURN_STATUSES = ['RETURNED'];
 
 const ciStatusIn = (values) =>
