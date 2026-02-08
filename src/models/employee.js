@@ -43,7 +43,7 @@ const Employee = sequelize.define(
     status: {
       type: Sequelize.STRING,
       allowNull: false,
-      defaultValue: 'pending',
+      defaultValue: 'active',
     },
     avatar_url: { type: Sequelize.STRING, allowNull: false },
     verification_code: { type: Sequelize.STRING, allowNull: true },

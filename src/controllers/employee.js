@@ -27,9 +27,10 @@ exports.createEmployee = async (req, res) => {
     }
     if (!data?.password) {
       return res.status(400).json({ error: 'Bad Request', message: 'password provisoria es requerida' });
-    }
+    }    
 
     // 1) Crear empleado en BD
+    data.status = 'active';
     const newEmployee = await Employee.create(data);
     const roleId = Number(newEmployee.role_id ?? data.role_id);
 
