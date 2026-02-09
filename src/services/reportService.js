@@ -500,7 +500,7 @@ exports.streamExecutivePDF = async (res, { period, statusPreset, overview, conte
   y = tableBottomY + 20;
 
   // Top 3 productos (título más descriptivo)
-  doc.fontSize(13).fillColor(THEME.text).text('Top 3 productos por cantidad de unidades vendidas', left, y);
+  doc.fontSize(13).fillColor(THEME.text).text('Top 3 productos por cantidad de pedidos', left, y);
   y += 8;
 
   const top = overview.topProductsBar || [];
@@ -508,23 +508,22 @@ exports.streamExecutivePDF = async (res, { period, statusPreset, overview, conte
     doc.fontSize(10).fillColor(THEME.muted).text('Sin datos en el período seleccionado.', left, y + 6);
     y += 26;
   } else {
-    const maxUnits = Math.max(...top.map((t) => Number(t.units || 0)));
-    const rowH = 26;
-    top.forEach((t, i) => {
-      const yyLocal = y + 6 + i * rowH;
-      const name = (t.productName || 'Desconocido').slice(0, 40);
-      doc.fontSize(10).fillColor(THEME.text).text(name, left, yyLocal);
+    const topRows = top.map((t) => [
+      (t.productName || 'Desconocido').slice(0, 30),
+      String(t.ordersCount || 0),
+      String(t.units || 0),
+      String(t.claimedOrders || 0),
+    ]);
 
-      const barX = left + 220;
-      const barW = pageW - 260;
-      miniBar(doc, barX, yyLocal + 2, barW, 10, Number(t.units || 0), maxUnits, THEME.accent);
+    const topTableY = table(
+      doc,
+      { x: left, y: y + 6, w: pageW },
+      ['Producto', 'Cantidad de Pedidos', 'Cantidad de Unidades', 'Pedidos Reclamados'],
+      topRows,
+      { colWidths: [180, 130, 130, 130] }
+    );
 
-      doc.fontSize(10).fillColor(THEME.muted).text(integer(t.units || 0), left + pageW - 40, yyLocal, {
-        width: 40,
-        align: 'right',
-      });
-    });
-    y += rowH * top.length + 18;
+    y = topTableY + 18;
   }
 
   // Resumen
@@ -533,11 +532,17 @@ exports.streamExecutivePDF = async (res, { period, statusPreset, overview, conte
 
   const soldUnits = overview?.pieProducts?.soldUnits || 0;
 
-  const expiredStock =
-    Number(overview?.expiredStock ?? 0) ||
-    Number(overview?.expiredProducts ?? 0) ||
-    Number(overview?.pieProducts?.expiredUnits ?? 0) ||
-    0;
+  // Extraer valor numérico de expiredProducts o usar expiredStock/expiredUnits
+  let expiredStock = 0;
+  if (typeof overview?.expiredProducts === 'string') {
+    const match = overview.expiredProducts.match(/^(\d+)/);
+    expiredStock = match ? Number(match[1]) : 0;
+  } else {
+    expiredStock =
+      Number(overview?.expiredStock ?? 0) ||
+      Number(overview?.pieProducts?.expiredUnits ?? 0) ||
+      0;
+  }
 
   const compl = overview?.pieOrders?.completedOrders || 0;
   const claim = overview?.pieOrders?.claimedOrders || 0;
@@ -555,7 +560,7 @@ exports.streamExecutivePDF = async (res, { period, statusPreset, overview, conte
 
   doc.fontSize(12)
     .fillColor('#EF4444')
-    .text(`Cantidad de stock vencido: ${integer(expiredStock)}`, left + 12, y + 56);
+    .text(`Stock de unidades vencidas: ${integer(expiredStock)} unidades`, left + 12, y + 56);
 
   // Card Pedidos
   const rightX = left + cardW + 14;

@@ -297,7 +297,6 @@ exports.getOverview = async ({
         group: [col('publication->product.name')],
         raw: true,
       });
-      claimedByProduct = {};
       claimedRaw.forEach((r) => {
         claimedByProduct[r.productName] = Number(r.claimedCount ?? 0);
       });
