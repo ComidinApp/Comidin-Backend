@@ -162,6 +162,8 @@ function translateOrderStatus(status) {
     case 'CLAIMED': return 'Reclamado';
     case 'RETURNED': return 'Devuelto';
     case 'CANCELLED': return 'Cancelado';
+    case 'RESOLVED': return 'Resuelto';
+    case 'CONFIRMED': return 'Confirmado';
     default: return status || '';
   }
 }
