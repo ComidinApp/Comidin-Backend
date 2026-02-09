@@ -1,5 +1,9 @@
 const CustomerComplain = require('../models/customerComplain');
 
+// ✅ Ajustá estos 2 imports según tu proyecto:
+const Order = require('../models/order'); // <-- cambiá si tu modelo se llama distinto o está en otra ruta
+const sequelize = require('../config/database'); // <-- cambiá si tu sequelize está en otro archivo
+
 exports.createCustomerComplain = async (req, res) => {
   try {
     const customerComplain = await CustomerComplain.create(req.body);
@@ -115,24 +119,55 @@ const fs = require('fs');
 const path = require('path');
 
 exports.setCustomerComplainSatisfaction = async (req, res) => {
+  // ✅ Transacción: si falla una update, se deshace todo.
+  const t = await sequelize.transaction();
+
   try {
     const { id } = req.params;
     const { answer } = req.query;
 
     const normalized = String(answer || '').trim().toUpperCase();
     if (normalized !== 'Y' && normalized !== 'N') {
+      await t.rollback();
       return res.status(400).send('Respuesta inválida');
     }
 
-    const complain = await CustomerComplain.findByPk(id);
+    const complain = await CustomerComplain.findByPk(id, { transaction: t });
     if (!complain) {
+      await t.rollback();
       return res.status(404).send('Reclamo no encontrado');
     }
 
-    await complain.update({
-      was_satisfactory: normalized === 'Y',
-      satisfaction_answered_at: new Date(),
-    });
+    // ✅ Update del reclamo (ya lo hacías)
+    await complain.update(
+      {
+        was_satisfactory: normalized === 'Y',
+        satisfaction_answered_at: new Date(),
+      },
+      { transaction: t }
+    );
+
+    // ✅ NUEVO: si fue satisfactorio, marcamos la orden como RESOLVED
+    if (normalized === 'Y') {
+      // Ajustá el nombre del campo según tu modelo (order_id / orderId)
+      const orderId = complain.order_id ?? complain.orderId;
+
+      if (orderId) {
+        const order = await Order.findByPk(orderId, { transaction: t });
+
+        if (!order) {
+          // Si querés ser estricto, podés tirar error y hacer rollback
+          // throw new Error(`Order not found with id: ${orderId}`);
+          console.warn(`Order not found with id: ${orderId} (complain id: ${id}). Skipping order update.`);
+        } else {
+          await order.update({ status: 'RESOLVED' }, { transaction: t });
+        }
+      } else {
+        console.warn(`No orderId found in complain id: ${id}. Skipping order update.`);
+      }
+    }
+
+    await t.commit();
 
     const html = fs.readFileSync(
       path.join(__dirname, '../templates/satisfaction.html'),
@@ -143,6 +178,7 @@ exports.setCustomerComplainSatisfaction = async (req, res) => {
     return res.status(200).send(html);
 
   } catch (error) {
+    await t.rollback();
     console.error('Error saving satisfaction:', error);
     return res.status(500).send('Error interno');
   }
