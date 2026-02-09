@@ -518,9 +518,9 @@ exports.streamExecutivePDF = async (res, { period, statusPreset, overview, conte
     const topTableY = table(
       doc,
       { x: left, y: y + 6, w: pageW },
-      ['Producto', 'Cantidad de Pedidos', 'Cantidad de Unidades', 'Pedidos Reclamados'],
+      ['Producto', 'Pedidos', 'Unidades', 'Reclamados'],
       topRows,
-      { colWidths: [180, 130, 130, 130] }
+      { colWidths: [200, 100, 100, 100] }
     );
 
     y = topTableY + 18;
@@ -550,30 +550,30 @@ exports.streamExecutivePDF = async (res, { period, statusPreset, overview, conte
   const cardW = Math.floor((pageW - 14) / 2);
   const cardH = 84; // un poquito más alto para textos largos
 
-  // Card Productos
+  // Card Pedidos (lado izquierdo)
   doc.save().roundedRect(left, y, cardW, cardH, 12).fill(THEME.card).restore();
-  doc.fontSize(11).fillColor(THEME.muted).text('Resumen de productos', left + 12, y + 12);
-
-  doc.fontSize(12)
-    .fillColor(THEME.primary)
-    .text(`Cantidad de unidades vendidas: ${integer(soldUnits)}`, left + 12, y + 36);
-
-  doc.fontSize(12)
-    .fillColor('#EF4444')
-    .text(`Stock de unidades vencidas: ${integer(expiredStock)} unidades`, left + 12, y + 56);
-
-  // Card Pedidos
-  const rightX = left + cardW + 14;
-  doc.save().roundedRect(rightX, y, cardW, cardH, 12).fill(THEME.card).restore();
-  doc.fontSize(11).fillColor(THEME.muted).text('Resumen de pedidos', rightX + 12, y + 12);
+  doc.fontSize(11).fillColor(THEME.muted).text('Resumen de pedidos', left + 12, y + 12);
 
   doc.fontSize(12)
     .fillColor(THEME.accent)
-    .text(`Cantidad de pedidos realizados: ${integer(compl)}`, rightX + 12, y + 36);
+    .text(`Cantidad de realizados: ${integer(compl)} unidades`, left + 12, y + 36);
 
   doc.fontSize(12)
     .fillColor('#EF4444')
-    .text(`Cantidad de pedidos con reclamos: ${integer(claim)}`, rightX + 12, y + 56);
+    .text(`Cantidad de reclamos: ${integer(claim)} unidades`, left + 12, y + 56);
+
+  // Card Productos (lado derecho)
+  const rightX = left + cardW + 14;
+  doc.save().roundedRect(rightX, y, cardW, cardH, 12).fill(THEME.card).restore();
+  doc.fontSize(11).fillColor(THEME.muted).text('Resumen de productos', rightX + 12, y + 12);
+
+  doc.fontSize(12)
+    .fillColor(THEME.primary)
+    .text(`Cantidad de vendidas: ${integer(soldUnits)} unidades`, rightX + 12, y + 36);
+
+  doc.fontSize(12)
+    .fillColor('#EF4444')
+    .text(`Stock de vencidas: ${integer(expiredStock)} unidades`, rightX + 12, y + 56);
 
   doc.end();
   try { footerNumbering(doc); } catch {}
