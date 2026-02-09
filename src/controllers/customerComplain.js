@@ -1,4 +1,12 @@
+// src/controllers/customerComplain.js
+
 const CustomerComplain = require('../models/customerComplain');
+const Order = require('../models/order');
+const OrderHistory = require('../models/orderHistory');
+const { sequelize } = require('../database');
+
+const fs = require('fs');
+const path = require('path');
 
 exports.createCustomerComplain = async (req, res) => {
   try {
@@ -111,9 +119,6 @@ exports.findCustomerComplainByOrderId = async (req, res) => {
   }
 };
 
-const fs = require('fs');
-const path = require('path');
-
 exports.setCustomerComplainSatisfaction = async (req, res) => {
   try {
     const { id } = req.params;
@@ -124,26 +129,69 @@ exports.setCustomerComplainSatisfaction = async (req, res) => {
       return res.status(400).send('Respuesta inválida');
     }
 
-    const complain = await CustomerComplain.findByPk(id);
-    if (!complain) {
-      return res.status(404).send('Reclamo no encontrado');
-    }
-
-    await complain.update({
-      was_satisfactory: normalized === 'Y',
-      satisfaction_answered_at: new Date(),
-    });
-
+    // Leemos el HTML una sola vez (fuera de la transacción)
     const html = fs.readFileSync(
       path.join(__dirname, '../templates/satisfaction.html'),
       'utf8'
     );
+
+    await sequelize.transaction(async (t) => {
+      const complain = await CustomerComplain.findByPk(id, { transaction: t });
+      if (!complain) {
+        const err = new Error('Reclamo no encontrado');
+        err.statusCode = 404;
+        throw err;
+      }
+
+      // ✅ Update del reclamo
+      await complain.update(
+        {
+          was_satisfactory: normalized === 'Y',
+          satisfaction_answered_at: new Date(),
+        },
+        { transaction: t }
+      );
+
+      // ✅ NUEVO: si es satisfactorio, actualizar orden a RESOLVED + history
+      if (normalized === 'Y') {
+        const orderId = complain.order_id; // consistente con tu createCustomerComplainForOrder
+
+        if (!orderId) {
+          const err = new Error('El reclamo no tiene order_id asociado');
+          err.statusCode = 409;
+          throw err;
+        }
+
+        const order = await Order.findByPk(orderId, { transaction: t });
+        if (!order) {
+          const err = new Error(`Order not found with id: ${orderId}`);
+          err.statusCode = 404;
+          throw err;
+        }
+
+        order.status = 'RESOLVED';
+        await order.save({ transaction: t });
+
+        await OrderHistory.create(
+          { order_id: order.id, status: 'RESOLVED' },
+          { transaction: t }
+        );
+      }
+    });
 
     res.setHeader('Content-Type', 'text/html');
     return res.status(200).send(html);
 
   } catch (error) {
     console.error('Error saving satisfaction:', error);
+
+    if (error.statusCode === 404) {
+      return res.status(404).send(error.message);
+    }
+    if (error.statusCode === 409) {
+      return res.status(409).send(error.message);
+    }
+
     return res.status(500).send('Error interno');
   }
 };
