@@ -148,6 +148,9 @@ exports.changeOrderStatus = async (req, res) => {
 
     const normalizedStatus = (status || '').toString().trim().toUpperCase();
 
+    // guardamos estado previo para detectar transición (PENDING -> CANCELLED, etc.)
+    let previousStatus = null;
+
     await sequelize.transaction(async (t) => {
       const order = await Order.findByPk(id, { transaction: t });
       if (!order) {
@@ -155,6 +158,8 @@ exports.changeOrderStatus = async (req, res) => {
         err.statusCode = 404;
         throw err;
       }
+
+      previousStatus = (order.status || '').toString().trim().toUpperCase();
 
       order.status = normalizedStatus;
       await order.save({ transaction: t });
@@ -165,12 +170,21 @@ exports.changeOrderStatus = async (req, res) => {
       );
     });
 
-    // ✅ Mail AFTER commit (si falla el mail, no te rompe la actualización del pedido)
+    // ✅ Mail AFTER commit
     try {
-      await emailSender.sendOrderStatusUpdateCustomer({
-        orderId: id,
-        newStatus: normalizedStatus,
-      });
+      const isCancelTransition =
+        normalizedStatus === 'CANCELLED' && previousStatus !== 'CANCELLED';
+
+      if (isCancelTransition) {
+        await emailSender.sendOrderCancelledByCommerceCustomer({
+          orderId: id,
+        });
+      } else {
+        await emailSender.sendOrderStatusUpdateCustomer({
+          orderId: id,
+          newStatus: normalizedStatus,
+        });
+      }
     } catch (mailError) {
       console.error('Order status updated but email failed:', mailError);
     }
@@ -185,6 +199,7 @@ exports.changeOrderStatus = async (req, res) => {
     res.status(409).json({ error: 'Conflict', message: error });
   }
 };
+
 
 
 /**

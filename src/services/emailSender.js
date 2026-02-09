@@ -240,6 +240,7 @@ exports.sendOrderStatusUpdateCustomer = async ({ orderId, newStatus }) => {
       CANCELLED: 'Cancelado',
       Delivered: 'Entregado',
       CLAIMED: 'Reclamado',
+      RESOLVED: 'Resuelto',
     };
 
     const orderState = statusTranslations[normalizedStatus] || normalizedStatus;
@@ -519,6 +520,89 @@ exports.sendNewCommerceRequestToAdmins = async ({ commerce, adminEmployees } = {
     });
   } catch (error) {
     console.error('Error al enviar solicitud de nuevo comercio a admins:', error);
+    if (error.response) console.error(error.response.body);
+    throw error;
+  }
+};
+
+
+exports.sendOrderCancelledByCommerceCustomer = async ({ orderId }) => {
+  try {
+    const templateId = process.env.SENGRID_CANCELLED_NOTIFICATION;
+    if (!templateId) {
+      throw new Error('Missing env var: SENGRID_CANCELLED_NOTIFICATION');
+    }
+
+    const Order = require('../models/order');
+    const orderFull = await Order.findOrderById(orderId);
+    if (!orderFull) return;
+
+    const to = (orderFull?.user?.email || '').trim();
+    if (!to || !to.includes('@')) return;
+
+    const userName =
+      `${orderFull?.user?.first_name || ''} ${orderFull?.user?.last_name || ''}`.trim() ||
+      'Cliente';
+
+    const commerce = orderFull?.commerce || {};
+    const commerceName = commerce?.name || 'el comercio';
+    const commerceEmail = (commerce?.email || '').trim();
+    const commercePhone =
+      (commerce?.phone_number || commerce?.phone || '').toString().trim();
+
+    // Detalle de items para que el cliente no flashee que fue "un pedido cualquiera"
+    const details = Array.isArray(orderFull?.order_details) ? orderFull.order_details : [];
+    const orderItems =
+      details
+        .map((d) => {
+          const name = d?.publication?.product?.name || 'Producto';
+          const qty = Number(d?.quantity ?? 1);
+          return qty > 1 ? `${name} x${qty}` : name;
+        })
+        .filter(Boolean)
+        .join(', ') || 'Sin detalle de productos';
+
+    const totalAmountRaw =
+      orderFull?.total_amount ?? orderFull?.total ?? orderFull?.total_price ?? null;
+
+    const totalAmountFallback = details.reduce((acc, d) => {
+      const qty = Number(d?.quantity ?? 0) || 0;
+      const price =
+        Number(d?.price ?? d?.unit_price ?? d?.publication?.discounted_price ?? d?.publication?.price ?? 0) || 0;
+      return acc + qty * price;
+    }, 0);
+
+    const totalAmountNumber = Number(totalAmountRaw ?? totalAmountFallback ?? 0) || 0;
+
+    const totalAmount = totalAmountNumber.toLocaleString('es-AR', {
+      style: 'currency',
+      currency: 'ARS',
+      minimumFractionDigits: 2,
+    });
+
+    const cancelledAt = new Date().toLocaleString('es-AR', {
+      timeZone: 'America/Argentina/Buenos_Aires',
+    });
+
+    const msg = {
+      to,
+      from: 'no-reply@comidin.com.ar',
+      templateId,
+      dynamic_template_data: {
+        userName,
+        orderId: orderFull?.id,
+        cancelledAt,
+        commerceName,
+        commerceEmail: commerceEmail || 'No informado',
+        commercePhone: commercePhone || 'No informado',
+        orderItems,
+        totalAmount,
+      },
+    };
+
+    await sgMail.send(msg);
+  } catch (error) {
+    console.error('Error al enviar mail de pedido cancelado por el comercio:', error);
     if (error.response) console.error(error.response.body);
     throw error;
   }
