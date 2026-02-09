@@ -246,6 +246,7 @@ exports.getOverview = async ({
     const top3Raw = await OrderDetail.findAll({
       attributes: [
         [col('publication->product.name'), 'productName'],
+        [fn('COUNT', fn('DISTINCT', col('order_id'))), 'ordersCount'],
         [fn('SUM', col('quantity')), 'units'],
       ],
       where: { order_id: { [Op.in]: soldOrderIds } },
@@ -259,14 +260,54 @@ exports.getOverview = async ({
         },
       ],
       group: [col('publication->product.name')],
-      order: [[fn('SUM', col('quantity')), 'DESC']],
+      order: [[fn('COUNT', fn('DISTINCT', col('order_id'))), 'DESC']],
       limit: 3,
       raw: true,
     });
 
+    // Obtener pedidos reclamados por producto
+    const claimedOrderIds = await Order.findAll({
+      attributes: ['id'],
+      where: { 
+        ...baseFilterNoStatus,
+        ...dateFilter,
+        [Op.and]: [ciStatusIn(CLAIM_GROUP_STATUSES)]
+      },
+      raw: true,
+    });
+    const claimedOrderIdsList = claimedOrderIds.map((r) => r.id);
+
+    let claimedByProduct = {};
+    if (claimedOrderIdsList.length) {
+      const claimedRaw = await OrderDetail.findAll({
+        attributes: [
+          [col('publication->product.name'), 'productName'],
+          [fn('COUNT', fn('DISTINCT', col('order_id'))), 'claimedCount'],
+        ],
+        where: { order_id: { [Op.in]: claimedOrderIdsList } },
+        include: [
+          {
+            model: Publication,
+            as: 'publication',
+            attributes: [],
+            required: true,
+            include: [{ model: Product, as: 'product', attributes: [], required: false }],
+          },
+        ],
+        group: [col('publication->product.name')],
+        raw: true,
+      });
+      claimedByProduct = {};
+      claimedRaw.forEach((r) => {
+        claimedByProduct[r.productName] = Number(r.claimedCount ?? 0);
+      });
+    }
+
     topProductsBar = top3Raw.map((r) => ({
       productName: r.productName ?? 'Desconocido',
+      ordersCount: Number(r.ordersCount ?? 0),
       units: Number(r.units ?? 0),
+      claimedOrders: claimedByProduct[r.productName ?? 'Desconocido'] ?? 0,
     }));
   }
 
@@ -321,7 +362,7 @@ exports.getOverview = async ({
     resolvedOrders,
     expiredStock,
     expiredCount,
-    expiredProducts: expiredStock,
+    expiredProducts: `${expiredStock} unidades`,
     topProductsBar,
     pieProducts: {
       soldUnits,
